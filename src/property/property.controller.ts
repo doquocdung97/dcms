@@ -1,6 +1,5 @@
 import { Controller, Post, Req } from '@nestjs/common';
 import { PropertyService } from './property.service';
-import PropertyBase from 'src/database/models/Property';
 
 @Controller('property')
 export class PropertyController {

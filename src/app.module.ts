@@ -12,12 +12,14 @@ import { MediaController } from './media/media.controller';
 import { ObjectController } from './object/object.controller';
 import { ObjectService } from './object/object.service';
 import { MediaService, ValueMediaService } from './media/media.service';
-import ObjectBase from './database/models/ObjectBase';
-import PropertyBase from './database/models/Property';
-import ValueObject from './database/models/ValueObject';
-import ValueMedia from './database/models/ValueMedia';
-import BaseMedia from './database/models/Media';
-import User from './database/models/User';
+import {
+  ObjectBase,
+  PropertyBase,
+  ValueObject,
+  ValueMedia,
+  BaseMedia,
+  User,
+} from 'core/database';
 @Module({
   imports: [
     TypeOrmModule.forRoot({

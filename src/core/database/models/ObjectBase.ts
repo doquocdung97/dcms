@@ -9,16 +9,19 @@ import {
   VirtualColumn,
   AfterLoad,
 } from 'typeorm';
-import PropertyBase from './Property';
-import ValueObject from './ValueObject';
+import { PropertyBase } from './Property';
+import { ValueObject } from './ValueObject';
 
 @Entity()
-export default class ObjectBase {
+export class ObjectBase {
   @PrimaryGeneratedColumn('uuid')
   id: string;
 
-  @Column({ default: '' })
+  @Column({ default: String() })
   name: string;
+
+  @Column({ nullable: true, default: String() })
+  type: string;
 
   @TreeChildren()
   children: ObjectBase[];
@@ -33,10 +36,10 @@ export default class ObjectBase {
 
   value: any = {};
 
-  @OneToMany(type => PropertyBase, obj => obj.parent)
+  @OneToMany((type) => PropertyBase, (obj) => obj.parent)
   properties: PropertyBase[];
 
-  @OneToMany(type => ValueObject, obj => obj.object)
+  @OneToMany((type) => ValueObject, (obj) => obj.object)
   connect: ValueObject[];
 
   //@CreateDateColumn()

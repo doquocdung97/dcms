@@ -2,15 +2,16 @@ import {
   Entity,
   PrimaryGeneratedColumn,
   Column,
+  BaseEntity,
   AfterLoad,
   ManyToOne,
   OneToMany,
   BeforeUpdate,
   AfterUpdate,
 } from 'typeorm';
-import ObjectBase from './ObjectBase';
-import ValueObject from './ValueObject';
-import ValueMedia from './ValueMedia';
+import { ObjectBase } from './ObjectBase';
+import { ValueObject } from './ValueObject';
+import { ValueMedia } from './ValueMedia';
 
 class _MainProperty {
   private properties = {};
@@ -120,41 +121,8 @@ class PropertyRelationships extends BasePropertyType {
 }
 MainProperty.addProperty('relationships', PropertyRelationships);
 
-class PropertyMedia extends BasePropertyType {
-  set(object: PropertyBase) {
-    super.set(object);
-  }
-  get(object: PropertyBase) {
-    let val = null;
-    if (object.connectMeida && object.connectMeida.length > 0) {
-      val = object.connectMeida[0].object;
-    }
-    return val;
-  }
-}
-MainProperty.addProperty('media', PropertyMedia);
-
-class PropertyMedias extends BasePropertyType {
-  set(object: PropertyBase) {
-    super.set(object);
-  }
-  get(object: PropertyBase) {
-    let val = [];
-    if (object.connectMeida && object.connectMeida.length > 0) {
-      let data = [];
-      for (let i = 0; i < object.connectMeida.length; i++) {
-        let obj = object.connectMeida[i];
-        data.push(obj.object);
-      }
-      val = data;
-    }
-    return val;
-  }
-}
-MainProperty.addProperty('medias', PropertyMedias);
-
 @Entity()
-export default class PropertyBase {
+export class PropertyBase extends BaseEntity {
   @PrimaryGeneratedColumn()
   id: number;
 
@@ -173,19 +141,19 @@ export default class PropertyBase {
   @Column({ type: 'json' })
   attribute: Object;
 
-  @ManyToOne(type => ObjectBase, obj => obj.properties)
+  @ManyToOne((type) => ObjectBase, (obj) => obj.properties)
   parent: ObjectBase;
 
-  @OneToMany(type => ValueObject, obj => obj.property)
+  @OneToMany((type) => ValueObject, (obj) => obj.property)
   connectObject: ValueObject[];
 
-  @OneToMany(type => ValueMedia, obj => obj.property)
+  @OneToMany((type) => ValueMedia, (obj) => obj.property)
   connectMeida: ValueMedia[];
 
   value: any = {};
 
   @AfterLoad()
-  reload() {
+  AfterLoad() {
     let property = MainProperty.get(this.type);
     if (property) {
       this.value = property.get(this);
