@@ -55,9 +55,16 @@ export class MediaService {
         },
       },
     });
-    let join = handleUpdateJoinTable<ValueMedia>(
+    let join = handleUpdateJoinTable<ValueMedia, PropertyBase>(
       property,
       connect,
+      (item, properties, index) => {
+        return (
+          item['property'] &&
+          item['property']['id'] &&
+          index < properties.length
+        );
+      },
       (item, property) => {
         item.property.id = property.id;
         item.object = data;

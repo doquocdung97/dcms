@@ -8,50 +8,12 @@ import {
   OneToMany,
   BeforeUpdate,
   AfterUpdate,
+  DataSource,
 } from 'typeorm';
 import { ObjectBase } from './ObjectBase';
 import { ValueObject } from './ValueObject';
 import { ValueMedia } from './ValueMedia';
-
-class _MainProperty {
-  private properties = {};
-  constructor() {}
-  addProperty(name: string, property: any) {
-    this.properties[name] = new property();
-  }
-  getTypes() {
-    return Object.keys(this.properties);
-  }
-  getDefault() {
-    return Object.keys(this.properties)[0];
-  }
-  checkType(name: string) {
-    console.log('checkType', name, this.properties[name]);
-    return this.properties[name] ? true : false;
-  }
-  get(name: any) {
-    return this.properties[name];
-  }
-  gets() {
-    return this.properties;
-  }
-}
-
-export const MainProperty = new _MainProperty();
-export class BasePropertyType {
-  set(object: PropertyBase): void {
-    if (!object.attribute) {
-      object.attribute = new Object();
-    }
-    var val = object.value;
-    object.attribute['value'] = val;
-  }
-  get(object: PropertyBase): any {
-    if (object.attribute) {
-      return object.attribute['value'];
-    }
-  }
-}
+import { BasePropertyType, MainProperty } from '../common';
 
 class PropertyString extends BasePropertyType {
   get(object: PropertyBase) {
@@ -87,39 +49,6 @@ class PropertyJson extends BasePropertyType {
   }
 }
 MainProperty.addProperty('json', PropertyJson);
-
-class PropertyRelationship extends BasePropertyType {
-  set(object: PropertyBase) {
-    super.set(object);
-  }
-  get(object: PropertyBase) {
-    let val = null;
-    if (object.connectObject && object.connectObject.length > 0) {
-      val = object.connectObject[0].object;
-    }
-    return val;
-  }
-}
-MainProperty.addProperty('relationship', PropertyRelationship);
-
-class PropertyRelationships extends BasePropertyType {
-  set(object: PropertyBase) {
-    super.set(object);
-  }
-  get(object: PropertyBase) {
-    let val = [];
-    if (object.connectObject && object.connectObject.length > 0) {
-      let data = [];
-      for (let i = 0; i < object.connectObject.length; i++) {
-        let obj = object.connectObject[i];
-        data.push(obj.object);
-      }
-      val = data;
-    }
-    return val;
-  }
-}
-MainProperty.addProperty('relationships', PropertyRelationships);
 
 @Entity()
 export class PropertyBase extends BaseEntity {
@@ -160,10 +89,10 @@ export class PropertyBase extends BaseEntity {
     }
   }
 
-  AfterUpdate() {
+  AfterUpdate(dataSource: DataSource) {
     let property = MainProperty.get(this.type);
     if (property) {
-      property.set(this);
+      property.set(this, dataSource);
     }
   }
 }

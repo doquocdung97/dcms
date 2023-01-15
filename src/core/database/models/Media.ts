@@ -10,9 +10,14 @@ import {
   AfterLoad,
   CreateDateColumn,
   UpdateDateColumn,
+  DataSource,
+  In,
 } from 'typeorm';
 import { ValueMedia } from './ValueMedia';
-import { MainProperty, BasePropertyType, PropertyBase } from './Property';
+import { PropertyBase } from './Property';
+import { handleUpdateJoinTable } from 'core/common';
+import { BasePropertyType, MainProperty } from '../common';
+
 @Entity()
 export class BaseMedia {
   @PrimaryGeneratedColumn('uuid')
@@ -53,8 +58,54 @@ export class BaseMedia {
   }
 }
 class PropertyMedia extends BasePropertyType {
-  set(object: PropertyBase) {
-    super.set(object);
+  async set(object: PropertyBase, dataSource: DataSource) {
+    const queryRunner = dataSource.createQueryRunner();
+    let mediaRepository = queryRunner.manager.getRepository(BaseMedia);
+    let connectRepository = queryRunner.manager.getRepository(ValueMedia);
+
+    let connect = await connectRepository.find({
+      relations: {
+        property: true,
+        object: true,
+      },
+      where: {
+        property: {
+          id: object.id,
+        },
+      },
+    });
+    if (!object.value) {
+      connectRepository.remove(connect);
+      return;
+    }
+    let medias = await mediaRepository.find({
+      where: { id: object.value },
+    });
+    let join = handleUpdateJoinTable<ValueMedia, BaseMedia>(
+      medias,
+      connect,
+      (item, properties, index) => {
+        return (
+          item['object'] && item['object']['id'] && index < properties.length
+        );
+      },
+      (item, media) => {
+        item.object = media;
+      },
+      (media: any) => {
+        let newvalue = new ValueMedia();
+        newvalue.object = media;
+        newvalue.property = object;
+        newvalue.lang = String();
+        return newvalue;
+      },
+    );
+    let rowdata = join.create_item.concat(join.update_item);
+    connectRepository.save(rowdata);
+
+    if (join.delete_item.length > 0) {
+      connectRepository.remove(join.delete_item);
+    }
   }
   get(object: PropertyBase) {
     let val = null;
@@ -67,9 +118,54 @@ class PropertyMedia extends BasePropertyType {
 MainProperty.addProperty('media', PropertyMedia);
 
 class PropertyMedias extends BasePropertyType {
-  set(object: PropertyBase) {
-    console;
-    super.set(object);
+  async set(object: PropertyBase, dataSource: DataSource) {
+    const queryRunner = dataSource.createQueryRunner();
+    let mediaRepository = queryRunner.manager.getRepository(BaseMedia);
+    let connectRepository = queryRunner.manager.getRepository(ValueMedia);
+    let ids = object.value || [];
+    let connect = await connectRepository.find({
+      relations: {
+        property: true,
+        object: true,
+      },
+      where: {
+        property: {
+          id: object.id,
+        },
+      },
+    });
+    if (ids.length == 0) {
+      connectRepository.remove(connect);
+      return;
+    }
+    let medias = await mediaRepository.find({
+      where: { id: In(ids) },
+    });
+    let join = handleUpdateJoinTable<ValueMedia, BaseMedia>(
+      medias,
+      connect,
+      (item, properties, index) => {
+        return (
+          item['object'] && item['object']['id'] && index < properties.length
+        );
+      },
+      (item, media) => {
+        item.object = media;
+      },
+      (media: any) => {
+        let newvalue = new ValueMedia();
+        newvalue.object = media;
+        newvalue.property = object;
+        newvalue.lang = String();
+        return newvalue;
+      },
+    );
+    let rowdata = join.create_item.concat(join.update_item);
+    connectRepository.save(rowdata);
+
+    if (join.delete_item.length > 0) {
+      connectRepository.remove(join.delete_item);
+    }
   }
   get(object: PropertyBase) {
     let val = [];
