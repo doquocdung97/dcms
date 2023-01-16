@@ -8,5 +8,10 @@ class Database {
 }
 export class Config {
   static PORT = process.env.port || 3000;
+  static FORDER_FILE = 'media';
+  static FORDER_FILE_PUBLIC_ROOT = 'media/public';
+  static FORDER_FILE_PUBLIC = '/public';
+  static FORDER_FILE_PRIVATE = '/private';
+  static CACHE_MAXAGE = 36000; // cache 10 hours
   static DATABASE = Database;
 }

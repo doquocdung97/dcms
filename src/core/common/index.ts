@@ -1,3 +1,4 @@
+export * from './filehelper';
 export function handleUpdateJoinTable<T, B>(
   objects: B[],
   connects: T[],

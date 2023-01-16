@@ -12,6 +12,9 @@ import { MediaController } from './media/media.controller';
 import { ObjectController } from './object/object.controller';
 import { ObjectService } from './object/object.service';
 import { MediaService, ValueMediaService } from './media/media.service';
+import { ServeStaticModule } from '@nestjs/serve-static';
+import { join } from 'path';
+
 import {
   ObjectBase,
   PropertyBase,
@@ -22,6 +25,13 @@ import {
 } from 'core/database';
 @Module({
   imports: [
+    ServeStaticModule.forRoot({
+      rootPath: join(__dirname, '..', Config.FORDER_FILE_PUBLIC_ROOT),
+      serveRoot: Config.FORDER_FILE_PUBLIC,
+      serveStaticOptions: {
+        maxAge: Config.CACHE_MAXAGE * 1000,
+      },
+    }),
     TypeOrmModule.forRoot({
       type: 'mysql',
       host: Config.DATABASE.HOST,
