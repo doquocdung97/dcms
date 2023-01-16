@@ -1,14 +1,19 @@
 import { Injectable } from '@nestjs/common';
-import PropertyBase, { MainProperty } from 'src/database/models/Property';
-import { Repository } from 'typeorm';
+import { In, Repository, DataSource } from 'typeorm';
 import { InjectRepository } from '@nestjs/typeorm';
-import ValueObject from 'src/database/models/ValueObject';
+
+import { ValueObject, PropertyBase, BaseMedia } from 'core/database';
+import { MediaService } from 'src/media/media.service';
+import { MainProperty } from 'core/database/common';
 
 @Injectable()
 export class PropertyService {
   constructor(
     @InjectRepository(PropertyBase)
     private propertyRepository: Repository<PropertyBase>,
+    @InjectRepository(BaseMedia)
+    private mediaRepository: Repository<BaseMedia>, //private readonly mediaService: MediaService,
+    private dataSource: DataSource,
   ) {}
   async saves(data: PropertyBase[]): Promise<PropertyBase[]> {
     return await this.propertyRepository.save(data);
@@ -18,11 +23,19 @@ export class PropertyService {
   }
   async update(data: PropertyBase): Promise<PropertyBase> {
     var record = await this.propertyRepository.findOne({
+      relations: {
+        parent: true,
+      },
       where: { id: data.id },
     });
     if (record && (!data.type || MainProperty.checkType(data.type))) {
       let result = Object.assign(record, data);
-      result.AfterUpdate();
+      //let a = await this.mediaRepository.find({
+      //  where: { id: In(data.value) },
+      //});
+      //console.log(MainProperty.get(data.type));
+      //console.log(a);
+      result.AfterUpdate(this.dataSource);
       record = this.propertyRepository.create(result);
       return await this.propertyRepository.save(record);
     }
@@ -38,6 +51,9 @@ export class PropertyService {
         connectMeida: true,
       },
     });
+  }
+  getRepository() {
+    return this.propertyRepository;
   }
 }
 

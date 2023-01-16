@@ -7,18 +7,18 @@ import {
   ManyToOne,
   OneToMany,
 } from 'typeorm';
-import PropertyBase from './Property';
-import ObjectBase from './ObjectBase';
+import { PropertyBase } from './Property';
+import { BaseMedia } from './Media';
 
 @Entity()
-export default class ValueObject {
+export class ValueMedia {
   @PrimaryGeneratedColumn()
   id: string;
 
-  @ManyToOne(type => ObjectBase, obj => obj.connect)
-  object: ObjectBase;
+  @ManyToOne((type) => BaseMedia, (obj) => obj.connect)
+  object: BaseMedia;
 
-  @ManyToOne(type => PropertyBase, obj => obj.connectObject)
+  @ManyToOne((type) => PropertyBase, (obj) => obj.connectMeida)
   property: PropertyBase;
 
   @Column()
