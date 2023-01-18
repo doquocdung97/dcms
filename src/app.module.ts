@@ -23,6 +23,7 @@ import {
   BaseMedia,
   User,
 } from 'core/database';
+import { AuthModule } from './auth/auth.module';
 @Module({
   imports: [
     ServeStaticModule.forRoot({
@@ -57,6 +58,7 @@ import {
       BaseMedia,
       User,
     ]),
+    AuthModule,
   ],
   controllers: [
     AppController,

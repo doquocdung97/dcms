@@ -12,11 +12,13 @@ import {
   UpdateDateColumn,
   DataSource,
   In,
+  ManyToOne,
 } from 'typeorm';
 import { ValueMedia } from './ValueMedia';
 import { PropertyBase } from './Property';
 import { handleUpdateJoinTable } from 'core/common';
 import { BasePropertyType, MainProperty } from '../common';
+import { User } from './User';
 
 @Entity()
 export class BaseMedia {
@@ -42,6 +44,9 @@ export class BaseMedia {
   lastUpdatedDate: Date;
 
   properties: any = [];
+
+  @ManyToOne((type) => User)
+  user: User;
 
   @AfterLoad()
   AfterLoad() {
