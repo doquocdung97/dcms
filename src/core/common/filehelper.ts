@@ -1,4 +1,4 @@
-import { Config } from 'src/Constants';
+import { MediaConfig } from 'src/Constants';
 import {
   createWriteStream,
   existsSync,
@@ -7,68 +7,88 @@ import {
   copyFile,
   copyFileSync,
 } from 'fs';
-import { join, basename, extname } from 'path';
+import { LoggerHelper } from 'core/common';
+import { join, basename, extname, dirname } from 'path';
 
 export class FileHelper {
-  private path = Config.FORDER_FILE;
-  constructor(path: string = String()) {
-    this.setDir(path);
-  }
+  private path = MediaConfig.FORDER_FILE;
+  private logger = new LoggerHelper('FileHelper');
+  constructor() {}
   /**
    *
    * @param path
    * @returns fullpath
    */
-  setDir(path: string) {
-    path = join(this.path, path);
-    let paths = path.split('\\');
-    let new_path = String();
-    paths.map((name, index) => {
-      new_path = join(new_path, name);
-      if (!existsSync(new_path)) {
-        mkdirSync(new_path);
-      }
-    });
-    return new_path;
+  createDir(filepath: string) {
+    let path = dirname(filepath);
+    if (!existsSync(path)) {
+      let paths = path.split('/');
+      let new_path = String();
+      paths.map((name, index) => {
+        new_path = join(new_path, name);
+        if (!existsSync(new_path)) {
+          mkdirSync(new_path);
+        }
+      });
+    }
+    return filepath;
   }
   /**
    *
    * @param file
    * @returns fullpath
    */
-  set(path: string, file: any) {
+  upload(path: string, file: any) {
     try {
-      let filepath = join(path || this.path, file.originalname);
+      this.logger.info(`Upload file: ${file.originalname}`);
+      let filepath = join(this.path, path, file.originalname);
+
+      filepath = this.createDir(filepath);
       var stream = createWriteStream(filepath);
       stream.once('open', function (fd) {
         stream.write(file.buffer);
         stream.end();
       });
-      return filepath.replace(/\\/g, '/');
-    } catch (error) {}
+      let pathfile = filepath.replace(/\\/g, '/');
+      this.logger.info(`Upload file success - path: ${pathfile}`);
+      return pathfile;
+    } catch (error) {
+      this.logger.error(`Upload file - error: ${error}`);
+    }
     return;
   }
   delete(filePath: string) {
     try {
+      this.logger.info(`Delete file - path: ${filePath}`);
       if (existsSync(filePath)) {
         unlinkSync(filePath);
+        this.logger.info(`Delete file success`);
         return true;
       }
-    } catch (error) {}
+    } catch (error) {
+      this.logger.error(`Delete file - error: ${error}`);
+    }
     return false;
   }
   /**
    *
    * @param pathfile pathfile current
    * @param path to path
+   * @param delete to true -> delete file current
    * @returns boolean true -> success, false -> failure
    */
-  async copy(pathfile: string, path: string) {
+  async copy(pathfile: string, path: string, isdelete: boolean = false) {
     try {
+      this.logger.info(`Copy file - path: ${pathfile} to path: ${path}`);
+      this.createDir(path);
       copyFileSync(pathfile, path);
+      this.logger.info(`Copy file success`);
+      if (isdelete) {
+        this.delete(pathfile);
+      }
       return true;
     } catch (error) {
-      console.log(error);
+      this.logger.error(`Copy file - error: ${error}`);
     }
     return false;
   }

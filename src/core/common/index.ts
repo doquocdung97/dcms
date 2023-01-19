@@ -1,4 +1,5 @@
 export * from './filehelper';
+export * from './loggerhelper';
 export function handleUpdateJoinTable<T, B>(
   objects: B[],
   connects: T[],
@@ -27,4 +28,10 @@ export function handleUpdateJoinTable<T, B>(
     }
   }
   return { create_item, update_item, delete_item };
+}
+export function parseBoolean(val: any): boolean {
+  if (val == 'true' || val == '1' || val == 1) {
+    return true;
+  }
+  return false;
 }
