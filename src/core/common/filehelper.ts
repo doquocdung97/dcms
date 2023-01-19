@@ -1,4 +1,4 @@
-import { Config } from 'src/Constants';
+import { MediaConfig } from 'src/Constants';
 import {
   createWriteStream,
   existsSync,
@@ -11,7 +11,7 @@ import { LoggerHelper } from 'core/common';
 import { join, basename, extname, dirname } from 'path';
 
 export class FileHelper {
-  private path = Config.FORDER_FILE;
+  private path = MediaConfig.FORDER_FILE;
   private logger = new LoggerHelper('FileHelper');
   constructor() {}
   /**
@@ -83,8 +83,8 @@ export class FileHelper {
       this.createDir(path);
       copyFileSync(pathfile, path);
       this.logger.info(`Copy file success`);
-      if(isdelete){
-        this.delete(pathfile)
+      if (isdelete) {
+        this.delete(pathfile);
       }
       return true;
     } catch (error) {

@@ -8,7 +8,7 @@ import {
   BeforeInsert,
 } from 'typeorm';
 import { hashSync, compareSync } from 'bcrypt';
-import { Config } from 'src/Constants';
+import { PasswordConfig } from 'src/Constants';
 @Entity()
 export class User {
   @PrimaryGeneratedColumn('uuid')
@@ -36,7 +36,7 @@ export class User {
   @BeforeUpdate()
   BeforeUpdate() {
     if (this.password) {
-      this.password = hashSync(this.password, Config.PASSWORD_ROUNDS);
+      this.password = hashSync(this.password, PasswordConfig.ROUNDS);
     }
   }
   checkPassword(password: string) {

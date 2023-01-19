@@ -2,7 +2,7 @@ import { Module } from '@nestjs/common';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { TypeOrmModule } from '@nestjs/typeorm';
-import { Config } from './Constants';
+import { Config, DatabaseConfig, MediaConfig } from './Constants';
 import { PropertyController } from './property/property.controller';
 import {
   PropertyService,
@@ -27,19 +27,19 @@ import { AuthModule } from './auth/auth.module';
 @Module({
   imports: [
     ServeStaticModule.forRoot({
-      rootPath: join(__dirname, '..', Config.FORDER_FILE_PUBLIC_ROOT),
-      serveRoot: Config.FORDER_FILE_PUBLIC,
+      rootPath: join(__dirname, '..', MediaConfig.FORDER_FILE_PUBLIC_ROOT),
+      serveRoot: MediaConfig.FORDER_FILE_PUBLIC,
       serveStaticOptions: {
         maxAge: Config.CACHE_MAXAGE * 1000,
       },
     }),
     TypeOrmModule.forRoot({
       type: 'mysql',
-      host: Config.DATABASE.HOST,
-      port: Config.DATABASE.PORT,
-      username: Config.DATABASE.USERNAME,
-      password: Config.DATABASE.PASSWORD,
-      database: Config.DATABASE.DATABASENAME,
+      host: DatabaseConfig.HOST,
+      port: DatabaseConfig.PORT,
+      username: DatabaseConfig.USERNAME,
+      password: DatabaseConfig.PASSWORD,
+      database: DatabaseConfig.DATABASENAME,
       entities: [
         ObjectBase,
         PropertyBase,

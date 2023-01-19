@@ -5,12 +5,9 @@ import { NestApplicationOptions } from '@nestjs/common';
 import { LoggerHelper } from 'core/common';
 let logger = new LoggerHelper('Main');
 async function bootstrap() {
-  let option: NestApplicationOptions = {};
-  if (!Config.LOGGER_NEST) {
-    option.logger = false;
-  }
-
-  const app = await NestFactory.create(AppModule, option);
+  const app = await NestFactory.create(AppModule, {
+    logger: new LoggerHelper('Nest'),
+  });
   let port = Config.PORT;
   await app.listen(port);
   logger.info(`App listening on port: ${port}`);

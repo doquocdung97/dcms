@@ -6,24 +6,17 @@ import { JwtModule } from '@nestjs/jwt';
 import { JwtStrategy } from './jwt.strategy';
 import { AuthController } from './auth.controller';
 import { TypeOrmModule } from '@nestjs/typeorm';
-import { Config } from '../Constants';
-import {
-  ObjectBase,
-  PropertyBase,
-  ValueObject,
-  ValueMedia,
-  BaseMedia,
-  User,
-} from 'core/database';
+import { Config, DatabaseConfig, PasswordConfig } from '../Constants';
+import { User } from 'core/database';
 @Module({
   imports: [
     TypeOrmModule.forRoot({
       type: 'mysql',
-      host: Config.DATABASE.HOST,
-      port: Config.DATABASE.PORT,
-      username: Config.DATABASE.USERNAME,
-      password: Config.DATABASE.PASSWORD,
-      database: Config.DATABASE.DATABASENAME,
+      host: DatabaseConfig.HOST,
+      port: DatabaseConfig.PORT,
+      username: DatabaseConfig.USERNAME,
+      password: DatabaseConfig.PASSWORD,
+      database: DatabaseConfig.DATABASENAME,
       entities: [User],
       synchronize: true,
     }),
@@ -31,7 +24,7 @@ import {
     //UsersModule,
     PassportModule,
     JwtModule.register({
-      secret: Config.AUTH_SECRET_KEY,
+      secret: PasswordConfig.AUTH_SECRET_KEY,
       //signOptions: { expiresIn: '60s' },
     }),
   ],

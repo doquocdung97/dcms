@@ -4,7 +4,7 @@ import { In, Repository } from 'typeorm';
 import { PropertyService } from 'src/property/property.service';
 import { PropertyBase, ValueMedia, BaseMedia, User } from 'core/database';
 import { FileHelper, handleUpdateJoinTable, LoggerHelper } from 'core/common';
-import { Config } from 'src/Constants';
+import { Config, MediaConfig } from 'src/Constants';
 import { REQUEST } from '@nestjs/core';
 @Injectable()
 export class ValueMediaService {
@@ -122,15 +122,18 @@ export class MediaService {
         } else if (beforedata.public != data.public) {
           let filename = this.filehelper.getFileName(beforedata.url, true);
           let afterurl = this.filehelper.joinpath(
-            Config.FORDER_FILE,
+            MediaConfig.FORDER_FILE,
             data.public
-              ? Config.FORDER_FILE_PUBLIC
-              : Config.FORDER_FILE_PRIVATE,
+              ? MediaConfig.FORDER_FILE_PUBLIC
+              : MediaConfig.FORDER_FILE_PRIVATE,
             filename,
           );
           let befoerurl = beforedata.url;
           if (beforedata.public) {
-            befoerurl = this.filehelper.joinpath(Config.FORDER_FILE, befoerurl);
+            befoerurl = this.filehelper.joinpath(
+              MediaConfig.FORDER_FILE,
+              befoerurl,
+            );
           }
           let statuscopy = await this.filehelper.copy(
             befoerurl,
@@ -145,7 +148,7 @@ export class MediaService {
         }
       }
       if (data.public && data.url) {
-        data.url = data.url.replace(Config.FORDER_FILE, String());
+        data.url = data.url.replace(MediaConfig.FORDER_FILE, String());
       }
       data.user = this.request.user as User;
       let afterdata = await this.mediaRepository.save(data);

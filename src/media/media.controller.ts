@@ -44,7 +44,6 @@ export class MediaController {
   @Get('private/:file')
   async getfile(@Res() res, @Param('file') filename, @CurrentUser() user) {
     let data = await this.mediaService.getByUrl('media/private/' + filename);
-    console.log(data);
     if (data && data.user && user && data.user.id == user.id) {
       res.sendFile(filename, { root: './media/private' });
       return;
