@@ -22,8 +22,10 @@ import {
   ValueMedia,
   BaseMedia,
   User,
+  History,
 } from 'core/database';
 import { AuthModule } from './auth/auth.module';
+import { MediaSubscriber } from 'core/database/subscriber/MediaSubscriber';
 @Module({
   imports: [
     ServeStaticModule.forRoot({
@@ -47,7 +49,9 @@ import { AuthModule } from './auth/auth.module';
         ValueMedia,
         BaseMedia,
         User,
+        History,
       ],
+      subscribers: [MediaSubscriber],
       synchronize: true,
     }),
     TypeOrmModule.forFeature([
@@ -57,6 +61,7 @@ import { AuthModule } from './auth/auth.module';
       ValueMedia,
       BaseMedia,
       User,
+      History,
     ]),
     AuthModule,
   ],

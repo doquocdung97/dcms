@@ -13,13 +13,14 @@ import {
   DataSource,
   In,
   ManyToOne,
+  DeleteDateColumn,
 } from 'typeorm';
 import { ValueMedia } from './ValueMedia';
 import { PropertyBase } from './Property';
 import { handleUpdateJoinTable } from 'core/common';
 import { BasePropertyType, MainProperty } from '../common';
 import { User } from './User';
-
+import { History } from './History';
 @Entity()
 export class BaseMedia {
   @PrimaryGeneratedColumn('uuid')
@@ -38,15 +39,21 @@ export class BaseMedia {
   connect: ValueMedia[];
 
   @CreateDateColumn()
-  createdDate: Date;
+  createdAt: Date;
 
   @UpdateDateColumn()
-  lastUpdatedDate: Date;
+  updatedAt: Date;
 
   properties: any = [];
 
   @ManyToOne((type) => User)
   user: User;
+
+  @OneToMany((type) => History, (obj) => obj.media)
+  historys: History[];
+
+  @DeleteDateColumn()
+  deletedAt: Date;
 
   @AfterLoad()
   AfterLoad() {

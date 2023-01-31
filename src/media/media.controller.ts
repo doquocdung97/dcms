@@ -3,6 +3,7 @@ import {
   Post,
   Req,
   Get,
+  Delete,
   UseInterceptors,
   UploadedFile,
   Body,
@@ -10,13 +11,11 @@ import {
   Res,
   Param,
   UseGuards,
+  Put,
 } from '@nestjs/common';
 import { MediaService } from './media.service';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { FileHelper, parseBoolean } from 'core/common';
-import { BaseMedia } from 'core/database';
-import { diskStorage } from 'multer';
-import { Config } from 'src/Constants';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 import { CurrentUser } from 'src/auth/currentuser';
 
@@ -26,20 +25,50 @@ export class MediaController {
   filehelper = new FileHelper();
   constructor(private readonly mediaService: MediaService) {}
 
-  @Post('/update')
+  @Put()
   @UseInterceptors(FileInterceptor('file'))
   async update(@UploadedFile() file: any, @Body() body) {
     let rowdata = body;
     rowdata.public = parseBoolean(rowdata.public);
-
     rowdata.file = file;
+    let result = await this.mediaService.save(rowdata);
+    return result;
+  }
+
+  @Post()
+  @UseInterceptors(FileInterceptor('file'))
+  async create(@UploadedFile() file: any, @Body() body) {
+    let rowdata = body;
+    rowdata.public = parseBoolean(rowdata.public);
+    rowdata.file = file;
+    delete rowdata['id'];
     let result = await this.mediaService.save(rowdata);
     return result;
   }
 
   @Get()
   async get(@Req() rep: any) {
-    return await this.mediaService.get(rep.body);
+    const { id } = rep.query;
+    return await this.mediaService.get({ id });
+  }
+
+  @Delete()
+  async delete(@Req() rep: any) {
+    const { id } = rep.query;
+    let ids = [];
+    if (id) {
+      ids = id.split(',');
+    }
+    return await this.mediaService.delete(ids);
+  }
+  @Put('restore')
+  async restore(@Req() rep: any) {
+    const { id } = rep.query;
+    let ids = [];
+    if (id) {
+      ids = id.split(',');
+    }
+    return await this.mediaService.restore(ids);
   }
   @Get('private/:file')
   async getfile(@Res() res, @Param('file') filename, @CurrentUser() user) {

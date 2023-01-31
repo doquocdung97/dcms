@@ -4,6 +4,7 @@ export * from './models/Property';
 export * from './models/User';
 export * from './models/ValueMedia';
 export * from './models/ValueObject';
+export * from './models/History';
 //import { DataSource } from 'typeorm';
 //import { Config } from '../Constants';
 //export const AppDataSource = new DataSource({

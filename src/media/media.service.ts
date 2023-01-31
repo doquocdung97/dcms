@@ -1,6 +1,6 @@
 import { Inject, Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { In, Repository } from 'typeorm';
+import { In, Repository, FindOneOptions, FindOptionsWhere } from 'typeorm';
 import { PropertyService } from 'src/property/property.service';
 import { PropertyBase, ValueMedia, BaseMedia, User } from 'core/database';
 import { FileHelper, handleUpdateJoinTable, LoggerHelper } from 'core/common';
@@ -150,9 +150,12 @@ export class MediaService {
       if (data.public && data.url) {
         data.url = data.url.replace(MediaConfig.FORDER_FILE, String());
       }
-      data.user = this.request.user as User;
-      let afterdata = await this.mediaRepository.save(data);
-
+      if (!data.id) {
+        data.user = this.request.user as User;
+      }
+      let afterdata = await this.mediaRepository.save(data, {
+        data: this.request.user,
+      });
       return afterdata;
     } catch (error) {
       this.logger.error(`Save ${error}`);
@@ -164,26 +167,28 @@ export class MediaService {
   }
   async get(data: any) {
     let user = this.request.user as User;
-    if (data.id) {
-      return await this.mediaRepository.findOne({
-        where: {
-          id: data.id,
-          user: { id: user.id },
-        },
-      });
-    }
-    return await this.mediaRepository.find({
+    let option: FindOneOptions<BaseMedia> = {
+      where: {
+        user: { id: user.id },
+      },
       relations: {
         connect: {
           property: true,
         },
-      },
-      where: {
-        user: {
-          id: user.id,
+        historys: {
+          user: true,
         },
       },
-    });
+      withDeleted: true,
+    };
+    if (data.id) {
+      option.where = {
+        id: data.id,
+        ...option.where,
+      };
+      return await this.mediaRepository.findOne(option);
+    }
+    return await this.mediaRepository.find(option);
   }
   async getByUrl(url: string) {
     return await this.mediaRepository.findOne({
@@ -192,5 +197,37 @@ export class MediaService {
         user: true,
       },
     });
+  }
+  async delete(ids: string[]) {
+    try {
+      let result = await this.mediaRepository
+        .createQueryBuilder()
+        .softDelete()
+        .where('id In(:ids)', { ids })
+        .execute();
+      this.logger.info(`Delete items: ${ids}`);
+      return result;
+    } catch (ex) {
+      this.logger.error(`Delete items: ${ids} message: ${ex}`);
+    }
+    return {
+      status: false,
+    };
+  }
+  async restore(ids: string[]) {
+    try {
+      let result = await this.mediaRepository
+        .createQueryBuilder()
+        .restore()
+        .where('id In(:ids)', { ids })
+        .execute();
+      this.logger.info(`Restore items: ${ids}`);
+      return result;
+    } catch (ex) {
+      this.logger.error(`Restore items: ${ids} message: ${ex}`);
+    }
+    return {
+      status: false,
+    };
   }
 }

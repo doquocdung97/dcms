@@ -35,3 +35,19 @@ export function parseBoolean(val: any): boolean {
   }
   return false;
 }
+export function checkChangeData(databefore, dataafter) {
+  let keys = Object.keys(dataafter);
+  let data = {};
+  keys.map((key, index) => {
+    let before = databefore[key];
+    let after = dataafter[key];
+    if (before instanceof Array && after instanceof Array) {
+      if (before.toString() != after.toString()) {
+        data[key] = after;
+      }
+    } else if (before != after) {
+      data[key] = after;
+    }
+  });
+  return data;
+}

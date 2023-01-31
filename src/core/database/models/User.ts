@@ -23,7 +23,7 @@ export class User {
   @Column({ nullable: true, length: 12 })
   phone!: string;
 
-  @Column()
+  @Column({ select: false })
   password: string;
 
   @CreateDateColumn()
@@ -40,6 +40,6 @@ export class User {
     }
   }
   checkPassword(password: string) {
-    return compareSync(password, this.password);
+    if (this.password) return compareSync(password, this.password);
   }
 }

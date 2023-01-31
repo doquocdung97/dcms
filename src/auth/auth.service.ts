@@ -26,7 +26,10 @@ export class AuthService {
     return this.userRepository.save(user);
   }
   async findOne(email: string): Promise<User | undefined> {
-    let user = this.userRepository.findOneBy({ email: email });
+    let user = await this.userRepository.findOne({
+      where: { email: email },
+      select: { password: true, id: true, name: true, email: true },
+    });
     return user;
   }
   async validateUser(email: string, pass: string): Promise<any> {
