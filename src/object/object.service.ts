@@ -52,6 +52,14 @@ export class ObjectService {
       relations: {
         children: {
           connect: true,
+          properties: {
+            connectObject: {
+              object: true,
+            },
+            connectMeida: {
+              object: true,
+            },
+          },
         },
         properties: {
           connectObject: {

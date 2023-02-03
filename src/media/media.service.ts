@@ -1,6 +1,6 @@
 import { Inject, Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { In, Repository } from 'typeorm';
+import { FindManyOptions, In, Repository } from 'typeorm';
 import { PropertyService } from 'src/property/property.service';
 import { PropertyBase, ValueMedia, BaseMedia, User } from 'core/database';
 import { FileHelper, handleUpdateJoinTable, LoggerHelper } from 'core/common';
@@ -162,28 +162,31 @@ export class MediaService {
   getRepository() {
     return this.mediaRepository;
   }
-  async get(data: any) {
-    let user = this.request.user as User;
-    if (data.id) {
-      return await this.mediaRepository.findOne({
-        where: {
-          id: data.id,
-          user: { id: user.id },
-        },
-      });
-    }
-    return await this.mediaRepository.find({
-      relations: {
-        connect: {
-          property: true,
-        },
-      },
+  async get(data: any = {}) {
+    let user = User.getByRequest(this.request);
+    let option: FindManyOptions<BaseMedia> = {
       where: {
         user: {
           id: user.id,
         },
       },
-    });
+      relations: {
+        connect: {
+          property: true,
+        },
+        user: true,
+      },
+    };
+    if (data.id) {
+      option.where = {
+        user: {
+          id: user.id,
+        },
+        id: data.id,
+      };
+      return await this.mediaRepository.findOne(option);
+    }
+    return await this.mediaRepository.find(option);
   }
   async getByUrl(url: string) {
     return await this.mediaRepository.findOne({

@@ -22,10 +22,20 @@ import {
   ValueMedia,
   BaseMedia,
   User,
+  PropertySubscriber,
 } from 'core/database';
 import { AuthModule } from './auth/auth.module';
+import { GraphQLModule } from '@nestjs/graphql';
+import { ApolloDriver, ApolloDriverConfig } from '@nestjs/apollo';
+import { MediaResolver } from './media/media.resolver';
+import { PropertyResolver } from './property/property.resolver';
+import { ObjectResolver } from './object/object.resolver';
 @Module({
   imports: [
+    GraphQLModule.forRoot<ApolloDriverConfig>({
+      driver: ApolloDriver,
+      autoSchemaFile: 'src/schema.gql',
+    }),
     ServeStaticModule.forRoot({
       rootPath: join(__dirname, '..', MediaConfig.FORDER_FILE_PUBLIC_ROOT),
       serveRoot: MediaConfig.FORDER_FILE_PUBLIC,
@@ -49,6 +59,7 @@ import { AuthModule } from './auth/auth.module';
         User,
       ],
       synchronize: true,
+      subscribers: [PropertySubscriber],
     }),
     TypeOrmModule.forFeature([
       ObjectBase,
@@ -73,6 +84,9 @@ import { AuthModule } from './auth/auth.module';
     ValueMediaService,
     ObjectService,
     MediaService,
+    MediaResolver,
+    PropertyResolver,
+    ObjectResolver,
   ],
   exports: [AppService],
 })

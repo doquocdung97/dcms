@@ -1,4 +1,4 @@
-import { handleUpdateJoinTable } from 'core/common';
+import { CustomUUID, handleUpdateJoinTable } from 'core/common';
 import {
   Entity,
   BaseEntity,
@@ -10,23 +10,30 @@ import {
   VirtualColumn,
   AfterLoad,
   DataSource,
+  CreateDateColumn,
+  UpdateDateColumn,
   In,
 } from 'typeorm';
 import { BasePropertyType, MainProperty } from '../common';
 import { PropertyBase } from './Property';
 import { ValueObject } from './ValueObject';
-
+import { Field, Int, ObjectType } from '@nestjs/graphql';
+@ObjectType()
 @Entity()
 export class ObjectBase {
+  @Field((type) => CustomUUID)
   @PrimaryGeneratedColumn('uuid')
   id: string;
 
+  @Field()
   @Column({ default: String() })
   name: string;
 
+  @Field({ nullable: true })
   @Column({ nullable: true, default: String() })
   type: string;
 
+  @Field((type) => [ObjectBase])
   @TreeChildren()
   children: ObjectBase[];
 
@@ -38,22 +45,22 @@ export class ObjectBase {
   //  return `${this.name} test`;
   //}
 
-  value: any = {};
-
+  @Field((type) => [PropertyBase], { defaultValue: [] })
   @OneToMany((type) => PropertyBase, (obj) => obj.parent)
   properties: PropertyBase[];
 
   @OneToMany((type) => ValueObject, (obj) => obj.object)
   connect: ValueObject[];
 
-  //@CreateDateColumn()
-  //createdDate: Date;
+  @CreateDateColumn()
+  createdAt: Date;
 
-  //@UpdateDateColumn()
-  //lastUpdatedDate: Date;
+  @UpdateDateColumn()
+  updatedAt: Date;
 }
 
 class PropertyRelationship extends BasePropertyType {
+  dataInTable = false;
   async set(property: PropertyBase, dataSource: DataSource) {
     const queryRunner = dataSource.createQueryRunner();
     let objectRepository = queryRunner.manager.getRepository(ObjectBase);
@@ -77,11 +84,11 @@ class PropertyRelationship extends BasePropertyType {
       connectRepository.remove(connect);
       return;
     }
-    let objects = await objectRepository.find({
+    let object = await objectRepository.findOne({
       where: { id: id },
     });
     let join = handleUpdateJoinTable<ValueObject, ObjectBase>(
-      objects,
+      [object],
       connect,
       (item, properties, index) => {
         return (
@@ -105,6 +112,7 @@ class PropertyRelationship extends BasePropertyType {
     if (join.delete_item.length > 0) {
       connectRepository.remove(join.delete_item);
     }
+    return object;
   }
   get(object: PropertyBase) {
     let val = null;
@@ -117,6 +125,7 @@ class PropertyRelationship extends BasePropertyType {
 MainProperty.addProperty('relationship', PropertyRelationship);
 
 class PropertyRelationships extends BasePropertyType {
+  dataInTable = false;
   async set(property: PropertyBase, dataSource: DataSource) {
     const queryRunner = dataSource.createQueryRunner();
     let objectRepository = queryRunner.manager.getRepository(ObjectBase);
@@ -142,7 +151,7 @@ class PropertyRelationships extends BasePropertyType {
     });
     if (ids.length == 0) {
       connectRepository.remove(connect);
-      return;
+      return [];
     }
     let objects = await objectRepository.find({
       where: { id: In(ids) },
@@ -172,6 +181,7 @@ class PropertyRelationships extends BasePropertyType {
     if (join.delete_item.length > 0) {
       connectRepository.remove(join.delete_item);
     }
+    return objects;
   }
   get(object: PropertyBase) {
     let val = [];

@@ -18,7 +18,7 @@ export class ValueMedia {
   @ManyToOne((type) => BaseMedia, (obj) => obj.connect)
   object: BaseMedia;
 
-  @ManyToOne((type) => PropertyBase, (obj) => obj.connectMeida)
+  @ManyToOne((type) => PropertyBase, (obj) => obj.connectMeida,{onDelete: 'CASCADE',})
   property: PropertyBase;
 
   @Column()

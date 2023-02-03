@@ -38,8 +38,9 @@ export class MediaController {
   }
 
   @Get()
-  async get(@Req() rep: any) {
-    return await this.mediaService.get(rep.body);
+  async get(@Req() request: any) {
+    const { id } = request.query;
+    return await this.mediaService.get({ id });
   }
   @Get('private/:file')
   async getfile(@Res() res, @Param('file') filename, @CurrentUser() user) {

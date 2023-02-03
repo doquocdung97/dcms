@@ -1,5 +1,5 @@
 import { Injectable } from '@nestjs/common';
-import { In, Repository, DataSource } from 'typeorm';
+import { In, Repository, DataSource, FindManyOptions } from 'typeorm';
 import { InjectRepository } from '@nestjs/typeorm';
 
 import { ValueObject, PropertyBase, BaseMedia } from 'core/database';
@@ -21,6 +21,12 @@ export class PropertyService {
   async save(data: PropertyBase): Promise<PropertyBase> {
     return await this.propertyRepository.save(data);
   }
+  async create(data: PropertyBase): Promise<PropertyBase> {
+    data.attribute = {};
+    let record = await this.propertyRepository.save(data);
+    return record;
+  }
+
   async update(data: PropertyBase): Promise<PropertyBase> {
     var record = await this.propertyRepository.findOne({
       relations: {
@@ -28,29 +34,45 @@ export class PropertyService {
       },
       where: { id: data.id },
     });
-    if (record && (!data.type || MainProperty.checkType(data.type))) {
+    if (
+      record &&
+      (!data.type || MainProperty.checkType(data.type.toString()))
+    ) {
       let result = Object.assign(record, data);
-      //let a = await this.mediaRepository.find({
-      //  where: { id: In(data.value) },
-      //});
-      //console.log(MainProperty.get(data.type));
-      //console.log(a);
       result.AfterUpdate(this.dataSource);
-      record = this.propertyRepository.create(result);
-      return await this.propertyRepository.save(record);
+      let rowdata = await this.propertyRepository.save(result);
+      rowdata.value = result.value;
+      return rowdata;
     }
     return null;
   }
-  async get(data: any) {
-    if (data.id) {
-      return await this.propertyRepository.findOneBy({ id: data.id });
-    }
-    return await this.propertyRepository.find({
+  async get(data: any = {}) {
+    let option: FindManyOptions<PropertyBase> = {
       relations: {
-        connectObject: true,
-        connectMeida: true,
+        connectObject: {
+          object: true,
+        },
+        connectMeida: {
+          object: true,
+        },
       },
-    });
+    };
+    if (data.id) {
+      option.where = {
+        id: data.id,
+      };
+      return await this.propertyRepository.findOne(option);
+    }
+    return await this.propertyRepository.find(option);
+  }
+  async delete(id: number, softDelete = true) {
+    if (softDelete) return await this.propertyRepository.softDelete({ id: id });
+    else {
+      return await this.propertyRepository.delete({ id: id });
+    }
+  }
+  async restore(id: number) {
+    return await this.propertyRepository.restore({ id: id });
   }
   getRepository() {
     return this.propertyRepository;
