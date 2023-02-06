@@ -29,12 +29,27 @@ import { GraphQLModule } from '@nestjs/graphql';
 import { ApolloDriver, ApolloDriverConfig } from '@nestjs/apollo';
 import { MediaResolver } from './media/media.resolver';
 import { PropertyResolver } from './property/property.resolver';
-import { ObjectResolver } from './object/object.resolver';
+import { CommandResolver, ObjectResolver } from './object/object.resolver';
+import { PubSub } from 'graphql-subscriptions';
 @Module({
   imports: [
     GraphQLModule.forRoot<ApolloDriverConfig>({
       driver: ApolloDriver,
       autoSchemaFile: 'src/schema.gql',
+      installSubscriptionHandlers: true,
+      subscriptions: {
+        'subscriptions-transport-ws': {
+          onConnect: (connectionParams) => {
+            return {
+              req: {
+                headers: { authorization: connectionParams.Authorization },
+              },
+            };
+          },
+        },
+      },
+      context: ({ req }) => ({ req }),
+     
     }),
     ServeStaticModule.forRoot({
       rootPath: join(__dirname, '..', MediaConfig.FORDER_FILE_PUBLIC_ROOT),
@@ -87,6 +102,11 @@ import { ObjectResolver } from './object/object.resolver';
     MediaResolver,
     PropertyResolver,
     ObjectResolver,
+    CommandResolver,
+    {
+      provide: 'PUB_SUB',
+      useValue: new PubSub(),
+    },
   ],
   exports: [AppService],
 })

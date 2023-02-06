@@ -1,3 +1,5 @@
+import { parseBoolean } from "core/common";
+
 export class DatabaseConfig {
   static TYPE = process.env.DB_TYPE || String();
   static PORT: number = parseInt(process.env.DB_PORT) || 3307;
@@ -17,7 +19,7 @@ export class MediaConfig {
   static readonly FORDER_FILE_PUBLIC_ROOT = 'media/public';
 }
 export class Config {
-  static readonly PRODUCT = false;
+  static readonly PRODUCTION: boolean = parseBoolean(process.env.PRODUCTION);
   static readonly PORT = process.env.PORT || 3000;
   static readonly CACHE_MAXAGE = 36000; // cache 10 hours
 }

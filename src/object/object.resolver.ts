@@ -9,9 +9,10 @@ import {
   Field,
   InterfaceType,
   ObjectType,
+  Subscription,
 } from '@nestjs/graphql';
-import { UseGuards } from '@nestjs/common';
-import { JwtAuthGuardGraphql } from 'src/auth/jwt-auth.guard';
+import { Inject,UseGuards } from '@nestjs/common';
+import { JwtAuthGuard, JwtAuthGuardGraphql, JwtAuthGuardGraphqlSubscription } from 'src/auth/jwt-auth.guard';
 import { CurrentUserGraphql } from 'src/auth/currentuser';
 import { BaseMedia, ObjectBase, PropertyBase } from 'core/database';
 import { ObjectService } from './object.service';
@@ -90,4 +91,48 @@ export class ObjectResolver {
   //  const { id } = author;
   //  return this.mediaService.findAll({ authorId: id });
   //}
+}
+import { PubSub, PubSubEngine } from 'graphql-subscriptions';
+
+@ObjectType()
+class Command {
+  @Field()
+  key: string;
+
+  @Field()
+  cmd: string;
+}
+//const pubSub = new PubSub();
+const PONG_EVENT_NAME = 'Command';
+@UseGuards(JwtAuthGuardGraphqlSubscription)
+@Resolver((of) => Command)
+export class CommandResolver {
+  constructor(@Inject('PUB_SUB') private pubSub: PubSubEngine) {}
+
+  @Subscription((returns) => Command, {
+    defaultValue: null,
+    nullable: true,
+    name: PONG_EVENT_NAME,
+    filter: ((payload, variables) => {
+
+      return payload.Command.key
+    }),
+  })
+  command() {
+    // let a = pubSub.asyncIterator(PONG_EVENT_NAME);
+    // console.log(a);
+    return this.pubSub.asyncIterator(PONG_EVENT_NAME);
+  }
+  @Mutation((returns) => Command)
+  async addCommand(@Args('key') key: string,) {
+    const pingId = Date.now();
+
+    let cmd = new Command();
+    cmd.key = key;
+    cmd.cmd = pingId.toString() + ` ${JSON.stringify(process.env.PRODUCTION)}`;
+    // this.pubSub.publish(PONG_EVENT_NAME, { [PONG_EVENT_NAME]: cmd });
+    // console.log(this.pubSub);
+    this.pubSub.publish(PONG_EVENT_NAME, { [PONG_EVENT_NAME]: cmd });
+    return cmd;
+  }
 }

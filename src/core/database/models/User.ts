@@ -25,7 +25,7 @@ export class User {
   @Column({ length: 50 })
   email: string;
 
-  @Field()
+  @Field({ nullable: true })
   @Column({ nullable: true, length: 12 })
   phone!: string;
 
