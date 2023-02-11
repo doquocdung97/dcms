@@ -9,12 +9,12 @@ export class ObjectController {
     //var data = await this.appService.create({
     //  name: 'dung',
     //});
-    let { name } = rep.body;
-    console.log(rep.body);
-    var data = await this.objectService.create({
-      name: name,
-    });
-    return data;
+    //let { name } = rep.body;
+    //console.log(rep.body);
+    //var data = await this.objectService.create({
+    //  name: name,
+    //});
+    //return data;
   }
   @Get()
   async getHello(@Param() params: any, @Req() request: any) {

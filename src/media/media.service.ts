@@ -6,28 +6,7 @@ import { PropertyBase, ValueMedia, BaseMedia, User } from 'core/database';
 import { FileHelper, handleUpdateJoinTable, LoggerHelper } from 'core/common';
 import { Config, MediaConfig } from 'src/Constants';
 import { REQUEST } from '@nestjs/core';
-@Injectable()
-export class ValueMediaService {
-  constructor(
-    @InjectRepository(ValueMedia)
-    private valueobjectRepository: Repository<ValueMedia>,
-  ) {}
-  async saves(data: ValueMedia[]): Promise<ValueMedia[]> {
-    return await this.valueobjectRepository.save(data);
-  }
-  async save(data: ValueMedia) {
-    return await this.valueobjectRepository.save(data);
-  }
-  async get(data: any) {
-    if (data.id) {
-      return await this.valueobjectRepository.findOneBy({ id: data.id });
-    }
-    return await this.valueobjectRepository.find();
-  }
-  getRepository() {
-    return this.valueobjectRepository;
-  }
-}
+import { BaseResult, BaseResultCode } from 'core/graphql';
 interface InputMedia {
   id: string;
   name: string;
@@ -45,7 +24,8 @@ export class MediaService {
     @InjectRepository(BaseMedia)
     private mediaRepository: Repository<BaseMedia>,
     private propertyService: PropertyService,
-    private valueMediaService: ValueMediaService,
+    @InjectRepository(ValueMedia)
+    private valueobjectRepository: Repository<ValueMedia>,
   ) {}
   async save(inputdata: InputMedia) {
     try {
@@ -71,8 +51,7 @@ export class MediaService {
           },
         });
         //console.log(property);
-        let connectRepository = this.valueMediaService.getRepository();
-        let connect = await connectRepository.find({
+        let connect = await this.valueobjectRepository.find({
           relations: {
             property: true,
           },
@@ -106,10 +85,10 @@ export class MediaService {
           },
         );
         let rowdata = join.create_item.concat(join.update_item);
-        connectRepository.save(rowdata);
+        this.valueobjectRepository.save(rowdata);
 
         if (join.delete_item.length > 0) {
-          connectRepository.remove(join.delete_item);
+          this.valueobjectRepository.remove(join.delete_item);
         }
       }
       let beforedata = null;
@@ -155,7 +134,7 @@ export class MediaService {
 
       return afterdata;
     } catch (error) {
-      this.logger.error(`Save ${error}`);
+      this.logger.error(`Save failed.\n${error}`);
     }
     return null;
   }
@@ -195,5 +174,55 @@ export class MediaService {
         user: true,
       },
     });
+  }
+  async delete(id: string, softDelete = true): Promise<BaseResult> {
+    let result = new BaseResult();
+
+    try {
+      let user = User.getByRequest(this.request);
+      if (softDelete) {
+        let data = await this.mediaRepository.softDelete({
+          id: id,
+          user: { id: user.id },
+        });
+        if (data.affected <= 0) {
+          result.success = false;
+          result.code = BaseResultCode.B002;
+        }
+      } else {
+        let data = await this.mediaRepository.delete({
+          id: id,
+          user: { id: user.id },
+        });
+        if (data.affected <= 0) {
+          result.success = false;
+          result.code = BaseResultCode.B002;
+        }
+      }
+    } catch (ex) {
+      this.logger.error(`Delete failed.\n${ex}`);
+      result.success = false;
+      result.code = BaseResultCode.B001;
+    }
+    return result;
+  }
+  async restore(id: string): Promise<BaseResult> {
+    let result = new BaseResult();
+    try {
+      let user = User.getByRequest(this.request);
+      let data = await this.mediaRepository.restore({
+        id: id,
+        user: { id: user.id },
+      });
+      if (data.affected <= 0) {
+        result.success = false;
+        result.code = BaseResultCode.B002;
+      }
+    } catch (ex) {
+      this.logger.error(`Restore failed.\n${ex}`);
+      result.success = false;
+      result.code = BaseResultCode.B001;
+    }
+    return result;
   }
 }

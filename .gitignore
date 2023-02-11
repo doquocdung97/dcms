@@ -391,6 +391,6 @@ docker-compose.yml
 .env
 dist
 src/schema.gql
-media
+/media
 logs
 .vscode

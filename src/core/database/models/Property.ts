@@ -193,8 +193,8 @@ import {
   ObjectType,
   registerEnumType,
 } from '@nestjs/graphql';
-import { CustomObject, handleUpdateJoinTable } from 'core/common';
-
+import {  handleUpdateJoinTable } from 'core/common';
+import { CustomObject } from 'core/graphql';
 //create value enum type property
 let typeproperties = MainProperty.getTypes();
 typeproperties.map((item) => {
@@ -230,10 +230,12 @@ export class PropertyBase extends BaseEntity {
   @Column({ default: 1 })
   status: number;
 
-  @Column({ type: 'json' })
+  @Column({ type: 'json', default: null })
   attribute: Object;
 
-  @ManyToOne((type) => ObjectBase, (obj) => obj.properties)
+  @ManyToOne((type) => ObjectBase, (obj) => obj.properties, {
+    onDelete: 'CASCADE',
+  })
   parent: ObjectBase;
 
   @OneToMany((type) => ValueObject, (obj) => obj.property, {
@@ -257,7 +259,7 @@ export class PropertyBase extends BaseEntity {
   @UpdateDateColumn()
   updatedAt: Date;
 
-  @Field()
+  @Field({ nullable: true })
   @DeleteDateColumn()
   deleteAt: Date;
 

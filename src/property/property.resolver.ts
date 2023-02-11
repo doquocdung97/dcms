@@ -7,8 +7,10 @@ import {
   Mutation,
   InputType,
   registerEnumType,
+  Directive,
+  Int,
 } from '@nestjs/graphql';
-import { Field, Int, ObjectType } from '@nestjs/graphql';
+
 import { UseGuards } from '@nestjs/common';
 import { JwtAuthGuardGraphql } from 'src/auth/jwt-auth.guard';
 import {
@@ -18,33 +20,18 @@ import {
   TypeProperty,
 } from 'core/database';
 import { PropertyService } from './property.service';
-import { CustomObject, CustomUUID } from 'core/common';
-
-@InputType()
-export class InputUpdateProperty {
-  @Field()
-  id: number;
-
-  @Field({ nullable: true })
-  name: string;
-
-  @Field((type) => TypeProperty, { nullable: true })
-  type: TypeProperty;
-
-  @Field({ nullable: true })
-  description: string;
-
-  @Field({ nullable: true })
-  status: number;
-
-  @Field((type) => CustomObject, { nullable: true })
-  value: any;
-}
-
+import { BaseResult, BaseResultCode } from 'core/graphql';
+import {
+  InputUpdateProperty,
+  InputCreateProperty,
+} from 'core/graphql/property';
+import { PropertiesResult, PropertyResult } from 'core/graphql/property';
 @UseGuards(JwtAuthGuardGraphql)
 @Resolver((of) => PropertyBase)
 export class PropertyResolver {
-  constructor(private propertyService: PropertyService) {}
+  constructor(
+    private propertyService: PropertyService, //private objectService: ObjectService,
+  ) {}
 
   @Query((returns) => PropertyBase, { nullable: true, name: 'property' })
   async getProperty(@Args('id', { type: () => Int }) id) {
@@ -57,7 +44,7 @@ export class PropertyResolver {
     var result = await this.propertyService.get();
     return result;
   }
-  @Mutation((returns) => PropertyBase)
+  @Mutation((returns) => PropertyResult)
   async updateProperty(@Args('input') input: InputUpdateProperty) {
     let p = new PropertyBase();
     let input_new = Object.assign(p, input);
@@ -70,55 +57,42 @@ export class PropertyResolver {
     @Args('id') id: number,
     @Args('soft', { defaultValue: true, nullable: true }) soft: boolean,
   ) {
-    let data = await this.propertyService.delete(id, soft);
-    let result = new BaseResult();
-    if (data.affected == 0) {
-      result.code = BaseResultCode.B001;
-      result.success = false;
-    }
-    return result;
+    return await this.propertyService.delete(id, soft);
   }
   @Mutation((returns) => BaseResult)
   async restoreProperty(@Args('id') id: number) {
-    let data = await this.propertyService.restore(id);
-    let result = new BaseResult();
-    if (data.affected == 0) {
-      result.code = BaseResultCode.B001;
-      result.success = false;
-    }
-    return result;
+    return await this.propertyService.restore(id);
+  }
+
+  @Mutation((returns) => PropertyResult)
+  async addProperty(
+    @Args('id') id: string,
+    @Args('input') input: InputCreateProperty,
+  ) {
+    let p = new PropertyBase();
+    let val = Object.assign(p, input);
+    let property = await this.propertyService.create(id, val);
+    return property;
+  }
+
+  @Mutation((returns) => PropertiesResult)
+  async addPropertys(
+    @Args('id') id: string,
+    @Args('inputs', { type: () => [InputCreateProperty] })
+    inputs: [InputCreateProperty],
+  ) {
+    let vals = [];
+    inputs.map((input) => {
+      let p = new PropertyBase();
+      let val = Object.assign(p, input);
+      vals.push(val);
+    });
+    let propertys = await this.propertyService.creates(id, vals);
+    return propertys;
   }
   //@ResolveField()
   //async posts(@Parent() author) {
   //  const { id } = author;
   //  return this.mediaService.findAll({ authorId: id });
   //}
-}
-enum BaseResultCode {
-  B000,
-  B001,
-  B002,
-  B003,
-}
-registerEnumType(BaseResultCode, {
-  name: 'BaseResultCode',
-  description: 'Base Result Code',
-  valuesMap: {
-    B000: {
-      description: 'The default color.',
-      deprecationReason: 'Too blue.',
-    },
-  },
-});
-
-@ObjectType()
-class BaseResult {
-  @Field((type) => BaseResultCode, { defaultValue: BaseResultCode.B000 })
-  code: BaseResultCode;
-
-  @Field({ defaultValue: true })
-  success: boolean;
-
-  //@Field({ nullable: true })
-  //message: string;
 }

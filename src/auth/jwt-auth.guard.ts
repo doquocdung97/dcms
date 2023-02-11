@@ -41,8 +41,9 @@ export class JwtAuthGuardGraphqlSubscription extends AuthGuard('jwt') {
 
   getRequest(context: ExecutionContext): Request {
     const ctx = GqlExecutionContext.create(context);
-
-    return ctx.getContext().req;
+    const { req } = ctx.getContext();
+    console.log(ctx);
+    return req;
   }
   handleRequest(err, user, info) {
     // You can throw an exception based on either "info" or "err" arguments
@@ -52,7 +53,6 @@ export class JwtAuthGuardGraphqlSubscription extends AuthGuard('jwt') {
     return user;
   }
 }
-
 
 @Injectable()
 export class JwtAuthGuardGraphql extends AuthGuard('jwt') {

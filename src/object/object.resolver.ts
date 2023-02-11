@@ -11,49 +11,26 @@ import {
   ObjectType,
   Subscription,
 } from '@nestjs/graphql';
-import { Inject,UseGuards } from '@nestjs/common';
-import { JwtAuthGuard, JwtAuthGuardGraphql, JwtAuthGuardGraphqlSubscription } from 'src/auth/jwt-auth.guard';
+import { Inject, UseGuards } from '@nestjs/common';
+import {
+  JwtAuthGuard,
+  JwtAuthGuardGraphql,
+  JwtAuthGuardGraphqlSubscription,
+} from 'src/auth/jwt-auth.guard';
 import { CurrentUserGraphql } from 'src/auth/currentuser';
 import { BaseMedia, ObjectBase, PropertyBase } from 'core/database';
 import { ObjectService } from './object.service';
-import { CustomObject, CustomUUID } from 'core/common';
+import { CustomObject, CustomUUID } from 'core/graphql';
 import { TypeProperty } from 'core/database/common';
 import { PropertyService } from 'src/property/property.service';
-
-@InterfaceType()
-export abstract class Character {
-  @Field((type) => CustomUUID)
-  id: string;
-
-  @Field()
-  name: string;
-}
-
-@InputType()
-export class InputAddProperty {
-  @Field()
-  name: string;
-
-  @Field((type) => TypeProperty)
-  type: TypeProperty;
-
-  @Field({ nullable: true })
-  description: string;
-
-  @Field({ nullable: true })
-  status: number;
-
-  @Field((type) => CustomObject)
-  value: any;
-}
+import { BaseResult } from 'core/graphql';
+import { ObjectResult } from 'core/graphql/object';
+import { InputCreateObject } from 'core/graphql/object';
 
 @UseGuards(JwtAuthGuardGraphql)
 @Resolver((of) => ObjectBase)
 export class ObjectResolver {
-  constructor(
-    private objectService: ObjectService,
-    private propertyService: PropertyService,
-  ) {}
+  constructor(private objectService: ObjectService) {}
 
   @Query((returns) => ObjectBase, { nullable: true, name: 'object' })
   async getObject(@Args('id') id: string) {
@@ -65,32 +42,24 @@ export class ObjectResolver {
     var result = await this.objectService.get();
     return result;
   }
-  @Mutation((returns) => PropertyBase)
-  async addProperty(
-    @Args('id') id: string,
-    @Args('input') input: InputAddProperty,
-  ) {
-    let obj = await this.objectService.get(id);
 
-    if (obj instanceof ObjectBase) {
-      let p = new PropertyBase();
-      p.name = input.name;
-      p.status = input.status;
-      p.description = input.description;
-      p.type = input.type;
-      p.value = input.value;
-      p.parent = obj as ObjectBase;
-      let property = await this.propertyService.create(p);
-      return property;
-    }
-    return null;
+  @Mutation((returns) => ObjectResult)
+  async createObject(@Args('input') input: InputCreateObject) {
+    let val = Object.assign(new ObjectBase(), input);
+    let result = await this.objectService.create(val);
+    return result;
   }
-
-  //@ResolveField()
-  //async posts(@Parent() author) {
-  //  const { id } = author;
-  //  return this.mediaService.findAll({ authorId: id });
-  //}
+  @Mutation((returns) => BaseResult)
+  async deleteObject(
+    @Args('id') id: string,
+    @Args('soft', { nullable: true, defaultValue: true }) soft: boolean,
+  ) {
+    return await this.objectService.delete(id, soft);
+  }
+  @Mutation((returns) => BaseResult)
+  async restoreObject(@Args('id') id: string) {
+    return await this.objectService.restore(id);
+  }
 }
 import { PubSub, PubSubEngine } from 'graphql-subscriptions';
 
@@ -113,10 +82,9 @@ export class CommandResolver {
     defaultValue: null,
     nullable: true,
     name: PONG_EVENT_NAME,
-    filter: ((payload, variables) => {
-
-      return payload.Command.key
-    }),
+    filter: (payload, variables) => {
+      return payload.Command.key;
+    },
   })
   command() {
     // let a = pubSub.asyncIterator(PONG_EVENT_NAME);
@@ -124,7 +92,7 @@ export class CommandResolver {
     return this.pubSub.asyncIterator(PONG_EVENT_NAME);
   }
   @Mutation((returns) => Command)
-  async addCommand(@Args('key') key: string,) {
+  async addCommand(@Args('key') key: string) {
     const pingId = Date.now();
 
     let cmd = new Command();

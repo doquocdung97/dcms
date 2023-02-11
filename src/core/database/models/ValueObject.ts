@@ -15,7 +15,9 @@ export class ValueObject {
   @PrimaryGeneratedColumn()
   id: string;
 
-  @ManyToOne((type) => ObjectBase, (obj) => obj.connect)
+  @ManyToOne((type) => ObjectBase, (obj) => obj.connect, {
+    onDelete: 'CASCADE',
+  })
   object: ObjectBase;
 
   @ManyToOne((type) => PropertyBase, (obj) => obj.connectObject, {

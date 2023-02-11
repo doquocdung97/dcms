@@ -1,4 +1,5 @@
-import { CustomUUID, handleUpdateJoinTable } from 'core/common';
+import { handleUpdateJoinTable } from 'core/common';
+import { CustomUUID } from 'core/graphql';
 import {
   Entity,
   BaseEntity,
@@ -12,6 +13,7 @@ import {
   DataSource,
   CreateDateColumn,
   UpdateDateColumn,
+  DeleteDateColumn,
   In,
 } from 'typeorm';
 import { BasePropertyType, MainProperty } from '../common';
@@ -37,7 +39,9 @@ export class ObjectBase {
   @TreeChildren()
   children: ObjectBase[];
 
-  @TreeParent()
+  @TreeParent({
+    onDelete: 'CASCADE',
+  })
   parent: ObjectBase;
 
   //@Column()
@@ -49,7 +53,9 @@ export class ObjectBase {
   @OneToMany((type) => PropertyBase, (obj) => obj.parent)
   properties: PropertyBase[];
 
-  @OneToMany((type) => ValueObject, (obj) => obj.object)
+  @OneToMany((type) => ValueObject, (obj) => obj.object, {
+    onDelete: 'CASCADE',
+  })
   connect: ValueObject[];
 
   @CreateDateColumn()
@@ -57,6 +63,10 @@ export class ObjectBase {
 
   @UpdateDateColumn()
   updatedAt: Date;
+
+  @Field({ nullable: true })
+  @DeleteDateColumn()
+  deleteAt: Date;
 }
 
 class PropertyRelationship extends BasePropertyType {

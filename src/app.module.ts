@@ -4,14 +4,11 @@ import { AppService } from './app.service';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { Config, DatabaseConfig, MediaConfig } from './Constants';
 import { PropertyController } from './property/property.controller';
-import {
-  PropertyService,
-  ValueObjectService,
-} from './property/property.service';
+import { PropertyService } from './property/property.service';
 import { MediaController } from './media/media.controller';
 import { ObjectController } from './object/object.controller';
 import { ObjectService } from './object/object.service';
-import { MediaService, ValueMediaService } from './media/media.service';
+import { MediaService } from './media/media.service';
 import { ServeStaticModule } from '@nestjs/serve-static';
 import { join } from 'path';
 
@@ -30,7 +27,9 @@ import { ApolloDriver, ApolloDriverConfig } from '@nestjs/apollo';
 import { MediaResolver } from './media/media.resolver';
 import { PropertyResolver } from './property/property.resolver';
 import { CommandResolver, ObjectResolver } from './object/object.resolver';
+import { AuthResolver } from './auth/auth.resolver';
 import { PubSub } from 'graphql-subscriptions';
+import { DirectiveLocation, GraphQLDirective } from 'graphql';
 @Module({
   imports: [
     GraphQLModule.forRoot<ApolloDriverConfig>({
@@ -38,8 +37,22 @@ import { PubSub } from 'graphql-subscriptions';
       autoSchemaFile: 'src/schema.gql',
       installSubscriptionHandlers: true,
       subscriptions: {
+        'graphql-ws': {
+          onConnect: (context: any) => {
+            console.log(context.connectionParams);
+            if (!context.connectionParams) return;
+            return {
+              req: {
+                headers: {
+                  authorization: context.connectionParams.Authorization,
+                },
+              },
+            };
+          },
+        },
         'subscriptions-transport-ws': {
-          onConnect: (connectionParams) => {
+          onConnect: (connectionParams: any) => {
+            console.log('subscriptions-transport-ws', connectionParams);
             return {
               req: {
                 headers: { authorization: connectionParams.Authorization },
@@ -48,8 +61,9 @@ import { PubSub } from 'graphql-subscriptions';
           },
         },
       },
-      context: ({ req }) => ({ req }),
-     
+      context: ({ req }) => {
+        return req;
+      },
     }),
     ServeStaticModule.forRoot({
       rootPath: join(__dirname, '..', MediaConfig.FORDER_FILE_PUBLIC_ROOT),
@@ -95,14 +109,13 @@ import { PubSub } from 'graphql-subscriptions';
   providers: [
     AppService,
     PropertyService,
-    ValueObjectService,
-    ValueMediaService,
     ObjectService,
     MediaService,
     MediaResolver,
     PropertyResolver,
     ObjectResolver,
     CommandResolver,
+    AuthResolver,
     {
       provide: 'PUB_SUB',
       useValue: new PubSub(),

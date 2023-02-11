@@ -1,7 +1,7 @@
 import { NestFactory } from '@nestjs/core';
 import { AppModule } from './app.module';
 import { Config } from './Constants';
-import { NestApplicationOptions } from '@nestjs/common';
+import { NestApplicationOptions, ValidationPipe } from '@nestjs/common';
 import { LoggerHelper } from 'core/common';
 import * as graphqlUploadExpress from 'graphql-upload/graphqlUploadExpress.js';
 
@@ -12,6 +12,7 @@ async function bootstrap() {
   });
   let port = Config.PORT;
   app.use(graphqlUploadExpress());
+  app.useGlobalPipes(new ValidationPipe());
   await app.listen(port);
   logger.info(`App listening on port: ${port}`);
 }

@@ -13,10 +13,12 @@ import {
   DataSource,
   In,
   ManyToOne,
+  DeleteDateColumn,
 } from 'typeorm';
 import { ValueMedia } from './ValueMedia';
 import { PropertyBase } from './Property';
-import { handleUpdateJoinTable, CustomUUID } from 'core/common';
+import { handleUpdateJoinTable } from 'core/common';
+import { CustomUUID } from 'core/graphql';
 import { BasePropertyType, MainProperty } from '../common';
 import { User } from './User';
 import { Field, Int, ObjectType } from '@nestjs/graphql';
@@ -39,12 +41,18 @@ export class BaseMedia {
 
   @OneToMany((type) => ValueMedia, (obj) => obj.object)
   connect: ValueMedia[];
+
   @Field()
   @CreateDateColumn()
   createdAt: Date;
+
   @Field()
   @UpdateDateColumn()
   updatedAt: Date;
+
+  @Field({ nullable: true })
+  @DeleteDateColumn()
+  deleteAt: Date;
 
   @Field((type) => [PropertyBase])
   properties: PropertyBase[] = [];

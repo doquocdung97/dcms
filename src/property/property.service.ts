@@ -1,50 +1,121 @@
 import { Injectable } from '@nestjs/common';
 import { In, Repository, DataSource, FindManyOptions } from 'typeorm';
 import { InjectRepository } from '@nestjs/typeorm';
-
-import { ValueObject, PropertyBase, BaseMedia } from 'core/database';
+import { LoggerHelper } from 'core/common';
+import { BaseResult, BaseResultCode } from 'core/graphql';
+import {
+  PropertyResult,
+  PropertiesResult,
+  ResultCode,
+} from 'core/graphql/property';
+import {
+  ValueObject,
+  PropertyBase,
+  BaseMedia,
+  ObjectBase,
+} from 'core/database';
 import { MediaService } from 'src/media/media.service';
 import { MainProperty } from 'core/database/common';
 
 @Injectable()
 export class PropertyService {
+  private logger = new LoggerHelper('PropertyService');
   constructor(
     @InjectRepository(PropertyBase)
     private propertyRepository: Repository<PropertyBase>,
     @InjectRepository(BaseMedia)
     private mediaRepository: Repository<BaseMedia>, //private readonly mediaService: MediaService,
+    @InjectRepository(ObjectBase)
+    private objectRepository: Repository<ObjectBase>,
     private dataSource: DataSource,
   ) {}
-  async saves(data: PropertyBase[]): Promise<PropertyBase[]> {
-    return await this.propertyRepository.save(data);
-  }
-  async save(data: PropertyBase): Promise<PropertyBase> {
-    return await this.propertyRepository.save(data);
-  }
-  async create(data: PropertyBase): Promise<PropertyBase> {
-    data.attribute = {};
-    let record = await this.propertyRepository.save(data);
-    return record;
-  }
-
-  async update(data: PropertyBase): Promise<PropertyBase> {
-    var record = await this.propertyRepository.findOne({
-      relations: {
-        parent: true,
-      },
-      where: { id: data.id },
-    });
-    if (
-      record &&
-      (!data.type || MainProperty.checkType(data.type.toString()))
-    ) {
-      let result = Object.assign(record, data);
-      result.AfterUpdate(this.dataSource);
-      let rowdata = await this.propertyRepository.save(result);
-      rowdata.value = result.value;
-      return rowdata;
+  //async saves(items: PropertyBase[]): Promise<PropertiesResult> {
+  //  let result = new PropertiesResult();
+  //  try {
+  //    let data = await this.propertyRepository.save(items);
+  //    if (data) {
+  //      result.data = data;
+  //    }
+  //    console.log(data);
+  //  } catch (ex) {
+  //    this.logger.error(`Delete failed.\n${ex}`);
+  //    result.success = false;
+  //    result.code = ResultCode.B001;
+  //  }
+  //  return result;
+  //}
+  //async save(data: PropertyBase): Promise<PropertyBase> {
+  //  return await this.propertyRepository.save(data);
+  //}
+  async create(id: string, data: PropertyBase): Promise<PropertyResult> {
+    let result = new PropertyResult();
+    try {
+      let obj = await this.objectRepository.findOneBy({ id: id });
+      if (obj) {
+        data.parent = obj;
+        let record = await this.propertyRepository.save(data);
+        result.data = record;
+      } else {
+        result.success = false;
+        result.code = ResultCode.B002;
+      }
+    } catch (ex) {
+      this.logger.error(`Create failed.\n${ex}`);
+      result.success = false;
+      result.code = ResultCode.B001;
     }
-    return null;
+    return result;
+  }
+  async creates(id: string, items: PropertyBase[]): Promise<PropertiesResult> {
+    let result = new PropertiesResult();
+    try {
+      let obj = await this.objectRepository.findOneBy({ id: id });
+      if (obj) {
+        items.map((data) => {
+          data.parent = obj;
+        });
+        let record = await this.propertyRepository.save(items);
+        result.data = record;
+      } else {
+        result.success = false;
+        result.code = ResultCode.B002;
+      }
+    } catch (ex) {
+      this.logger.error(`Creates failed.\n${ex}`);
+      result.success = false;
+      result.code = ResultCode.B001;
+    }
+
+    return result;
+  }
+  async update(item: PropertyBase): Promise<PropertyResult> {
+    let result = new PropertyResult();
+    try {
+      var record = await this.propertyRepository.findOne({
+        relations: {
+          parent: true,
+        },
+        where: { id: item.id },
+      });
+      if (
+        record &&
+        (!item.type || MainProperty.checkType(item.type.toString()))
+      ) {
+        let data = Object.assign(record, item);
+        data.AfterUpdate(this.dataSource);
+        let rowdata = await this.propertyRepository.save(data);
+        rowdata.value = data.value;
+        result.data = rowdata;
+      } else {
+        result.success = false;
+        result.code = ResultCode.B002;
+      }
+    } catch (ex) {
+      this.logger.error(`Update failed.\n${ex}`);
+      result.success = false;
+      result.code = ResultCode.B001;
+    }
+    return result;
   }
   async get(data: any = {}) {
     let option: FindManyOptions<PropertyBase> = {
@@ -65,30 +136,45 @@ export class PropertyService {
     }
     return await this.propertyRepository.find(option);
   }
-  async delete(id: number, softDelete = true) {
-    if (softDelete) return await this.propertyRepository.softDelete({ id: id });
-    else {
-      return await this.propertyRepository.delete({ id: id });
+  async delete(id: number, softDelete = true): Promise<BaseResult> {
+    let result = new BaseResult();
+    try {
+      if (softDelete) {
+        let data = await this.propertyRepository.softDelete({ id: id });
+        if (data.affected <= 0) {
+          result.success = false;
+          result.code = BaseResultCode.B002;
+        }
+      } else {
+        let data = await this.propertyRepository.delete({ id: id });
+        if (data.affected <= 0) {
+          result.success = false;
+          result.code = BaseResultCode.B002;
+        }
+      }
+    } catch (ex) {
+      this.logger.error(`Delete failed.\n${ex}`);
+      result.success = false;
+      result.code = BaseResultCode.B001;
     }
+    return result;
   }
-  async restore(id: number) {
-    return await this.propertyRepository.restore({ id: id });
+  async restore(id: number): Promise<BaseResult> {
+    let result = new BaseResult();
+    try {
+      let data = await this.propertyRepository.restore({ id: id });
+      if (data.affected <= 0) {
+        result.success = false;
+        result.code = BaseResultCode.B002;
+      }
+    } catch (ex) {
+      this.logger.error(`Restore failed.\n${ex}`);
+      result.success = false;
+      result.code = BaseResultCode.B001;
+    }
+    return result;
   }
   getRepository() {
     return this.propertyRepository;
-  }
-}
-
-@Injectable()
-export class ValueObjectService {
-  constructor(
-    @InjectRepository(ValueObject)
-    private valueobjectRepository: Repository<ValueObject>,
-  ) {}
-  async saves(data: ValueObject[]): Promise<ValueObject[]> {
-    return await this.valueobjectRepository.save(data);
-  }
-  async save(data: ValueObject) {
-    return await this.valueobjectRepository.save(data);
   }
 }

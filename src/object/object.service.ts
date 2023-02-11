@@ -2,50 +2,41 @@ import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { FindManyOptions, Repository } from 'typeorm';
 import { ObjectBase, PropertyBase, ValueObject } from 'core/database';
-import {
-  PropertyService,
-  ValueObjectService,
-} from 'src/property/property.service';
+import { LoggerHelper } from 'core/common';
+import { ObjectResult, ResultCode } from 'core/graphql/object';
+import { BaseResult, BaseResultCode } from 'core/graphql';
+import { PropertyService } from 'src/property/property.service';
 
 @Injectable()
 export class ObjectService {
+  private logger = new LoggerHelper('ObjectService');
   constructor(
     @InjectRepository(ObjectBase)
     private objectRepository: Repository<ObjectBase>,
     private readonly propertyService: PropertyService,
-    private readonly valueobjectService: ValueObjectService,
   ) {}
-  async create(test: any) {
-    let objs = [];
-    for (let i = 0; i < 10; i++) {
-      let a = new ObjectBase();
-      a.name = test.name + ' ' + i;
-      objs.push(a);
+  async create(obj: ObjectBase): Promise<ObjectResult> {
+    let result = new ObjectResult();
+    try {
+      let data = await this.objectRepository.save(obj);
+      if (data) {
+        let record = await this.propertyService.creates(
+          data.id,
+          data.properties,
+        );
+        if (record.success) {
+          data.properties = record.data;
+        }
+      }
+      result.data = data;
+    } catch (ex) {
+      this.logger.error(
+        `Create failed.\nWith info:\n${JSON.stringify(obj)}.\n${ex}`,
+      );
+      result.success = false;
+      result.code = ResultCode.B001;
     }
-
-    await this.objectRepository.save(objs);
-
-    let main = new ObjectBase();
-    main.name = 'child test';
-    main.children = objs;
-    let properties = [];
-    for (let i = 0; i < 10; i++) {
-      let property = new PropertyBase();
-      property.name = `property ${i}`;
-      properties.push(property);
-    }
-    await this.propertyService.saves(properties);
-    let valueobjects = [];
-    for (let i = 0; i < 5; i++) {
-      let valueobject = new ValueObject();
-      valueobject.object = objs[i];
-      valueobject.property = properties[0];
-      valueobjects.push(valueobject);
-    }
-    this.valueobjectService.saves(valueobjects);
-    main.properties = properties;
-    await this.objectRepository.save(main);
-    return main;
+    return result;
   }
   async get(id: string = String()) {
     let option: FindManyOptions<ObjectBase> = {
@@ -83,5 +74,43 @@ export class ObjectService {
     }
     let data = await this.objectRepository.find(option);
     return data;
+  }
+  async delete(id: string, softDelete = true): Promise<BaseResult> {
+    let result = new BaseResult();
+    try {
+      if (softDelete) {
+        let data = await this.objectRepository.softDelete({ id: id });
+        if (data.affected <= 0) {
+          result.success = false;
+          result.code = BaseResultCode.B002;
+        }
+      } else {
+        let data = await this.objectRepository.delete({ id: id });
+        if (data.affected <= 0) {
+          result.success = false;
+          result.code = BaseResultCode.B002;
+        }
+      }
+    } catch (ex) {
+      this.logger.error(`Delete failed.\n${ex}`);
+      result.success = false;
+      result.code = BaseResultCode.B001;
+    }
+    return result;
+  }
+  async restore(id: string): Promise<BaseResult> {
+    let result = new BaseResult();
+    try {
+      let data = await this.objectRepository.restore({ id: id });
+      if (data.affected <= 0) {
+        result.success = false;
+        result.code = BaseResultCode.B002;
+      }
+    } catch (ex) {
+      this.logger.error(`Restore failed.\n${ex}`);
+      result.success = false;
+      result.code = BaseResultCode.B001;
+    }
+    return result;
   }
 }

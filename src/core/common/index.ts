@@ -1,6 +1,5 @@
 export * from './filehelper';
 export * from './loggerhelper';
-export * from './graphqlscalartype';
 export function handleUpdateJoinTable<T, B>(
   objects: B[],
   connects: T[],

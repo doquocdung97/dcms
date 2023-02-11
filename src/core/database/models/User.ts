@@ -22,12 +22,15 @@ export class User {
   name: string;
 
   @Field()
-  @Column({ length: 50 })
+  @Column({
+    length: 50,
+    //unique: true
+  })
   email: string;
 
   @Field({ nullable: true })
   @Column({ nullable: true, length: 12 })
-  phone!: string;
+  phone: string;
 
   @Column()
   password: string;
