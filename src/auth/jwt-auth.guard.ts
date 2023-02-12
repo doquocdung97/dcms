@@ -2,7 +2,6 @@ import {
   Injectable,
   UnauthorizedException,
   ExecutionContext,
-  CanActivate,
 } from '@nestjs/common';
 import { ExecutionContextHost } from '@nestjs/core/helpers/execution-context-host';
 import { GqlExecutionContext } from '@nestjs/graphql';
@@ -42,7 +41,6 @@ export class JwtAuthGuardGraphqlSubscription extends AuthGuard('jwt') {
   getRequest(context: ExecutionContext): Request {
     const ctx = GqlExecutionContext.create(context);
     const { req } = ctx.getContext();
-    console.log(ctx);
     return req;
   }
   handleRequest(err, user, info) {

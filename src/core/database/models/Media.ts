@@ -1,27 +1,22 @@
 import {
   Entity,
-  BaseEntity,
   PrimaryGeneratedColumn,
   Column,
-  TreeChildren,
-  TreeParent,
   OneToMany,
-  VirtualColumn,
   AfterLoad,
   CreateDateColumn,
   UpdateDateColumn,
-  DataSource,
-  In,
   ManyToOne,
   DeleteDateColumn,
 } from 'typeorm';
 import { ValueMedia } from './ValueMedia';
 import { PropertyBase } from './Property';
-import { handleUpdateJoinTable } from 'core/common';
+import { File } from 'core/common';
 import { CustomUUID } from 'core/graphql';
 import { BasePropertyType, MainProperty } from '../common';
 import { User } from './User';
 import { Field, Int, ObjectType } from '@nestjs/graphql';
+
 @ObjectType()
 @Entity()
 export class BaseMedia {
@@ -54,12 +49,14 @@ export class BaseMedia {
   @DeleteDateColumn()
   deleteAt: Date;
 
-  @Field((type) => [PropertyBase])
-  properties: PropertyBase[] = [];
+  @Field((type) => [PropertyBase],{defaultValue:[]})
+  properties: PropertyBase[];
 
   @Field()
   @ManyToOne((type) => User)
   user: User;
+
+  file:File
 
   @AfterLoad()
   AfterLoad() {

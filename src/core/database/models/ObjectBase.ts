@@ -2,14 +2,11 @@ import { handleUpdateJoinTable } from 'core/common';
 import { CustomUUID } from 'core/graphql';
 import {
   Entity,
-  BaseEntity,
   PrimaryGeneratedColumn,
   Column,
   TreeChildren,
   TreeParent,
   OneToMany,
-  VirtualColumn,
-  AfterLoad,
   DataSource,
   CreateDateColumn,
   UpdateDateColumn,
@@ -112,7 +109,6 @@ class PropertyRelationship extends BasePropertyType {
         let newvalue = new ValueObject();
         newvalue.object = media;
         newvalue.property = property;
-        newvalue.lang = String();
         return newvalue;
       },
     );
@@ -181,7 +177,6 @@ class PropertyRelationships extends BasePropertyType {
         let newvalue = new ValueObject();
         newvalue.object = media;
         newvalue.property = property;
-        newvalue.lang = String();
         return newvalue;
       },
     );

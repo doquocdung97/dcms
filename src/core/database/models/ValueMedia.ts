@@ -2,10 +2,7 @@ import {
   Entity,
   PrimaryGeneratedColumn,
   Column,
-  TreeChildren,
-  TreeParent,
   ManyToOne,
-  OneToMany,
 } from 'typeorm';
 import { PropertyBase } from './Property';
 import { BaseMedia } from './Media';
@@ -23,6 +20,6 @@ export class ValueMedia {
   })
   property: PropertyBase;
 
-  @Column()
+  @Column({default:String()})
   lang: string;
 }

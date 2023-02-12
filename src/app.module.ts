@@ -29,30 +29,19 @@ import { PropertyResolver } from './property/property.resolver';
 import { CommandResolver, ObjectResolver } from './object/object.resolver';
 import { AuthResolver } from './auth/auth.resolver';
 import { PubSub } from 'graphql-subscriptions';
-import { DirectiveLocation, GraphQLDirective } from 'graphql';
+import { ApolloServerPluginLandingPageLocalDefault } from 'apollo-server-core';
+
 @Module({
   imports: [
     GraphQLModule.forRoot<ApolloDriverConfig>({
       driver: ApolloDriver,
-      autoSchemaFile: 'src/schema.gql',
+      playground: false,
+      plugins: [ApolloServerPluginLandingPageLocalDefault({ embed: !Config.PRODUCTION })],
+      autoSchemaFile: Config.GRAPHQL_FILE,
       installSubscriptionHandlers: true,
       subscriptions: {
-        'graphql-ws': {
-          onConnect: (context: any) => {
-            console.log(context.connectionParams);
-            if (!context.connectionParams) return;
-            return {
-              req: {
-                headers: {
-                  authorization: context.connectionParams.Authorization,
-                },
-              },
-            };
-          },
-        },
         'subscriptions-transport-ws': {
           onConnect: (connectionParams: any) => {
-            console.log('subscriptions-transport-ws', connectionParams);
             return {
               req: {
                 headers: { authorization: connectionParams.Authorization },
@@ -61,9 +50,7 @@ import { DirectiveLocation, GraphQLDirective } from 'graphql';
           },
         },
       },
-      context: ({ req }) => {
-        return req;
-      },
+      context: ({ req }) => req,
     }),
     ServeStaticModule.forRoot({
       rootPath: join(__dirname, '..', MediaConfig.FORDER_FILE_PUBLIC_ROOT),
@@ -123,4 +110,4 @@ import { DirectiveLocation, GraphQLDirective } from 'graphql';
   ],
   exports: [AppService],
 })
-export class AppModule {}
+export class AppModule { }

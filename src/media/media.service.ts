@@ -14,6 +14,7 @@ interface InputMedia {
   file: any;
   properties: number[];
 }
+import { MediaResult, MediasResult, ResultCode } from 'core/graphql/media';
 @Injectable()
 export class MediaService {
   private filehelper = new FileHelper();
@@ -26,13 +27,137 @@ export class MediaService {
     private propertyService: PropertyService,
     @InjectRepository(ValueMedia)
     private valueobjectRepository: Repository<ValueMedia>,
-  ) {}
-  async save(inputdata: InputMedia) {
+  ) { }
+  async create(input: BaseMedia): Promise<MediaResult> {
+    //input.validate()
+    let result = new MediaResult()
     try {
-      let new_data = Object.assign(new BaseMedia(), inputdata);
+      if (input.file) {
+        let pathfile = await this.filehelper.upload(
+          input.public ? 'public' : 'private',
+          input.file,
+        );
+        if (pathfile) {
+          input.url = pathfile
+          if (input.public) {
+            input.url = pathfile.replace(MediaConfig.FORDER_FILE, String());
+          }
+        }
+      }
+      input.user = User.getByRequest(this.request);
+      let media = await this.mediaRepository.save(input);
+      if (input.properties) {
+        let propertyRepository = this.propertyService.getRepository();
+        let properties = await propertyRepository.find({
+          where: {
+            id: In(input.properties.map((item) => item.id)),
+          },
+        });
+        await this.updateProperties(properties,[],media)
+        media.properties = properties
+      }
+      result.data = media
+    } catch (ex) {
+      this.logger.error(`Create failure.\n${ex}`);
+      result.success = false;
+      result.code = ResultCode.B001;
+    }
+    return result
+  }
+  private async createData(input: BaseMedia):Promise<BaseMedia>{
+    try {
+      if (input.file) {
+        let pathfile = await this.filehelper.upload(
+          input.public ? 'public' : 'private',
+          input.file,
+        );
+        if (pathfile) {
+          input.url = pathfile
+          if (input.public) {
+            input.url = pathfile.replace(MediaConfig.FORDER_FILE, String());
+          }
+        }
+      }
+      input.user = User.getByRequest(this.request);
+      let media = await this.mediaRepository.save(input);
+      if (input.properties) {
+        let propertyRepository = this.propertyService.getRepository();
+        let properties = await propertyRepository.find({
+          where: {
+            id: In(input.properties.map((item) => item.id)),
+          },
+        });
+        await this.updateProperties(properties,[],media)
+        media.properties = properties
+      }
+      return media
+    } catch (ex) {
+      this.logger.error(`Create data failed.\n${ex}`);
+    }
+  }
+  async creates(inputs: BaseMedia[]): Promise<MediasResult> {
+    //input.validate()
+    let result = new MediasResult()
+    try {
+      let medias = []
+      for (let index = 0; index < inputs.length; index++) {
+        const input = inputs[index];
+        let media = await this.createData(input)
+        medias.push(media)
+      }
+      result.data = medias
+    } catch (ex) {
+      this.logger.error(`Create many failures.\n${ex}`);
+      result.success = false;
+      result.code = ResultCode.B001;
+    }
+    return result
+  }
+  async updateProperties(properties: PropertyBase[], connect: ValueMedia[], media: BaseMedia, lang: string = String()) {
+    let join = handleUpdateJoinTable<ValueMedia, PropertyBase>(
+      properties,
+      connect,
+      (item, properties, index) => {
+        return (
+          item.property &&
+          item.property.id &&
+          index < properties.length
+        );
+      },
+      (item, property) => {
+        item.property.id = property.id;
+        item.lang = lang;
+        item.object = media;
+      },
+      (property: any) => {
+        let value = new ValueMedia();
+        value.property = property;
+        value.lang = lang;
+        value.object = media;
+        return value;
+      },
+    );
+    let rowdata = join.create_item.concat(join.update_item);
+    await this.valueobjectRepository.save(rowdata);
+
+    if (join.delete_item.length > 0) {
+      await this.valueobjectRepository.remove(join.delete_item);
+    }
+    return join
+  }
+  async update(input: BaseMedia):Promise<MediaResult> {
+    let result = new MediaResult()
+    try {
+      let dataintable = await this.mediaRepository.findOne({where:{id:input.id}})
+      if(!dataintable){
+        result.success = false;
+        result.code = ResultCode.B002;
+        return result
+      }
+      let new_data = Object.assign(dataintable, input);
 
       if (new_data.file) {
-        let pathfile = this.filehelper.upload(
+        let pathfile = await this.filehelper.upload(
           new_data.public ? 'public' : 'private',
           new_data.file,
         );
@@ -40,14 +165,12 @@ export class MediaService {
           new_data.url = pathfile;
         }
       }
-      delete new_data['file'];
-      let data: BaseMedia = new_data;
-      this.logger.info(`Save input: ${JSON.stringify(data)}`);
-      if (inputdata.properties) {
+      let properties = []
+      if (input.properties) {
         let propertyRepository = this.propertyService.getRepository();
-        let property = await propertyRepository.find({
+        properties = await propertyRepository.find({
           where: {
-            id: In(data.properties),
+            id: In(new_data.properties.map(p=>p.id)),
           },
         });
         //console.log(property);
@@ -58,51 +181,24 @@ export class MediaService {
           where: {
             //property: In(property.map(({ id }) => id)),
             object: {
-              id: data.id,
+              id: new_data.id,
             },
           },
         });
-        let join = handleUpdateJoinTable<ValueMedia, PropertyBase>(
-          property,
-          connect,
-          (item, properties, index) => {
-            return (
-              item['property'] &&
-              item['property']['id'] &&
-              index < properties.length
-            );
-          },
-          (item, property) => {
-            item.property.id = property.id;
-            item.object = data;
-          },
-          (property: any) => {
-            let newvalue = new ValueMedia();
-            newvalue.property = property;
-            newvalue.lang = String();
-            newvalue.object = data;
-            return newvalue;
-          },
-        );
-        let rowdata = join.create_item.concat(join.update_item);
-        this.valueobjectRepository.save(rowdata);
-
-        if (join.delete_item.length > 0) {
-          this.valueobjectRepository.remove(join.delete_item);
-        }
+        await this.updateProperties(properties,connect,new_data)
       }
       let beforedata = null;
-      if (data.id) {
-        beforedata = await this.mediaRepository.findOneBy({ id: data.id });
+      if (new_data.id) {
+        beforedata = await this.mediaRepository.findOneBy({ id: new_data.id });
       }
       if (beforedata) {
-        if (new_data.file && data.url && beforedata.url != data.url) {
+        if (new_data.file && new_data.url && beforedata.url != new_data.url) {
           this.filehelper.delete(beforedata.url);
-        } else if (beforedata.public != data.public) {
+        } else if (beforedata.public != new_data.public) {
           let filename = this.filehelper.getFileName(beforedata.url, true);
           let afterurl = this.filehelper.joinpath(
             MediaConfig.FORDER_FILE,
-            data.public
+            new_data.public
               ? MediaConfig.FORDER_FILE_PUBLIC
               : MediaConfig.FORDER_FILE_PRIVATE,
             filename,
@@ -120,27 +216,26 @@ export class MediaService {
             true,
           );
           if (statuscopy) {
-            data.url = afterurl;
+            new_data.url = afterurl;
           } else {
-            data.public = beforedata.public;
+            new_data.public = beforedata.public;
           }
         }
       }
-      if (data.public && data.url) {
-        data.url = data.url.replace(MediaConfig.FORDER_FILE, String());
+      if (new_data.public && new_data.url) {
+        new_data.url = new_data.url.replace(MediaConfig.FORDER_FILE, String());
       }
-      data.user = this.request.user as User;
-      let afterdata = await this.mediaRepository.save(data);
-
-      return afterdata;
+      let afterdata = await this.mediaRepository.save(new_data);
+      afterdata.properties = properties
+      result.data = afterdata;
     } catch (error) {
-      this.logger.error(`Save failed.\n${error}`);
+      this.logger.error(`Update failures.\n${error}`);
+      result.success = false;
+      result.code = ResultCode.B001;
     }
-    return null;
+    return result;
   }
-  getRepository() {
-    return this.mediaRepository;
-  }
+
   async get(data: any = {}) {
     let user = User.getByRequest(this.request);
     let option: FindManyOptions<BaseMedia> = {

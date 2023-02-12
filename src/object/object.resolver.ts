@@ -1,13 +1,9 @@
 import {
   Args,
-  Parent,
-  ResolveField,
   Resolver,
   Query,
   Mutation,
-  InputType,
   Field,
-  InterfaceType,
   ObjectType,
   Subscription,
 } from '@nestjs/graphql';
@@ -93,13 +89,11 @@ export class CommandResolver {
   }
   @Mutation((returns) => Command)
   async addCommand(@Args('key') key: string) {
-    const pingId = Date.now();
+    const date = Date();
 
     let cmd = new Command();
     cmd.key = key;
-    cmd.cmd = pingId.toString() + ` ${JSON.stringify(process.env.PRODUCTION)}`;
-    // this.pubSub.publish(PONG_EVENT_NAME, { [PONG_EVENT_NAME]: cmd });
-    // console.log(this.pubSub);
+    cmd.cmd = date.toString();
     this.pubSub.publish(PONG_EVENT_NAME, { [PONG_EVENT_NAME]: cmd });
     return cmd;
   }

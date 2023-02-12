@@ -22,6 +22,8 @@ export class Config {
   static readonly PRODUCTION: boolean = parseBoolean(process.env.PRODUCTION);
   static readonly PORT = process.env.PORT || 3000;
   static readonly CACHE_MAXAGE = 36000; // cache 10 hours
+  static readonly GRAPHQL_LINK = '/graphql';
+  static readonly GRAPHQL_FILE = 'src/core/graphql/schema.graphql';
 }
 export class LoggerConfig {
   static readonly FOLDER = 'logs';

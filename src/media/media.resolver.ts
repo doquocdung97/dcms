@@ -1,23 +1,17 @@
 import {
   Args,
-  Parent,
-  ResolveField,
   Resolver,
   Query,
   Mutation,
-  InputType,
 } from '@nestjs/graphql';
 import { MediaService } from './media.service';
-import { Field, Int, ObjectType } from '@nestjs/graphql';
 import { UseGuards } from '@nestjs/common';
 import { JwtAuthGuardGraphql } from 'src/auth/jwt-auth.guard';
-import { CurrentUserGraphql } from 'src/auth/currentuser';
 import { BaseMedia } from 'core/database';
-
-import * as GraphQLUpload from 'graphql-upload/GraphQLUpload.js';
-import { CustomUUID, BaseResult } from 'core/graphql';
+import {  BaseResult } from 'core/graphql';
 import { InputUpdateMedia, InputCreateMedia } from 'core/graphql/media';
 import { MediaResult, MediasResult, ResultCode } from 'core/graphql/media';
+import { plainToClass } from "class-transformer";
 @UseGuards(JwtAuthGuardGraphql)
 @Resolver((of) => BaseMedia)
 export class MediaResolver {
@@ -28,6 +22,7 @@ export class MediaResolver {
     var result = await this.mediaService.get({ id });
     return result;
   }
+
   @Query((returns) => [BaseMedia], { nullable: true, name: 'medias' })
   async getMedias() {
     var result = await this.mediaService.get();
@@ -36,23 +31,30 @@ export class MediaResolver {
 
   @Mutation(() => MediaResult)
   async createMedia(@Args('input') input: InputCreateMedia) {
-    /** now you have the file as a stream **/
-    console.log(input);
-    return new MediaResult();
+    let data= plainToClass(InputCreateMedia, input);
+    let model = await data.createModel() 
+    return await this.mediaService.create(model)
   }
+
   @Mutation(() => MediasResult)
   async createMedias(
     @Args('input', { type: () => [InputCreateMedia] })
     inputs: InputCreateMedia[],
   ) {
-    /** now you have the file as a stream **/
-    console.log(inputs);
-    return new MediasResult();
+    let models = []
+    for (let index = 0; index < inputs.length; index++) {
+      const input = inputs[index];
+      let data= plainToClass(InputCreateMedia, input);
+      let model = await data.createModel() 
+      models.push(model)
+    }
+    return await this.mediaService.creates(models)
   }
-  @Mutation(() => BaseMedia)
+  @Mutation(() => MediaResult)
   async updateMedia(@Args('input') input: InputUpdateMedia) {
-    /** now you have the file as a stream **/
-    return false;
+    let data= plainToClass(InputUpdateMedia, input);
+    let model = await data.createModel()
+    return await this.mediaService.update(model)
   }
   @Mutation((returns) => BaseResult)
   async deleteMedia(

@@ -4,16 +4,15 @@ import {
   existsSync,
   mkdirSync,
   unlinkSync,
-  copyFile,
   copyFileSync,
 } from 'fs';
 import { LoggerHelper } from 'core/common';
 import { join, basename, extname, dirname } from 'path';
-
+import { Stream } from 'stream';
 export class FileHelper {
   private path = MediaConfig.FORDER_FILE;
   private logger = new LoggerHelper('FileHelper');
-  constructor() {}
+  constructor() { }
   /**
    *
    * @param path
@@ -38,17 +37,20 @@ export class FileHelper {
    * @param file
    * @returns fullpath
    */
-  upload(path: string, file: any) {
+  async upload(path: string, file: File) {
     try {
-      this.logger.info(`Upload file: ${file.originalname}`);
-      let filepath = join(this.path, path, file.originalname);
+      this.logger.info(`Upload file: ${file.filename}`);
+      let filepath = join(this.path, path, file.filename);
 
       filepath = this.createDir(filepath);
       var stream = createWriteStream(filepath);
-      stream.once('open', function (fd) {
-        stream.write(file.buffer);
-        stream.end();
-      });
+      await new Promise((resolve, reject) => {
+        stream.once('open', function (fd) {
+          stream.write(file.buffer);
+          stream.end();
+          resolve(true);
+        });
+      })
       let pathfile = filepath.replace(/\\/g, '/');
       this.logger.info(`Upload file success - path: ${pathfile}`);
       return pathfile;
@@ -93,16 +95,69 @@ export class FileHelper {
     return false;
   }
   getFileName(path: string, type: boolean = false) {
-    if (type) {
-      return basename(path);
-    }
-    var extension = extname(path);
-    return basename(path, extension);
+    return getFileName(path, type)
   }
   getType(file: string) {
     return extname(file);
   }
   joinpath(...path) {
     return join(...path);
+  }
+}
+export function getFileName(path: string, type: boolean = false) {
+  if (type) {
+    return basename(path);
+  }
+  var extension = extname(path);
+  return basename(path, extension);
+}
+
+export class File {
+  filename: string;
+  mimetype: string;
+  buffer: Buffer
+}
+export class FileUpload {
+  filename: string;
+  mimetype: string;
+  encoding: string;
+  createReadStream: () => Stream;
+  async buffer():Promise<Buffer> {
+    let stream = this.createReadStream();
+    const buffer = await new Promise((resolve, reject) => {
+      var buffers = [];
+      stream.on("data", function(data) {
+        buffers.push(data);
+      });
+      stream.on("end", function() {
+        const everything = Buffer.concat(buffers);
+        resolve(everything);
+      });
+      stream.on("error", function(e) {
+        reject(e);
+      });
+    }) ;
+    return buffer as Buffer
+  }
+  async toFile():Promise<File> {
+    let file = new File()
+    file.filename = this.filename
+    file.mimetype = this.mimetype
+    file.buffer = await this.buffer()
+    return file
+  }
+}
+export class FileAPI {
+  originalname: string;
+  mimetype: string;
+  encoding: string;
+  buffer: Buffer;
+  size: number;
+  toFile():File {
+    let file = new File()
+    file.filename = this.originalname
+    file.mimetype = this.mimetype
+    file.buffer = this.buffer
+    return file
   }
 }

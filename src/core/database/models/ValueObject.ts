@@ -2,10 +2,7 @@ import {
   Entity,
   PrimaryGeneratedColumn,
   Column,
-  TreeChildren,
-  TreeParent,
   ManyToOne,
-  OneToMany,
 } from 'typeorm';
 import { PropertyBase } from './Property';
 import { ObjectBase } from './ObjectBase';
@@ -25,6 +22,6 @@ export class ValueObject {
   })
   property: PropertyBase;
 
-  @Column()
+  @Column({default:String()})
   lang: string;
 }

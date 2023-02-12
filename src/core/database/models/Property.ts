@@ -6,9 +6,6 @@ import {
   AfterLoad,
   ManyToOne,
   OneToMany,
-  BeforeUpdate,
-  AfterUpdate,
-  BeforeInsert,
   DataSource,
   In,
   DeleteDateColumn,
@@ -96,7 +93,6 @@ class PropertyMedia extends BasePropertyType {
         let newvalue = new ValueMedia();
         newvalue.object = media;
         newvalue.property = object;
-        newvalue.lang = String();
         return newvalue;
       },
     );
@@ -160,7 +156,6 @@ class PropertyMedias extends BasePropertyType {
         let newvalue = new ValueMedia();
         newvalue.object = media;
         newvalue.property = object;
-        newvalue.lang = String();
         return newvalue;
       },
     );

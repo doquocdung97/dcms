@@ -1,16 +1,10 @@
 import {
-  Args,
-  Parent,
-  ResolveField,
-  Resolver,
-  Query,
-  Mutation,
   InputType,
   registerEnumType,
-  Directive,
   Field,
   ObjectType,
 } from '@nestjs/graphql';
+import { Length } from 'class-validator';
 import { ObjectBase } from 'core/database';
 import {
   InputUpdateProperty,
@@ -43,6 +37,7 @@ export class ObjectResult {
 }
 @InputType()
 export abstract class InputCreateObject {
+  @Length(5,50)
   @Field()
   name: string;
 
