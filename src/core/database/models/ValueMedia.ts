@@ -2,10 +2,7 @@ import {
   Entity,
   PrimaryGeneratedColumn,
   Column,
-  TreeChildren,
-  TreeParent,
   ManyToOne,
-  OneToMany,
 } from 'typeorm';
 import { PropertyBase } from './Property';
 import { BaseMedia } from './Media';
@@ -15,12 +12,14 @@ export class ValueMedia {
   @PrimaryGeneratedColumn()
   id: string;
 
-  @ManyToOne((type) => BaseMedia, (obj) => obj.connect)
+  @ManyToOne((type) => BaseMedia, (obj) => obj.connect, { onDelete: 'CASCADE' })
   object: BaseMedia;
 
-  @ManyToOne((type) => PropertyBase, (obj) => obj.connectMeida)
+  @ManyToOne((type) => PropertyBase, (obj) => obj.connectMeida, {
+    onDelete: 'CASCADE',
+  })
   property: PropertyBase;
 
-  @Column()
+  @Column({default:String()})
   lang: string;
 }

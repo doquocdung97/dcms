@@ -1,10 +1,12 @@
+import { parseBoolean } from 'core/common';
+
 export class DatabaseConfig {
-  static TYPE = process.env.TYPE || String();
-  static PORT: number = parseInt(process.env.PORT) || 3307;
-  static HOST = process.env.HOST || String();
-  static USERNAME = process.env.USERNAME || String();
-  static PASSWORD = process.env.PASSWORD || String();
-  static DATABASENAME = process.env.DATABASENAME || String();
+  static TYPE = process.env.DB_TYPE || String();
+  static PORT: number = parseInt(process.env.DB_PORT) || 3307;
+  static HOST = process.env.DB_HOST || String();
+  static USERNAME = process.env.DB_USERNAME || String();
+  static PASSWORD = process.env.DB_PASSWORD || String();
+  static DATABASENAME = process.env.DB_DATABASE_NAME || String();
 }
 export class PasswordConfig {
   static readonly ROUNDS = 10;
@@ -17,9 +19,11 @@ export class MediaConfig {
   static readonly FORDER_FILE_PUBLIC_ROOT = 'media/public';
 }
 export class Config {
-  static readonly PRODUCT = false;
-  static readonly PORT = process.env.port || 3000;
+  static readonly PRODUCTION: boolean = parseBoolean(process.env.PRODUCTION);
+  static readonly PORT = process.env.PORT || 3000;
   static readonly CACHE_MAXAGE = 36000; // cache 10 hours
+  static readonly GRAPHQL_LINK = '/graphql';
+  static readonly GRAPHQL_FILE = 'src/graphql/schema.graphql';
 }
 export class LoggerConfig {
   static readonly FOLDER = 'logs';

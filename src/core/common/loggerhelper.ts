@@ -1,6 +1,6 @@
 import { createLogger, transports, format } from 'winston';
 import { join } from 'path';
-import { Config, LoggerConfig } from 'src/Constants';
+import { Config, LoggerConfig } from 'src/constants';
 import { TransformableInfo } from 'logform';
 import { LoggerService } from '@nestjs/common';
 
@@ -23,7 +23,7 @@ export class LoggerHelper implements LoggerService {
         ),
       }),
     ];
-    if (Config.PRODUCT) {
+    if (Config.PRODUCTION) {
       data_transports.push(
         new transports.File({
           level: LoggerConfig.LEVEL_ERROR,
@@ -66,7 +66,7 @@ export class LoggerHelper implements LoggerService {
     this.logger.warn(message);
   }
   error(message: any, ...optionalParams: any[]) {
-    this.logger.error(message);
+    this.logger.error(`${message}\n ${optionalParams}`);
   }
   log(message: any, ...optionalParams: any[]) {
     this.logger.info(message);

@@ -8,29 +8,40 @@ import {
   BeforeInsert,
 } from 'typeorm';
 import { hashSync, compareSync } from 'bcrypt';
-import { PasswordConfig } from 'src/Constants';
+import { PasswordConfig } from 'src/constants';
+import { Field, Int, ObjectType } from '@nestjs/graphql';
+@ObjectType()
 @Entity()
 export class User {
+  @Field()
   @PrimaryGeneratedColumn('uuid')
   id: string;
 
+  @Field()
   @Column({ length: 100 })
   name: string;
 
-  @Column({ length: 50 })
+  @Field()
+  @Column({
+    length: 50,
+    //unique: true
+  })
   email: string;
 
+  @Field({ nullable: true })
   @Column({ nullable: true, length: 12 })
-  phone!: string;
+  phone: string;
 
   @Column()
   password: string;
 
+  @Field()
   @CreateDateColumn()
-  createdDate: Date;
+  createdAt: Date;
 
+  @Field()
   @UpdateDateColumn()
-  UpdatedDate: Date;
+  updatedAt: Date;
 
   @BeforeInsert()
   @BeforeUpdate()
@@ -41,5 +52,12 @@ export class User {
   }
   checkPassword(password: string) {
     return compareSync(password, this.password);
+  }
+  static getByRequest(request: any): User {
+    let user = request.req?.user;
+    if (!user) {
+      user = request.user;
+    }
+    return user;
   }
 }
