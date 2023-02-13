@@ -1,6 +1,6 @@
 import { NestFactory } from '@nestjs/core';
 import { AppModule } from './app.module';
-import { Config } from './Constants';
+import { Config } from './constants';
 import { ValidationPipe } from '@nestjs/common';
 import { LoggerHelper } from 'core/common';
 import * as graphqlUploadExpress from 'graphql-upload/graphqlUploadExpress.js';

@@ -6,7 +6,7 @@ import { In, Repository, DataSource } from 'typeorm';
 import { InjectRepository } from '@nestjs/typeorm';
 import { User } from 'core/database';
 import { LoggerHelper } from 'core/common';
-import { UserResult, ResultCode } from 'core/graphql/user';
+import { UserResult, ResultCode } from 'src/graphql/user';
 @Injectable()
 export class AuthService {
   constructor(

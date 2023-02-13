@@ -188,8 +188,8 @@ import {
   ObjectType,
   registerEnumType,
 } from '@nestjs/graphql';
-import {  handleUpdateJoinTable } from 'core/common';
-import { CustomObject } from 'core/graphql';
+import { handleUpdateJoinTable } from 'core/common';
+import { CustomObject } from 'src/graphql';
 //create value enum type property
 let typeproperties = MainProperty.getTypes();
 typeproperties.map((item) => {

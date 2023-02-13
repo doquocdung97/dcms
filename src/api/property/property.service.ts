@@ -2,19 +2,18 @@ import { Injectable } from '@nestjs/common';
 import { In, Repository, DataSource, FindManyOptions } from 'typeorm';
 import { InjectRepository } from '@nestjs/typeorm';
 import { LoggerHelper } from 'core/common';
-import { BaseResult, BaseResultCode } from 'core/graphql';
+import { BaseResult, BaseResultCode } from 'src/graphql';
 import {
   PropertyResult,
   PropertiesResult,
   ResultCode,
-} from 'core/graphql/property';
+} from 'src/graphql/property';
 import {
   ValueObject,
   PropertyBase,
   BaseMedia,
   ObjectBase,
 } from 'core/database';
-import { MediaService } from 'src/media/media.service';
 import { MainProperty } from 'core/database/common';
 
 @Injectable()

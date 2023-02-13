@@ -5,7 +5,7 @@ import {
   registerEnumType,
 } from '@nestjs/graphql';
 import { User } from 'core/database';
-import { CustomUUID } from 'core/graphql';
+import { CustomUUID } from 'src/graphql';
 import {
   MinLength,
   MaxLength,

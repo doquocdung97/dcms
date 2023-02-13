@@ -8,7 +8,7 @@ import {
   BeforeInsert,
 } from 'typeorm';
 import { hashSync, compareSync } from 'bcrypt';
-import { PasswordConfig } from 'src/Constants';
+import { PasswordConfig } from 'src/constants';
 import { Field, Int, ObjectType } from '@nestjs/graphql';
 @ObjectType()
 @Entity()

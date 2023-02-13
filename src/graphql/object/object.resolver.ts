@@ -8,20 +8,16 @@ import {
   Subscription,
 } from '@nestjs/graphql';
 import { Inject, UseGuards } from '@nestjs/common';
-import {
-  JwtAuthGuard,
-  JwtAuthGuardGraphql,
-  JwtAuthGuardGraphqlSubscription,
-} from 'src/auth/jwt-auth.guard';
-import { CurrentUserGraphql } from 'src/auth/currentuser';
+import { JwtAuthGuard, JwtAuthGuardGraphql } from 'src/api/auth/jwt-auth.guard';
+import { CurrentUserGraphql } from 'src/api/auth/currentuser';
 import { BaseMedia, ObjectBase, PropertyBase } from 'core/database';
-import { ObjectService } from './object.service';
-import { CustomObject, CustomUUID } from 'core/graphql';
+import { ObjectService } from 'src/api/object/object.service';
+import { CustomObject, CustomUUID } from 'src/graphql';
 import { TypeProperty } from 'core/database/common';
-import { PropertyService } from 'src/property/property.service';
-import { BaseResult } from 'core/graphql';
-import { ObjectResult } from 'core/graphql/object';
-import { InputCreateObject } from 'core/graphql/object';
+import { PropertyService } from 'src/api/property/property.service';
+import { BaseResult } from 'src/graphql';
+import { ObjectResult } from 'src/graphql/object';
+import { InputCreateObject } from 'src/graphql/object';
 
 @UseGuards(JwtAuthGuardGraphql)
 @Resolver((of) => ObjectBase)
@@ -69,7 +65,7 @@ class Command {
 }
 //const pubSub = new PubSub();
 const PONG_EVENT_NAME = 'Command';
-@UseGuards(JwtAuthGuardGraphqlSubscription)
+@UseGuards(JwtAuthGuard)
 @Resolver((of) => Command)
 export class CommandResolver {
   constructor(@Inject('PUB_SUB') private pubSub: PubSubEngine) {}

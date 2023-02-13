@@ -1,17 +1,12 @@
-import {
-  Args,
-  Resolver,
-  Query,
-  Mutation,
-} from '@nestjs/graphql';
-import { MediaService } from './media.service';
+import { Args, Resolver, Query, Mutation } from '@nestjs/graphql';
+import { MediaService } from 'src/api/media/media.service';
 import { UseGuards } from '@nestjs/common';
-import { JwtAuthGuardGraphql } from 'src/auth/jwt-auth.guard';
+import { JwtAuthGuardGraphql } from 'src/api/auth/jwt-auth.guard';
 import { BaseMedia } from 'core/database';
-import {  BaseResult } from 'core/graphql';
-import { InputUpdateMedia, InputCreateMedia } from 'core/graphql/media';
-import { MediaResult, MediasResult, ResultCode } from 'core/graphql/media';
-import { plainToClass } from "class-transformer";
+import { BaseResult } from 'src/graphql';
+import { InputUpdateMedia, InputCreateMedia } from 'src/graphql/media';
+import { MediaResult, MediasResult, ResultCode } from 'src/graphql/media';
+import { plainToClass } from 'class-transformer';
 @UseGuards(JwtAuthGuardGraphql)
 @Resolver((of) => BaseMedia)
 export class MediaResolver {
@@ -31,9 +26,9 @@ export class MediaResolver {
 
   @Mutation(() => MediaResult)
   async createMedia(@Args('input') input: InputCreateMedia) {
-    let data= plainToClass(InputCreateMedia, input);
-    let model = await data.createModel() 
-    return await this.mediaService.create(model)
+    let data = plainToClass(InputCreateMedia, input);
+    let model = await data.createModel();
+    return await this.mediaService.create(model);
   }
 
   @Mutation(() => MediasResult)
@@ -41,20 +36,20 @@ export class MediaResolver {
     @Args('input', { type: () => [InputCreateMedia] })
     inputs: InputCreateMedia[],
   ) {
-    let models = []
+    let models = [];
     for (let index = 0; index < inputs.length; index++) {
       const input = inputs[index];
-      let data= plainToClass(InputCreateMedia, input);
-      let model = await data.createModel() 
-      models.push(model)
+      let data = plainToClass(InputCreateMedia, input);
+      let model = await data.createModel();
+      models.push(model);
     }
-    return await this.mediaService.creates(models)
+    return await this.mediaService.creates(models);
   }
   @Mutation(() => MediaResult)
   async updateMedia(@Args('input') input: InputUpdateMedia) {
-    let data= plainToClass(InputUpdateMedia, input);
-    let model = await data.createModel()
-    return await this.mediaService.update(model)
+    let data = plainToClass(InputUpdateMedia, input);
+    let model = await data.createModel();
+    return await this.mediaService.update(model);
   }
   @Mutation((returns) => BaseResult)
   async deleteMedia(

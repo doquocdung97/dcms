@@ -6,7 +6,7 @@ import { JwtModule } from '@nestjs/jwt';
 import { JwtStrategy } from './jwt.strategy';
 import { AuthController } from './auth.controller';
 import { TypeOrmModule } from '@nestjs/typeorm';
-import { Config, DatabaseConfig, PasswordConfig } from '../Constants';
+import { Config, DatabaseConfig, PasswordConfig } from '../../constants';
 import { User } from 'core/database';
 @Module({
   imports: [

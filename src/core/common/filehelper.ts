@@ -1,4 +1,4 @@
-import { MediaConfig } from 'src/Constants';
+import { MediaConfig } from 'src/constants';
 import {
   createWriteStream,
   existsSync,
@@ -12,7 +12,7 @@ import { Stream } from 'stream';
 export class FileHelper {
   private path = MediaConfig.FORDER_FILE;
   private logger = new LoggerHelper('FileHelper');
-  constructor() { }
+  constructor() {}
   /**
    *
    * @param path
@@ -50,7 +50,7 @@ export class FileHelper {
           stream.end();
           resolve(true);
         });
-      })
+      });
       let pathfile = filepath.replace(/\\/g, '/');
       this.logger.info(`Upload file success - path: ${pathfile}`);
       return pathfile;
@@ -77,7 +77,7 @@ export class FileHelper {
    * @param pathfile pathfile current
    * @param path to path
    * @param delete to true -> delete file current
-   * @returns boolean true -> success, false -> failure
+   * @returns `boolean` true -> success, false -> failure
    */
   async copy(pathfile: string, path: string, isdelete: boolean = false) {
     try {
@@ -95,7 +95,7 @@ export class FileHelper {
     return false;
   }
   getFileName(path: string, type: boolean = false) {
-    return getFileName(path, type)
+    return getFileName(path, type);
   }
   getType(file: string) {
     return extname(file);
@@ -115,36 +115,36 @@ export function getFileName(path: string, type: boolean = false) {
 export class File {
   filename: string;
   mimetype: string;
-  buffer: Buffer
+  buffer: Buffer;
 }
 export class FileUpload {
   filename: string;
   mimetype: string;
   encoding: string;
   createReadStream: () => Stream;
-  async buffer():Promise<Buffer> {
+  async buffer(): Promise<Buffer> {
     let stream = this.createReadStream();
     const buffer = await new Promise((resolve, reject) => {
       var buffers = [];
-      stream.on("data", function(data) {
+      stream.on('data', function (data) {
         buffers.push(data);
       });
-      stream.on("end", function() {
+      stream.on('end', function () {
         const everything = Buffer.concat(buffers);
         resolve(everything);
       });
-      stream.on("error", function(e) {
+      stream.on('error', function (e) {
         reject(e);
       });
-    }) ;
-    return buffer as Buffer
+    });
+    return buffer as Buffer;
   }
-  async toFile():Promise<File> {
-    let file = new File()
-    file.filename = this.filename
-    file.mimetype = this.mimetype
-    file.buffer = await this.buffer()
-    return file
+  async toFile(): Promise<File> {
+    let file = new File();
+    file.filename = this.filename;
+    file.mimetype = this.mimetype;
+    file.buffer = await this.buffer();
+    return file;
   }
 }
 export class FileAPI {
@@ -153,11 +153,11 @@ export class FileAPI {
   encoding: string;
   buffer: Buffer;
   size: number;
-  toFile():File {
-    let file = new File()
-    file.filename = this.originalname
-    file.mimetype = this.mimetype
-    file.buffer = this.buffer
-    return file
+  toFile(): File {
+    let file = new File();
+    file.filename = this.originalname;
+    file.mimetype = this.mimetype;
+    file.buffer = this.buffer;
+    return file;
   }
 }

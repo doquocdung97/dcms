@@ -1,12 +1,12 @@
 import { Inject, Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { FindManyOptions, In, Repository } from 'typeorm';
-import { PropertyService } from 'src/property/property.service';
+import { PropertyService } from '../property/property.service';
 import { PropertyBase, ValueMedia, BaseMedia, User } from 'core/database';
 import { FileHelper, handleUpdateJoinTable, LoggerHelper } from 'core/common';
-import { Config, MediaConfig } from 'src/Constants';
+import { Config, MediaConfig } from 'src/constants';
 import { REQUEST } from '@nestjs/core';
-import { BaseResult, BaseResultCode } from 'core/graphql';
+import { BaseResult, BaseResultCode } from 'src/graphql';
 interface InputMedia {
   id: string;
   name: string;
@@ -14,7 +14,7 @@ interface InputMedia {
   file: any;
   properties: number[];
 }
-import { MediaResult, MediasResult, ResultCode } from 'core/graphql/media';
+import { MediaResult, MediasResult, ResultCode } from 'src/graphql/media';
 @Injectable()
 export class MediaService {
   private filehelper = new FileHelper();
@@ -27,10 +27,10 @@ export class MediaService {
     private propertyService: PropertyService,
     @InjectRepository(ValueMedia)
     private valueobjectRepository: Repository<ValueMedia>,
-  ) { }
+  ) {}
   async create(input: BaseMedia): Promise<MediaResult> {
     //input.validate()
-    let result = new MediaResult()
+    let result = new MediaResult();
     try {
       if (input.file) {
         let pathfile = await this.filehelper.upload(
@@ -38,7 +38,7 @@ export class MediaService {
           input.file,
         );
         if (pathfile) {
-          input.url = pathfile
+          input.url = pathfile;
           if (input.public) {
             input.url = pathfile.replace(MediaConfig.FORDER_FILE, String());
           }
@@ -53,18 +53,18 @@ export class MediaService {
             id: In(input.properties.map((item) => item.id)),
           },
         });
-        await this.updateProperties(properties,[],media)
-        media.properties = properties
+        await this.updateProperties(properties, [], media);
+        media.properties = properties;
       }
-      result.data = media
+      result.data = media;
     } catch (ex) {
       this.logger.error(`Create failure.\n${ex}`);
       result.success = false;
       result.code = ResultCode.B001;
     }
-    return result
+    return result;
   }
-  private async createData(input: BaseMedia):Promise<BaseMedia>{
+  private async createData(input: BaseMedia): Promise<BaseMedia> {
     try {
       if (input.file) {
         let pathfile = await this.filehelper.upload(
@@ -72,7 +72,7 @@ export class MediaService {
           input.file,
         );
         if (pathfile) {
-          input.url = pathfile
+          input.url = pathfile;
           if (input.public) {
             input.url = pathfile.replace(MediaConfig.FORDER_FILE, String());
           }
@@ -87,42 +87,43 @@ export class MediaService {
             id: In(input.properties.map((item) => item.id)),
           },
         });
-        await this.updateProperties(properties,[],media)
-        media.properties = properties
+        await this.updateProperties(properties, [], media);
+        media.properties = properties;
       }
-      return media
+      return media;
     } catch (ex) {
       this.logger.error(`Create data failed.\n${ex}`);
     }
   }
   async creates(inputs: BaseMedia[]): Promise<MediasResult> {
     //input.validate()
-    let result = new MediasResult()
+    let result = new MediasResult();
     try {
-      let medias = []
+      let medias = [];
       for (let index = 0; index < inputs.length; index++) {
         const input = inputs[index];
-        let media = await this.createData(input)
-        medias.push(media)
+        let media = await this.createData(input);
+        medias.push(media);
       }
-      result.data = medias
+      result.data = medias;
     } catch (ex) {
       this.logger.error(`Create many failures.\n${ex}`);
       result.success = false;
       result.code = ResultCode.B001;
     }
-    return result
+    return result;
   }
-  async updateProperties(properties: PropertyBase[], connect: ValueMedia[], media: BaseMedia, lang: string = String()) {
+  async updateProperties(
+    properties: PropertyBase[],
+    connect: ValueMedia[],
+    media: BaseMedia,
+    lang: string = String(),
+  ) {
     let join = handleUpdateJoinTable<ValueMedia, PropertyBase>(
       properties,
       connect,
       (item, properties, index) => {
-        return (
-          item.property &&
-          item.property.id &&
-          index < properties.length
-        );
+        return item.property && item.property.id && index < properties.length;
       },
       (item, property) => {
         item.property.id = property.id;
@@ -143,16 +144,18 @@ export class MediaService {
     if (join.delete_item.length > 0) {
       await this.valueobjectRepository.remove(join.delete_item);
     }
-    return join
+    return join;
   }
-  async update(input: BaseMedia):Promise<MediaResult> {
-    let result = new MediaResult()
+  async update(input: BaseMedia): Promise<MediaResult> {
+    let result = new MediaResult();
     try {
-      let dataintable = await this.mediaRepository.findOne({where:{id:input.id}})
-      if(!dataintable){
+      let dataintable = await this.mediaRepository.findOne({
+        where: { id: input.id },
+      });
+      if (!dataintable) {
         result.success = false;
         result.code = ResultCode.B002;
-        return result
+        return result;
       }
       let new_data = Object.assign(dataintable, input);
 
@@ -165,12 +168,12 @@ export class MediaService {
           new_data.url = pathfile;
         }
       }
-      let properties = []
+      let properties = [];
       if (input.properties) {
         let propertyRepository = this.propertyService.getRepository();
         properties = await propertyRepository.find({
           where: {
-            id: In(new_data.properties.map(p=>p.id)),
+            id: In(new_data.properties.map((p) => p.id)),
           },
         });
         //console.log(property);
@@ -185,7 +188,7 @@ export class MediaService {
             },
           },
         });
-        await this.updateProperties(properties,connect,new_data)
+        await this.updateProperties(properties, connect, new_data);
       }
       let beforedata = null;
       if (new_data.id) {
@@ -226,7 +229,7 @@ export class MediaService {
         new_data.url = new_data.url.replace(MediaConfig.FORDER_FILE, String());
       }
       let afterdata = await this.mediaRepository.save(new_data);
-      afterdata.properties = properties
+      afterdata.properties = properties;
       result.data = afterdata;
     } catch (error) {
       this.logger.error(`Update failures.\n${error}`);

@@ -1,6 +1,6 @@
 import { createLogger, transports, format } from 'winston';
 import { join } from 'path';
-import { Config, LoggerConfig } from 'src/Constants';
+import { Config, LoggerConfig } from 'src/constants';
 import { TransformableInfo } from 'logform';
 import { LoggerService } from '@nestjs/common';
 

@@ -6,10 +6,7 @@ import {
 } from '@nestjs/graphql';
 import { Length } from 'class-validator';
 import { ObjectBase } from 'core/database';
-import {
-  InputUpdateProperty,
-  InputCreateProperty,
-} from 'core/graphql/property';
+import { InputUpdateProperty, InputCreateProperty } from 'src/graphql/property';
 export enum ResultCode {
   /**
    * succses
@@ -37,7 +34,7 @@ export class ObjectResult {
 }
 @InputType()
 export abstract class InputCreateObject {
-  @Length(5,50)
+  @Length(5, 50)
   @Field()
   name: string;
 

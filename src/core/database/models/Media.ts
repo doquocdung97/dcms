@@ -12,7 +12,7 @@ import {
 import { ValueMedia } from './ValueMedia';
 import { PropertyBase } from './Property';
 import { File } from 'core/common';
-import { CustomUUID } from 'core/graphql';
+import { CustomUUID } from 'src/graphql';
 import { BasePropertyType, MainProperty } from '../common';
 import { User } from './User';
 import { Field, Int, ObjectType } from '@nestjs/graphql';
@@ -49,14 +49,14 @@ export class BaseMedia {
   @DeleteDateColumn()
   deleteAt: Date;
 
-  @Field((type) => [PropertyBase],{defaultValue:[]})
+  @Field((type) => [PropertyBase], { defaultValue: [] })
   properties: PropertyBase[];
 
   @Field()
   @ManyToOne((type) => User)
   user: User;
 
-  file:File
+  file: File;
 
   @AfterLoad()
   AfterLoad() {

@@ -6,11 +6,10 @@ import {
 } from '@nestjs/graphql';
 import { BaseMedia, PropertyBase } from 'core/database';
 import * as GraphQLUpload from 'graphql-upload/GraphQLUpload.js';
-import { CustomUUID } from 'core/graphql';
+import { CustomUUID } from 'src/graphql';
 import { FileUpload, getFileName } from 'core/common';
-import { plainToClass } from "class-transformer";
+import { plainToClass } from 'class-transformer';
 import { IsOptional, Length } from 'class-validator';
-
 
 @InputType()
 export class InputUpdateMedia {
@@ -18,7 +17,7 @@ export class InputUpdateMedia {
   id: string;
 
   @IsOptional()
-  @Length(5,50)
+  @Length(5, 50)
   @Field({ nullable: true })
   name: string;
 
@@ -26,35 +25,35 @@ export class InputUpdateMedia {
   public: boolean;
 
   @Field(() => [Number], { nullable: true })
-  properties: number[]
+  properties: number[];
 
   @Field(() => GraphQLUpload, { nullable: true })
   file: Promise<FileUpload>;
 
   async createModel(): Promise<BaseMedia> {
-    let model = plainToClass(BaseMedia,this)
-    let file = await this.file
+    let model = plainToClass(BaseMedia, this);
+    let file = await this.file;
     if (file) {
-      let fileUpload = plainToClass(FileUpload, file)
-      model.file = await fileUpload.toFile()
+      let fileUpload = plainToClass(FileUpload, file);
+      model.file = await fileUpload.toFile();
     }
-    if(this.properties){
-      let properties = []
-      this.properties?.map(id => {
-        let property = new PropertyBase()
-        property.id = id
-        properties.push(property)
-      })
-      model.properties = properties
+    if (this.properties) {
+      let properties = [];
+      this.properties?.map((id) => {
+        let property = new PropertyBase();
+        property.id = id;
+        properties.push(property);
+      });
+      model.properties = properties;
     }
-    
-    return model
+
+    return model;
   }
 }
 @InputType()
 export class InputCreateMedia {
   @IsOptional()
-  @Length(5,50)
+  @Length(5, 50)
   @Field({ nullable: true })
   name: string;
 
@@ -65,28 +64,28 @@ export class InputCreateMedia {
   file: Promise<FileUpload>;
 
   @Field(() => [Number], { nullable: true })
-  properties: number[]
+  properties: number[];
 
   async createModel(): Promise<BaseMedia> {
-    let model = new BaseMedia()
-    model.name = this.name
-    let file = await this.file
+    let model = new BaseMedia();
+    model.name = this.name;
+    let file = await this.file;
     if (file) {
-      if(!this.name){
-        model.name = getFileName(file.filename)
+      if (!this.name) {
+        model.name = getFileName(file.filename);
       }
-      let fileUpload = plainToClass(FileUpload, file)
-      model.file = await fileUpload.toFile()
+      let fileUpload = plainToClass(FileUpload, file);
+      model.file = await fileUpload.toFile();
     }
-    model.public = this.public
-    let properties = []
-    this.properties?.map(id => {
-      let property = new PropertyBase()
-      property.id = id
-      properties.push(property)
-    })
-    model.properties = properties
-    return model
+    model.public = this.public;
+    let properties = [];
+    this.properties?.map((id) => {
+      let property = new PropertyBase();
+      property.id = id;
+      properties.push(property);
+    });
+    model.properties = properties;
+    return model;
   }
 }
 

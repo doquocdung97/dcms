@@ -1,4 +1,4 @@
-import { CustomObject, CustomUUID } from 'core/graphql';
+import { CustomObject, CustomUUID } from 'src/graphql';
 import { TypeProperty } from 'core/database';
 import {
   MinLength,

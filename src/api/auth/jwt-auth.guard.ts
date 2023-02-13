@@ -19,25 +19,6 @@ export class JwtAuthGuard extends AuthGuard('jwt') {
       //throw new AuthenticationError(generalErrorMessages.invalidToken);
     }
   }
-
-  handleRequest(err, user, info) {
-    // You can throw an exception based on either "info" or "err" arguments
-    if (err || !user) {
-      throw err || new UnauthorizedException();
-    }
-    return user;
-  }
-}
-@Injectable()
-export class JwtAuthGuardGraphqlSubscription extends AuthGuard('jwt') {
-  async canActivate(context: ExecutionContext): Promise<boolean> {
-    try {
-      return (await super.canActivate(context)) as boolean;
-    } catch (e) {
-      //throw new AuthenticationError(generalErrorMessages.invalidToken);
-    }
-  }
-
   getRequest(context: ExecutionContext): Request {
     const ctx = GqlExecutionContext.create(context);
     const { req } = ctx.getContext();

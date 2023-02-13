@@ -3,9 +3,9 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { FindManyOptions, Repository } from 'typeorm';
 import { ObjectBase, PropertyBase, ValueObject } from 'core/database';
 import { LoggerHelper } from 'core/common';
-import { ObjectResult, ResultCode } from 'core/graphql/object';
-import { BaseResult, BaseResultCode } from 'core/graphql';
-import { PropertyService } from 'src/property/property.service';
+import { ObjectResult, ResultCode } from 'src/graphql/object';
+import { BaseResult, BaseResultCode } from 'src/graphql';
+import { PropertyService } from '../property/property.service';
 
 @Injectable()
 export class ObjectService {

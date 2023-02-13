@@ -12,20 +12,17 @@ import {
 } from '@nestjs/graphql';
 
 import { UseGuards } from '@nestjs/common';
-import { JwtAuthGuardGraphql } from 'src/auth/jwt-auth.guard';
+import { JwtAuthGuardGraphql } from 'src/api/auth/jwt-auth.guard';
 import {
   BaseMedia,
   ObjectBase,
   PropertyBase,
   TypeProperty,
 } from 'core/database';
-import { PropertyService } from './property.service';
-import { BaseResult, BaseResultCode } from 'core/graphql';
-import {
-  InputUpdateProperty,
-  InputCreateProperty,
-} from 'core/graphql/property';
-import { PropertiesResult, PropertyResult } from 'core/graphql/property';
+import { PropertyService } from 'src/api/property/property.service';
+import { BaseResult, BaseResultCode } from 'src/graphql';
+import { InputUpdateProperty, InputCreateProperty } from 'src/graphql/property';
+import { PropertiesResult, PropertyResult } from 'src/graphql/property';
 @UseGuards(JwtAuthGuardGraphql)
 @Resolver((of) => PropertyBase)
 export class PropertyResolver {

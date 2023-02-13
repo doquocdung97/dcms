@@ -15,17 +15,16 @@ import { UseGuards } from '@nestjs/common';
 import {
   JwtAuthGuardGraphql,
   //LogInWithCredentialsGuard,
-} from 'src/auth/jwt-auth.guard';
-import { CurrentUserGraphql } from 'src/auth/currentuser';
-import { CustomUUID, BaseResult } from 'core/graphql';
+} from 'src/api/auth/jwt-auth.guard';
+import { CurrentUserGraphql } from 'src/api/auth/currentuser';
 import { User } from 'core/database';
 import {
   UserResult,
   InputUpdateUser,
   InputCreateUser,
   InputUser,
-} from 'core/graphql/user';
-import { AuthService, UserService } from './auth.service';
+} from 'src/graphql/user';
+import { AuthService, UserService } from 'src/api/auth/auth.service';
 
 @Resolver((of) => User)
 export class AuthResolver {

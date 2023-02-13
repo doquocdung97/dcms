@@ -1,5 +1,5 @@
 import { handleUpdateJoinTable } from 'core/common';
-import { CustomUUID } from 'core/graphql';
+import { CustomUUID } from 'src/graphql';
 import {
   Entity,
   PrimaryGeneratedColumn,
