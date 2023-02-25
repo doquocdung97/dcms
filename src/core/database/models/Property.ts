@@ -19,12 +19,21 @@ import { ValueMedia } from './ValueMedia';
 import { BasePropertyType, MainProperty, TypeProperty } from '../common';
 
 class PropertyString extends BasePropertyType {
+  /**
+   * Design Pattern:
+   * Structural Pattern - Decorator Pattern
+   */
   get(object: PropertyBase) {
     return super.get(object) || String();
   }
 }
 MainProperty.addProperty('string', PropertyString);
 
+/**
+ * Design Pattern:
+ * Structural Pattern - Bridge Pattern
+ */
+  
 class PropertyStrings extends BasePropertyType {
   get(object: PropertyBase) {
     return super.get(object) || [];
@@ -32,6 +41,11 @@ class PropertyStrings extends BasePropertyType {
 }
 MainProperty.addProperty('strings', PropertyStrings);
 
+/**
+ * Design Pattern
+ * Structural Pattern - Composite Pattern
+ * Leaf class
+ */
 class PropertyNumber extends BasePropertyType {
   get(object: PropertyBase) {
     return super.get(object) || 0;
@@ -210,7 +224,7 @@ export class PropertyBase extends BaseEntity {
   id: number;
 
   @Field()
-  @Column({ default: String() })
+  @Column({ default: String(), length: 50 })
   name: string;
 
   @Field()

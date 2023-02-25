@@ -2,6 +2,8 @@ export * from './common';
 export * from './models/Media';
 export * from './models/ObjectBase';
 export * from './models/User';
+export * from './models/Document';
+export * from './models/Authentication';
 export * from './models/ValueMedia';
 export * from './models/ValueObject';
 export * from './models/Property';

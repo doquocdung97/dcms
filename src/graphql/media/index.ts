@@ -1,131 +1,74 @@
+import { Args, Resolver, Query, Mutation } from '@nestjs/graphql';
+import { MediaService } from 'src/api/media/media.service';
+import { UseGuards } from '@nestjs/common';
+import { JwtAuthGuardGraphql } from 'src/api/auth/jwt-auth.guard';
+import { BaseMedia } from 'core/database';
+import { BaseResult } from 'src/graphql';
 import {
-  Field,
-  ObjectType,
-  InputType,
-  registerEnumType,
-} from '@nestjs/graphql';
-import { BaseMedia, PropertyBase } from 'core/database';
-import * as GraphQLUpload from 'graphql-upload/GraphQLUpload.js';
-import { CustomUUID } from 'src/graphql';
-import { FileUpload, getFileName } from 'core/common';
+  InputUpdateMedia,
+  InputCreateMedia,
+  MediaResult,
+  MediasResult,
+} from 'src/graphql/media/schema';
 import { plainToClass } from 'class-transformer';
-import { IsOptional, Length } from 'class-validator';
+@UseGuards(JwtAuthGuardGraphql)
+@Resolver((of) => BaseMedia)
+export class MediaResolver {
+  constructor(private mediaService: MediaService) {}
 
-@InputType()
-export class InputUpdateMedia {
-  @Field((type) => CustomUUID)
-  id: string;
-
-  @IsOptional()
-  @Length(5, 50)
-  @Field({ nullable: true })
-  name: string;
-
-  @Field({ nullable: true })
-  public: boolean;
-
-  @Field(() => [Number], { nullable: true })
-  properties: number[];
-
-  @Field(() => GraphQLUpload, { nullable: true })
-  file: Promise<FileUpload>;
-
-  async createModel(): Promise<BaseMedia> {
-    let model = plainToClass(BaseMedia, this);
-    let file = await this.file;
-    if (file) {
-      let fileUpload = plainToClass(FileUpload, file);
-      model.file = await fileUpload.toFile();
-    }
-    if (this.properties) {
-      let properties = [];
-      this.properties?.map((id) => {
-        let property = new PropertyBase();
-        property.id = id;
-        properties.push(property);
-      });
-      model.properties = properties;
-    }
-
-    return model;
+  @Query((returns) => BaseMedia, { nullable: true, name: 'media' })
+  async getMedia(@Args('id') id: string) {
+    var result = await this.mediaService.get({ id });
+    return result;
   }
-}
-@InputType()
-export class InputCreateMedia {
-  @IsOptional()
-  @Length(5, 50)
-  @Field({ nullable: true })
-  name: string;
 
-  @Field({ nullable: true, defaultValue: true })
-  public: boolean;
-
-  @Field(() => GraphQLUpload)
-  file: Promise<FileUpload>;
-
-  @Field(() => [Number], { nullable: true })
-  properties: number[];
-
-  async createModel(): Promise<BaseMedia> {
-    let model = new BaseMedia();
-    model.name = this.name;
-    let file = await this.file;
-    if (file) {
-      if (!this.name) {
-        model.name = getFileName(file.filename);
-      }
-      let fileUpload = plainToClass(FileUpload, file);
-      model.file = await fileUpload.toFile();
-    }
-    model.public = this.public;
-    let properties = [];
-    this.properties?.map((id) => {
-      let property = new PropertyBase();
-      property.id = id;
-      properties.push(property);
-    });
-    model.properties = properties;
-    return model;
+  @Query((returns) => [BaseMedia], { nullable: true, name: 'medias' })
+  async getMedias() {
+    var result = await this.mediaService.get();
+    return result;
   }
-}
 
-export enum ResultCode {
-  /**
-   * succses
-   */
-  B000,
-  /**
-   * failed
-   */
-  B001,
-  /**
-   * item not found
-   */
-  B002,
-}
-registerEnumType(ResultCode, {
-  name: 'MediaResultCode',
-  description: 'Media result code',
-});
+  @Mutation(() => MediaResult)
+  async createMedia(@Args('input') input: InputCreateMedia) {
+    let data = plainToClass(InputCreateMedia, input);
+    let model = await data.createModel();
+    return await this.mediaService.create(model);
+  }
 
-@ObjectType()
-export class MediaResult {
-  @Field((type) => ResultCode, { defaultValue: ResultCode.B000 })
-  code: ResultCode;
-
-  @Field({ defaultValue: true })
-  success: boolean;
-  @Field((type) => BaseMedia, { nullable: true })
-  data: BaseMedia;
-}
-
-@ObjectType()
-export class MediasResult {
-  @Field((type) => ResultCode, { defaultValue: ResultCode.B000 })
-  code: ResultCode;
-
-  @Field({ defaultValue: true })
-  success: boolean;
-  @Field((type) => [BaseMedia], { nullable: true })
-  data: BaseMedia[];
+  @Mutation(() => MediasResult)
+  async createMedias(
+    @Args('input', { type: () => [InputCreateMedia] })
+    inputs: InputCreateMedia[],
+  ) {
+    let models = [];
+    for (let index = 0; index < inputs.length; index++) {
+      const input = inputs[index];
+      let data = plainToClass(InputCreateMedia, input);
+      let model = await data.createModel();
+      models.push(model);
+    }
+    return await this.mediaService.creates(models);
+  }
+  @Mutation(() => MediaResult)
+  async updateMedia(@Args('input') input: InputUpdateMedia) {
+    let data = plainToClass(InputUpdateMedia, input);
+    let model = await data.createModel();
+    return await this.mediaService.update(model);
+  }
+  @Mutation((returns) => BaseResult)
+  async deleteMedia(
+    @Args('id') id: string,
+    @Args('soft', { nullable: true, defaultValue: true }) soft: boolean,
+  ) {
+    return await this.mediaService.delete(id, soft);
+  }
+  @Mutation((returns) => BaseResult)
+  async restoreMedia(@Args('id') id: string) {
+    return await this.mediaService.restore(id);
+  }
+  //@ResolveField()
+  //async posts(@Parent() author) {
+  //  const { id } = author;
+  //  return this.mediaService.findAll({ authorId: id });
+  //}
 }

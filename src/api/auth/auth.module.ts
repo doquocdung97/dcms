@@ -7,7 +7,18 @@ import { JwtStrategy } from './jwt.strategy';
 import { AuthController } from './auth.controller';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { Config, DatabaseConfig, PasswordConfig } from '../../constants';
-import { User } from 'core/database';
+import {
+  ObjectBase,
+  PropertyBase,
+  ValueObject,
+  ValueMedia,
+  BaseMedia,
+  User,
+  BaseDocument,
+  PropertySubscriber,
+  AuthContentDocument,
+  Authentication,
+} from 'core/database';
 @Module({
   imports: [
     TypeOrmModule.forRoot({
@@ -17,10 +28,32 @@ import { User } from 'core/database';
       username: DatabaseConfig.USERNAME,
       password: DatabaseConfig.PASSWORD,
       database: DatabaseConfig.DATABASENAME,
-      entities: [User],
+      entities: [
+        ObjectBase,
+        PropertyBase,
+        ValueObject,
+        ValueMedia,
+        BaseMedia,
+        User,
+        BaseDocument,
+        PropertySubscriber,
+        AuthContentDocument,
+        Authentication,
+      ],
       synchronize: true,
     }),
-    TypeOrmModule.forFeature([User]),
+    TypeOrmModule.forFeature([
+      ObjectBase,
+      PropertyBase,
+      ValueObject,
+      ValueMedia,
+      BaseMedia,
+      User,
+      BaseDocument,
+      PropertySubscriber,
+      AuthContentDocument,
+      Authentication,
+    ]),
     //UsersModule,
     PassportModule,
     JwtModule.register({

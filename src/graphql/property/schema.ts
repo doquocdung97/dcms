@@ -1,4 +1,4 @@
-import { CustomObject, CustomUUID } from 'src/graphql';
+import { BaseResultCode, CustomObject, CustomUUID } from 'src/graphql';
 import { TypeProperty } from 'core/database';
 import {
   MinLength,
@@ -58,29 +58,11 @@ export class InputCreateProperty {
   @Field((type) => CustomObject)
   value: any;
 }
-export enum ResultCode {
-  /**
-   * succses
-   */
-  B000,
-  /**
-   * failed
-   */
-  B001,
-  /**
-   * item not found
-   */
-  B002,
-}
-registerEnumType(ResultCode, {
-  name: 'PropertyResultCode',
-  description: 'Property result code',
-});
 
 @ObjectType()
 export class PropertyResult {
-  @Field((type) => ResultCode, { defaultValue: ResultCode.B000 })
-  code: ResultCode;
+  @Field((type) => BaseResultCode, { defaultValue: BaseResultCode.B000 })
+  code: BaseResultCode;
 
   @Field({ defaultValue: true })
   success: boolean;
@@ -90,8 +72,8 @@ export class PropertyResult {
 
 @ObjectType()
 export class PropertiesResult {
-  @Field((type) => ResultCode, { defaultValue: ResultCode.B000 })
-  code: ResultCode;
+  @Field((type) => BaseResultCode, { defaultValue: BaseResultCode.B000 })
+  code: BaseResultCode;
 
   @Field({ defaultValue: true })
   success: boolean;

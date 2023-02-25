@@ -14,13 +14,10 @@ import { ObjectController } from './api/object/object.controller';
 import { ObjectService } from './api/object/object.service';
 import { MediaService } from './api/media/media.service';
 import { AuthModule } from './api/auth/auth.module';
-import { MediaResolver } from './graphql/media/media.resolver';
+import { MediaResolver } from './graphql/media';
 import { PropertyResolver } from './graphql/property/property.resolver';
-import {
-  CommandResolver,
-  ObjectResolver,
-} from './graphql/object/object.resolver';
-import { AuthResolver } from './graphql/user/auth.resolver';
+import { CommandResolver, ObjectResolver } from './graphql/object';
+import { AuthResolver } from './graphql/user';
 
 import {
   ObjectBase,
@@ -29,16 +26,23 @@ import {
   ValueMedia,
   BaseMedia,
   User,
+  BaseDocument,
   PropertySubscriber,
+  AuthContentDocument,
+  Authentication,
 } from 'core/database';
 import { PubSub } from 'graphql-subscriptions';
 import { ApolloServerPluginLandingPageLocalDefault } from 'apollo-server-core';
+import { DocumentController } from './api/document/document.controller';
+import { DocumentService } from './api/document/document.service';
+import { DocumentResolver } from './graphql/document';
 
 @Module({
   imports: [
     GraphQLModule.forRoot<ApolloDriverConfig>({
       driver: ApolloDriver,
       playground: false,
+      path: Config.GRAPHQL_LINK,
       plugins: [
         ApolloServerPluginLandingPageLocalDefault({
           embed: !Config.PRODUCTION,
@@ -80,6 +84,9 @@ import { ApolloServerPluginLandingPageLocalDefault } from 'apollo-server-core';
         ValueMedia,
         BaseMedia,
         User,
+        BaseDocument,
+        AuthContentDocument,
+        Authentication,
       ],
       synchronize: true,
       subscribers: [PropertySubscriber],
@@ -91,6 +98,9 @@ import { ApolloServerPluginLandingPageLocalDefault } from 'apollo-server-core';
       ValueMedia,
       BaseMedia,
       User,
+      BaseDocument,
+      AuthContentDocument,
+      Authentication,
     ]),
     AuthModule,
   ],
@@ -99,12 +109,14 @@ import { ApolloServerPluginLandingPageLocalDefault } from 'apollo-server-core';
     PropertyController,
     MediaController,
     ObjectController,
+    DocumentController,
   ],
   providers: [
     AppService,
     PropertyService,
     ObjectService,
     MediaService,
+    DocumentService,
     MediaResolver,
     PropertyResolver,
     ObjectResolver,
@@ -114,6 +126,7 @@ import { ApolloServerPluginLandingPageLocalDefault } from 'apollo-server-core';
       provide: 'PUB_SUB',
       useValue: new PubSub(),
     },
+    DocumentResolver,
   ],
   exports: [AppService],
 })

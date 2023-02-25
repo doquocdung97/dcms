@@ -3,11 +3,7 @@ import { In, Repository, DataSource, FindManyOptions } from 'typeorm';
 import { InjectRepository } from '@nestjs/typeorm';
 import { LoggerHelper } from 'core/common';
 import { BaseResult, BaseResultCode } from 'src/graphql';
-import {
-  PropertyResult,
-  PropertiesResult,
-  ResultCode,
-} from 'src/graphql/property';
+import { PropertyResult, PropertiesResult } from 'src/graphql/property/schema';
 import {
   ValueObject,
   PropertyBase,
@@ -28,24 +24,6 @@ export class PropertyService {
     private objectRepository: Repository<ObjectBase>,
     private dataSource: DataSource,
   ) {}
-  //async saves(items: PropertyBase[]): Promise<PropertiesResult> {
-  //  let result = new PropertiesResult();
-  //  try {
-  //    let data = await this.propertyRepository.save(items);
-  //    if (data) {
-  //      result.data = data;
-  //    }
-  //    console.log(data);
-  //  } catch (ex) {
-  //    this.logger.error(`Delete failed.\n${ex}`);
-  //    result.success = false;
-  //    result.code = ResultCode.B001;
-  //  }
-  //  return result;
-  //}
-  //async save(data: PropertyBase): Promise<PropertyBase> {
-  //  return await this.propertyRepository.save(data);
-  //}
   async create(id: string, data: PropertyBase): Promise<PropertyResult> {
     let result = new PropertyResult();
     try {
@@ -56,12 +34,12 @@ export class PropertyService {
         result.data = record;
       } else {
         result.success = false;
-        result.code = ResultCode.B002;
+        result.code = BaseResultCode.B002;
       }
     } catch (ex) {
       this.logger.error(`Create failed.\n${ex}`);
       result.success = false;
-      result.code = ResultCode.B001;
+      result.code = BaseResultCode.B001;
     }
     return result;
   }
@@ -77,12 +55,12 @@ export class PropertyService {
         result.data = record;
       } else {
         result.success = false;
-        result.code = ResultCode.B002;
+        result.code = BaseResultCode.B002;
       }
     } catch (ex) {
       this.logger.error(`Creates failed.\n${ex}`);
       result.success = false;
-      result.code = ResultCode.B001;
+      result.code = BaseResultCode.B001;
     }
 
     return result;
@@ -107,12 +85,12 @@ export class PropertyService {
         result.data = rowdata;
       } else {
         result.success = false;
-        result.code = ResultCode.B002;
+        result.code = BaseResultCode.B002;
       }
     } catch (ex) {
       this.logger.error(`Update failed.\n${ex}`);
       result.success = false;
-      result.code = ResultCode.B001;
+      result.code = BaseResultCode.B001;
     }
     return result;
   }

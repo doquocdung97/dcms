@@ -1,9 +1,9 @@
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { FindManyOptions, Repository } from 'typeorm';
+import { FindManyOptions, In, Repository } from 'typeorm';
 import { ObjectBase, PropertyBase, ValueObject } from 'core/database';
 import { LoggerHelper } from 'core/common';
-import { ObjectResult, ResultCode } from 'src/graphql/object';
+import { ObjectResult } from 'src/graphql/object/schema';
 import { BaseResult, BaseResultCode } from 'src/graphql';
 import { PropertyService } from '../property/property.service';
 
@@ -34,10 +34,29 @@ export class ObjectService {
         `Create failed.\nWith info:\n${JSON.stringify(obj)}.\n${ex}`,
       );
       result.success = false;
-      result.code = ResultCode.B001;
+      result.code = BaseResultCode.B001;
     }
     return result;
   }
+  async update(obj: ObjectBase): Promise<ObjectResult> {
+    let result = new ObjectResult();
+    try {
+      let data = await this.objectRepository.save(obj);
+      let ids = obj.children.filter((o) => o.id != obj.id).map((x) => x.id);
+      data.children = await this.objectRepository.find({
+        where: { id: In(ids) },
+      });
+      result.data = data;
+    } catch (ex) {
+      this.logger.error(
+        `Update failed.\nWith info:\n${JSON.stringify(obj)}.\n${ex}`,
+      );
+      result.success = false;
+      result.code = BaseResultCode.B001;
+    }
+    return result;
+  }
+
   async get(id: string = String()) {
     let option: FindManyOptions<ObjectBase> = {
       relations: {

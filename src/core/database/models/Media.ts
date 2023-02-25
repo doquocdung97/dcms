@@ -25,7 +25,7 @@ export class BaseMedia {
   id: string;
 
   @Field()
-  @Column({ default: '' })
+  @Column({ default: '', length: 50 })
   name: string;
   @Field()
   @Column()

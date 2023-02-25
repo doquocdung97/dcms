@@ -21,8 +21,7 @@ import {
 } from 'core/database';
 import { PropertyService } from 'src/api/property/property.service';
 import { BaseResult, BaseResultCode } from 'src/graphql';
-import { InputUpdateProperty, InputCreateProperty } from 'src/graphql/property';
-import { PropertiesResult, PropertyResult } from 'src/graphql/property';
+import { InputUpdateProperty, InputCreateProperty,PropertiesResult, PropertyResult } from 'src/graphql/property/schema';
 @UseGuards(JwtAuthGuardGraphql)
 @Resolver((of) => PropertyBase)
 export class PropertyResolver {

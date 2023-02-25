@@ -1,103 +1,63 @@
 import {
-  Field,
-  ObjectType,
+  Args,
+  Parent,
+  ResolveField,
+  Resolver,
+  Query,
+  Mutation,
   InputType,
-  registerEnumType,
+  Field,
+  Int,
+  ObjectType,
 } from '@nestjs/graphql';
-import { User } from 'core/database';
-import { CustomUUID } from 'src/graphql';
+
+import { UseGuards } from '@nestjs/common';
 import {
-  MinLength,
-  MaxLength,
-  Length,
-  IsEmpty,
-  IsNotEmpty,
-  IsOptional,
-  IsEmail,
-  IsPhoneNumber,
-} from 'class-validator';
-@InputType()
-export class InputUpdateUser {
-  @IsOptional()
-  @Length(5, 50)
-  @Field({ nullable: true })
-  name: string;
+  JwtAuthGuardGraphql,
+  //LogInWithCredentialsGuard,
+} from 'src/api/auth/jwt-auth.guard';
+import { CurrentUserGraphql } from 'src/api/auth/currentuser';
+import { User } from 'core/database';
+import {
+  UserResult,
+  InputUpdateUser,
+  InputCreateUser,
+  InputUser,
+} from 'src/graphql/user/schema';
+import { AuthService, UserService } from 'src/api/auth/auth.service';
 
-  //@IsEmail()
-  //@Field({ nullable: true })
-  //email: string;
-
-  @IsOptional()
-  @Length(10, 11)
-  @Field({ nullable: true })
-  phone: string;
-
-  @Field({ nullable: true })
-  password: string;
-}
-@InputType()
-export class InputCreateUser {
-  @Length(5, 50)
-  @Field()
-  name: string;
-
-  @IsEmail()
-  @Field()
-  email: string;
-
-  @IsOptional()
-  @Length(10, 11)
-  @Field()
-  phone: string;
-
-  @Field()
-  password: string;
-}
-
-@InputType()
-export class InputUser {
-  @IsEmail()
-  @Field()
-  email: string;
-
-  @Field()
-  password: string;
-}
-
-export enum ResultCode {
-  /**
-   * succses
-   */
-  B000,
-  /**
-   * failed
-   */
-  B001,
-  /**
-   * item not found
-   */
-  B002,
-  /**
-   * can't update item
-   */
-  B003,
-  /**
-   * email has in database
-   */
-  B004,
-}
-registerEnumType(ResultCode, {
-  name: 'UserResultCode',
-  description: 'User result code',
-});
-
-@ObjectType()
-export class UserResult {
-  @Field((type) => ResultCode, { defaultValue: ResultCode.B000 })
-  code: ResultCode;
-
-  @Field({ defaultValue: true })
-  success: boolean;
-  @Field((type) => User, { nullable: true })
-  data: User;
+@Resolver((of) => User)
+export class AuthResolver {
+  constructor(
+    private authService: AuthService,
+    private userService: UserService,
+  ) {}
+  @UseGuards(JwtAuthGuardGraphql)
+  @Query((returns) => User)
+  async user(@CurrentUserGraphql() user: User) {
+    return user;
+  }
+  @UseGuards(JwtAuthGuardGraphql)
+  @Mutation(() => UserResult)
+  async updateUser(@Args('input') input: InputUpdateUser) {
+    /** now you have the file as a stream **/
+    let val = Object.assign(new User(), input);
+    let result = await this.userService.update(val);
+    return result;
+  }
+  @Mutation(() => UserResult)
+  async createUser(@Args('input') input: InputCreateUser) {
+    /** now you have the file as a stream **/
+    let val = Object.assign(new User(), input);
+    let result = await this.userService.create(val);
+    return result;
+  }
+  //@UseGuards(LogInWithCredentialsGuard)
+  @Mutation(() => UserResult)
+  async loginUser(@Args('input') input: InputUser) {
+    /** now you have the file as a stream **/
+    //let val = Object.assign(new User(), input);
+    //let result = await this.userService.login(input.email, input.password);
+    return await this.userService.login();
+  }
 }

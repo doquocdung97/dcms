@@ -1,7 +1,7 @@
 import { DataSource, Repository } from 'typeorm';
 import { User } from '../models/User';
 import { LoggerHelper } from 'core/common';
-import { UserResult, ResultCode } from 'src/graphql/user';
+import { UserResult, ResultCode } from 'src/graphql/user/schema';
 export default class UserRepository {
   private _logger = new LoggerHelper('User Repository');
   private _dataSource: DataSource;

@@ -6,7 +6,7 @@ import { In, Repository, DataSource } from 'typeorm';
 import { InjectRepository } from '@nestjs/typeorm';
 import { User } from 'core/database';
 import { LoggerHelper } from 'core/common';
-import { UserResult, ResultCode } from 'src/graphql/user';
+import { UserResult, ResultCode } from 'src/graphql/user/schema';
 @Injectable()
 export class AuthService {
   constructor(
@@ -29,7 +29,16 @@ export class AuthService {
     return this.userRepository.save(user);
   }
   async findOne(email: string): Promise<User | undefined> {
-    let user = await this.userRepository.findOneBy({ email: email });
+    let user = await this.userRepository.findOne({
+      relations: {
+        connect: {
+          document: true,
+          //user: true,
+        },
+      },
+      where: [{ email: email }],
+    });
+
     return user;
   }
   async validateUser(email: string, pass: string): Promise<any> {
@@ -120,5 +129,16 @@ export class UserService {
       result.code = ResultCode.B001;
     }
     return result;
+  }
+  async get(): Promise<any> {
+    let result = await this.userRepository.find({
+      relations: {
+        connect: {
+          document: true,
+          user: true,
+        },
+      },
+    });
+    return result; //this.userRepository.save(user);
   }
 }

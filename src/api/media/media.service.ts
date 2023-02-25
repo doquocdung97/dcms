@@ -14,7 +14,7 @@ interface InputMedia {
   file: any;
   properties: number[];
 }
-import { MediaResult, MediasResult, ResultCode } from 'src/graphql/media';
+import { MediaResult, MediasResult } from 'src/graphql/media/schema';
 @Injectable()
 export class MediaService {
   private filehelper = new FileHelper();
@@ -60,7 +60,7 @@ export class MediaService {
     } catch (ex) {
       this.logger.error(`Create failure.\n${ex}`);
       result.success = false;
-      result.code = ResultCode.B001;
+      result.code = BaseResultCode.B001;
     }
     return result;
   }
@@ -109,7 +109,7 @@ export class MediaService {
     } catch (ex) {
       this.logger.error(`Create many failures.\n${ex}`);
       result.success = false;
-      result.code = ResultCode.B001;
+      result.code = BaseResultCode.B001;
     }
     return result;
   }
@@ -154,7 +154,7 @@ export class MediaService {
       });
       if (!dataintable) {
         result.success = false;
-        result.code = ResultCode.B002;
+        result.code = BaseResultCode.B002;
         return result;
       }
       let new_data = Object.assign(dataintable, input);
@@ -234,7 +234,7 @@ export class MediaService {
     } catch (error) {
       this.logger.error(`Update failures.\n${error}`);
       result.success = false;
-      result.code = ResultCode.B001;
+      result.code = BaseResultCode.B001;
     }
     return result;
   }
