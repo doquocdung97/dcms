@@ -12,18 +12,30 @@ import {
   UpdateDateColumn,
   DeleteDateColumn,
   In,
+  Tree,
+  OneToOne,
+  JoinColumn,
+  ManyToOne,
 } from 'typeorm';
 import { BasePropertyType, MainProperty } from '../common';
 import { PropertyBase } from './Property';
 import { ValueObject } from './ValueObject';
 import { Field, Int, ObjectType } from '@nestjs/graphql';
+import { ObjectMain, } from './ObjectMain';
+import { BaseDocument } from './Document';
+
+
 @ObjectType()
 @Entity()
 export class ObjectBase {
   @Field((type) => CustomUUID)
+  
   @PrimaryGeneratedColumn('uuid')
   id: string;
 
+  @OneToOne(() => ObjectMain,(obj) => obj.detail)
+  main: ObjectMain
+ 
   @Field()
   @Column({ default: String() })
   name: string;
@@ -31,15 +43,6 @@ export class ObjectBase {
   @Field({ nullable: true })
   @Column({ nullable: true, default: String() })
   type: string;
-
-  @Field((type) => [ObjectBase])
-  @TreeChildren()
-  children: ObjectBase[];
-
-  @TreeParent({
-    onDelete: 'CASCADE',
-  })
-  parent: ObjectBase;
 
   //@Column()
   //public get fullName(): string {
@@ -64,8 +67,12 @@ export class ObjectBase {
   @Field({ nullable: true })
   @DeleteDateColumn()
   deleteAt: Date;
+
+  @ManyToOne(()=>BaseDocument,obj=>obj.objects,{nullable:false})
+  document:BaseDocument
 }
 
+let mainproperty = new MainProperty()
 class PropertyRelationship extends BasePropertyType {
   dataInTable = false;
   async set(property: PropertyBase, dataSource: DataSource) {
@@ -128,7 +135,7 @@ class PropertyRelationship extends BasePropertyType {
     return val;
   }
 }
-MainProperty.addProperty('relationship', PropertyRelationship);
+mainproperty.addProperty('relationship', PropertyRelationship);
 
 class PropertyRelationships extends BasePropertyType {
   dataInTable = false;
@@ -201,4 +208,4 @@ class PropertyRelationships extends BasePropertyType {
     return val;
   }
 }
-MainProperty.addProperty('relationships', PropertyRelationships);
+mainproperty.addProperty('relationships', PropertyRelationships);

@@ -9,25 +9,25 @@ import { DataSource } from 'typeorm';
  * Structural Pattern - Composite Pattern
  * Composite class
  */
-class _MainProperty {
+export class MainProperty {
   /**
  * Design Pattern
  * Creational Pattern - Singleton Pattern
  */
-  private static instance: _MainProperty;
+  private static instance: MainProperty;
   private properties = {};
   constructor() {
-    const instance = _MainProperty.instance;
+    const instance = MainProperty.instance;
     if (instance) {
       return instance;
     }
-    _MainProperty.instance = this;
+    MainProperty.instance = this;
   }
-  public static getInstance(): _MainProperty {
-    if (!_MainProperty.instance) {
-      _MainProperty.instance = new _MainProperty();
+  public static getInstance(): MainProperty {
+    if (!MainProperty.instance) {
+      MainProperty.instance = new MainProperty();
     }
-    return _MainProperty.instance;
+    return MainProperty.instance;
   }
 
   addProperty(name: string, property: any) {
@@ -53,8 +53,6 @@ class _MainProperty {
     return this.properties;
   }
 }
-
-export const MainProperty = new _MainProperty();
 
 /**
  * Design Pattern

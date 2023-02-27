@@ -76,7 +76,7 @@ export class PropertyService {
       });
       if (
         record &&
-        (!item.type || MainProperty.checkType(item.type.toString()))
+        (!item.type || new MainProperty().checkType(item.type.toString()))
       ) {
         let data = Object.assign(record, item);
         data.AfterUpdate(this.dataSource);

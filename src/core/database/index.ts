@@ -1,6 +1,7 @@
 export * from './common';
 export * from './models/Media';
 export * from './models/ObjectBase';
+export * from './models/ObjectMain';
 export * from './models/User';
 export * from './models/Document';
 export * from './models/Authentication';
@@ -8,6 +9,7 @@ export * from './models/ValueMedia';
 export * from './models/ValueObject';
 export * from './models/Property';
 export * from './subscriber/PropertySubscriber';
+
 //import { DataSource } from 'typeorm';
 //import { Config } from '../Constants';
 //export const AppDataSource = new DataSource({

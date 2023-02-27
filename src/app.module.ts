@@ -30,6 +30,7 @@ import {
   PropertySubscriber,
   AuthContentDocument,
   Authentication,
+  ObjectMain,
 } from 'core/database';
 import { PubSub } from 'graphql-subscriptions';
 import { ApolloServerPluginLandingPageLocalDefault } from 'apollo-server-core';
@@ -79,6 +80,7 @@ import { DocumentResolver } from './graphql/document';
       database: DatabaseConfig.DATABASENAME,
       entities: [
         ObjectBase,
+        ObjectMain,
         PropertyBase,
         ValueObject,
         ValueMedia,
@@ -93,6 +95,7 @@ import { DocumentResolver } from './graphql/document';
     }),
     TypeOrmModule.forFeature([
       ObjectBase,
+      ObjectMain,
       PropertyBase,
       ValueObject,
       ValueMedia,

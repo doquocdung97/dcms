@@ -6,7 +6,7 @@ import {
 } from '@nestjs/graphql';
 import { plainToClass } from 'class-transformer';
 import { IsOptional, Length } from 'class-validator';
-import { ObjectBase } from 'core/database';
+import { BaseDocument, ObjectBase, PropertyBase } from 'core/database';
 import {
   InputUpdateProperty,
   InputCreateProperty,
@@ -26,6 +26,9 @@ export class ObjectResult {
 }
 @InputType()
 export class InputCreateObject {
+  @Field(() => CustomUUID)
+  documentId: string;
+
   @Length(5, 50)
   @Field()
   name: string;
@@ -36,6 +39,20 @@ export class InputCreateObject {
 
   @Field((type) => [InputCreateProperty], { nullable: true })
   properties: [InputCreateProperty];
+  createModel() {
+    let model = plainToClass(ObjectBase, this);
+    let properties = [];
+
+    this.properties?.map((obj) => {
+      let p = plainToClass(PropertyBase, obj);
+      properties.push(p);
+    });
+    model.properties = properties;
+    let doc  = new BaseDocument()
+    doc.id = this.documentId
+    model.document = doc
+    return model;
+  }
 }
 @InputType()
 export class InputUpdateObject {
@@ -44,7 +61,7 @@ export class InputUpdateObject {
 
   @Field({ nullable: true })
   @IsOptional()
-  @Length(5, 10)
+  @Length(5, 50)
   name: string;
 
   @Field({ nullable: true })
@@ -64,7 +81,7 @@ export class InputUpdateObject {
       o.id = obj;
       objs.push(o);
     });
-    model.children = objs;
+    // model.children = objs;
     return model;
   }
 }

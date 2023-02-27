@@ -16,6 +16,7 @@ import { Field, Int, ObjectType } from '@nestjs/graphql';
 import { User } from './User';
 import { Authentication } from './Authentication';
 import { ifError } from 'assert';
+import { ObjectBase } from './ObjectBase';
 @ObjectType()
 @Entity()
 export class BaseDocument {
@@ -50,6 +51,9 @@ export class BaseDocument {
   //  if (!this.auths) this.auths = [];
   //  this.auths.push(auth);
   //}
+  @Field(() => [ObjectBase], { defaultValue: [] })
+  @OneToMany(()=>ObjectBase,obj=>obj.document)
+  objects:ObjectBase[]
 }
 export enum InputRole {
   ADMIN,

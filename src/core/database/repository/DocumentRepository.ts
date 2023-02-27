@@ -4,7 +4,7 @@ import { handleUpdateJoinTable, LoggerHelper } from 'core/common';
 import { plainToClass } from 'class-transformer';
 import { Authentication } from '../models/Authentication';
 import { User } from '../models/User';
-import { async } from 'rxjs';
+
 export default class DocumentRepository {
   private _logger = new LoggerHelper('Document Repository');
   private _dataSource: DataSource;
@@ -24,24 +24,20 @@ export default class DocumentRepository {
   }
   async get(id: string = String()) {
     let user = User.getByRequest(this._request);
-    //if (!id) {
-    //  let data = await this._authconnectdocumentRepository.find({
-    //    relations: {
-    //      document: true,
-    //      user: true,
-    //    },
-    //  });
-    //  console.log(data);
-    //  await this._authconnectdocumentRepository.delete(data.map((i) => i.id));
-    //}
-
     if (!user) return;
     let option: FindManyOptions<BaseDocument> = {
       relations: {
-        auths: {
-          //auth: true,
-          user: true,
-        },
+        // auths: {
+        //   //auth: true,
+        //   user: true,
+        // },
+        objects:{
+          properties:{
+            connectObject: true,
+            connectMeida: true,
+          }
+        }
+        
       },
       where: {
         id: id,
@@ -51,6 +47,9 @@ export default class DocumentRepository {
       return await this._repository.findOne(option);
     }
     return await this._repository.find(option);
+  }
+  getRepository(){
+    return this._repository
   }
   async create(input: BaseDocument) {
     await this._authconnectdocumentRepository.save(input.auths);
@@ -111,30 +110,14 @@ export default class DocumentRepository {
           }
         },
       );
-      //console.log(join);
       let rowdata = join.create_item.concat(join.update_item, auth_create);
       if (join.delete_item.length > 0) {
         await this._authconnectdocumentRepository.remove(join.delete_item);
       }
-      //await this._repository.save(input);
-      //console.log(input);
-      //console.log(rowdata);
       let result = await this._repository.save(input);
       result.auths = await this._authconnectdocumentRepository.save(rowdata);
       return Object.assign(result, record);
     }
-    //let user = await this._userRepository.findOne({
-    //  where: { id: '39b916f0-a287-4e37-b28b-88460d58a4d3' },
-    //});
-    //let auth = await this._authRepository.save(new Authentication());
-    //
-    //let connect = new AuthContentDocument();
-    //connect.auth = auth;
-    //connect.user = user;
-    //connect.document = record;
-    //await this._authconnectdocumentRepository.save(connect);
-    //let data = plainToClass(BaseDocument, record);
-    //data.users = users;
     return null;
   }
 }

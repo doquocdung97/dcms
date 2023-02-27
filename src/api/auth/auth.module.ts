@@ -18,6 +18,7 @@ import {
   PropertySubscriber,
   AuthContentDocument,
   Authentication,
+  ObjectMain,
 } from 'core/database';
 @Module({
   imports: [
@@ -39,6 +40,7 @@ import {
         PropertySubscriber,
         AuthContentDocument,
         Authentication,
+        ObjectMain
       ],
       synchronize: true,
     }),
@@ -53,6 +55,7 @@ import {
       PropertySubscriber,
       AuthContentDocument,
       Authentication,
+      ObjectMain
     ]),
     //UsersModule,
     PassportModule,
