@@ -20,7 +20,7 @@ export class ObjectController {
   async getHello(@Param() params: any, @Req() request: any) {
     //console.log(request.params, request.query);
     const { id } = request.query;
-    var data = await this.objectService.get(id);
+    var data = await this.objectService.get(null,id);
     return data;
   }
 }

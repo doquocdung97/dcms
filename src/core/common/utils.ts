@@ -1,3 +1,6 @@
+import { UnauthorizedException } from "@nestjs/common";
+import { BaseDocument, User } from "../database";
+
 export function handleUpdateJoinTable<T, B>(
     objects: B[],
     connects: T[],
@@ -32,4 +35,52 @@ export function parseBoolean(val: any): boolean {
         return true;
     }
     return false;
+}
+export enum TypeFunction {
+    QUERY,
+    CREATE,
+    EDIT,
+    DELETE,
+    SETTING
+}
+export async function Authorization(
+    user: User, 
+    doc: BaseDocument, 
+    type: TypeFunction,
+    success:() =>any,
+    error:(e: any) => void){
+    let autho = user.connect.find(x => x.document.id == doc.id)
+    let status = false;
+    if (autho) {
+        switch (type) {
+            case TypeFunction.QUERY: {
+                status = autho.query
+                break
+            }
+            case TypeFunction.CREATE: {
+                status = autho.create
+                break
+            }
+            case TypeFunction.EDIT: {
+                status = autho.edit
+                break
+            }
+            case TypeFunction.DELETE: {
+                status = autho.delete
+                break
+            }
+            case TypeFunction.SETTING: {
+                status = autho.setting
+                break
+            }
+        }
+    }
+    if(!status){
+        throw new UnauthorizedException()
+    }
+    try{
+       return await success()
+    }catch(ex){
+        error(ex)
+    }
 }

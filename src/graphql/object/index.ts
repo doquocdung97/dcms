@@ -9,7 +9,7 @@ import {
 } from '@nestjs/graphql';
 import { Inject, UseGuards } from '@nestjs/common';
 import { JwtAuthGuard, JwtAuthGuardGraphql } from 'src/api/auth/jwt-auth.guard';
-import { ObjectBase } from 'core/database';
+import { ObjectBase, ObjectMain } from 'core/database';
 import { ObjectService } from 'src/api/object/object.service';
 import { BaseResult } from 'src/graphql';
 import {
@@ -26,19 +26,25 @@ export class ObjectResolver {
 
   @Query((returns) => ObjectBase, { nullable: true })
   async object(@Args('id') id: string) {
-    var result = await this.objectService.get(id);
+    var result = await this.objectService.get(null,id);
     return result;
   }
   @Query((returns) => [ObjectBase], { nullable: true })
-  async objects() {
-    var result = await this.objectService.get();
+  async objects(@Args('documentId') documentId: string) {
+    var result = await this.objectService.get(documentId,null);
+    return result;
+  }
+  @Query((returns) => [ObjectMain], { nullable: true })
+  async treeObjects(@Args('documentId') documentId: string) {
+    var result = await this.objectService.getTree(documentId);
     return result;
   }
 
   @Mutation((returns) => ObjectResult)
-  async createObject(@Args('input') input: InputCreateObject) {
-    let val = Object.assign(new ObjectBase(), input);
-    let result = await this.objectService.create(val);
+  async createObject(@Args('parentId',{nullable:true}) parentId: string,@Args('input') input: InputCreateObject) {
+    let data = plainToClass(InputCreateObject, input);
+    let val = data.createModel()
+    let result = await this.objectService.create(parentId,val);
     return result;
   }
   @Mutation((returns) => ObjectResult)

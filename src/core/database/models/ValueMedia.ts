@@ -12,7 +12,7 @@ export class ValueMedia {
   @PrimaryGeneratedColumn()
   id: string;
 
-  @ManyToOne((type) => BaseMedia, (obj) => obj.connect, { onDelete: 'CASCADE' })
+  @ManyToOne((type) => BaseMedia, (obj) => obj.connect, { onDelete: 'CASCADE',eager: true })
   object: BaseMedia;
 
   @ManyToOne((type) => PropertyBase, (obj) => obj.connectMeida, {

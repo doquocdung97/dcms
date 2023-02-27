@@ -14,6 +14,7 @@ export class ValueObject {
 
   @ManyToOne((type) => ObjectBase, (obj) => obj.connect, {
     onDelete: 'CASCADE',
+    eager: true
   })
   object: ObjectBase;
 
