@@ -17,6 +17,7 @@ import { User } from './User';
 import { Authentication } from './Authentication';
 import { ifError } from 'assert';
 import { ObjectBase } from './ObjectBase';
+import { BaseMedia } from './Media';
 @ObjectType()
 @Entity()
 export class BaseDocument {
@@ -52,8 +53,12 @@ export class BaseDocument {
   //  this.auths.push(auth);
   //}
   @Field(() => [ObjectBase], { defaultValue: [] })
-  @OneToMany(()=>ObjectBase,obj=>obj.document)
-  objects:ObjectBase[]
+  @OneToMany(() => ObjectBase, (obj) => obj.document)
+  objects: ObjectBase[];
+
+  @Field(() => [BaseMedia], { defaultValue: [] })
+  @OneToMany(() => BaseMedia, (obj) => obj.document)
+  medias: BaseMedia;
 }
 export enum InputRole {
   ADMIN,
@@ -158,8 +163,8 @@ export class AuthContentDocument {
       this.setting = false;
     }
   }
-  constructor(role: Role = null, user:User = null) {
+  constructor(role: Role = null, user: User = null) {
     if (role != null) this.setValueByRole(role);
-    this.user = user
-    }
+    this.user = user;
+  }
 }

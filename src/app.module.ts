@@ -15,7 +15,7 @@ import { ObjectService } from './api/object/object.service';
 import { MediaService } from './api/media/media.service';
 import { AuthModule } from './api/auth/auth.module';
 import { MediaResolver } from './graphql/media';
-import { PropertyResolver } from './graphql/property/property.resolver';
+import { PropertyResolver } from './graphql/property';
 import { CommandResolver, ObjectResolver } from './graphql/object';
 import { AuthResolver } from './graphql/user';
 

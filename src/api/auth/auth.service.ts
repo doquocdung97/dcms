@@ -15,7 +15,7 @@ export class AuthService {
     private jwtService: JwtService, //@Inject(REQUEST) //private request,
   ) {}
 
-  async login(user: any) {
+  async login(user: User) {
     const payload = { email: user.email };
 
     return {
@@ -24,11 +24,22 @@ export class AuthService {
       }),
     };
   }
+  getToken(user: User) {
+    const payload = {
+      email: user.email,
+      docmentId: user.currentDoc?.document?.id,
+    };
+    console.log(payload);
+    return this.jwtService.sign(payload);
+  }
   async save(data: User) {
     let user = this.userRepository.create(data);
     return this.userRepository.save(user);
   }
-  async findOne(email: string): Promise<User | undefined> {
+  async findOne(
+    email: string,
+    documentId: string = null,
+  ): Promise<User | undefined> {
     let user = await this.userRepository.findOne({
       relations: {
         connect: {
@@ -38,7 +49,7 @@ export class AuthService {
       },
       where: [{ email: email }],
     });
-
+    user.currentDoc = user.connect.find((x) => x.document?.id == documentId);
     return user;
   }
   async validateUser(email: string, pass: string): Promise<any> {

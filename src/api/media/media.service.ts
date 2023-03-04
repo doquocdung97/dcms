@@ -3,7 +3,13 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { FindManyOptions, In, Repository } from 'typeorm';
 import { PropertyService } from '../property/property.service';
 import { PropertyBase, ValueMedia, BaseMedia, User } from 'core/database';
-import { FileHelper, handleUpdateJoinTable, LoggerHelper } from 'core/common';
+import {
+  FileHelper,
+  handleUpdateJoinTable,
+  LoggerHelper,
+  Authorization,
+  TypeFunction,
+} from 'core/common';
 import { Config, MediaConfig } from 'src/constants';
 import { REQUEST } from '@nestjs/core';
 import { BaseResult, BaseResultCode } from 'src/graphql';
@@ -241,29 +247,26 @@ export class MediaService {
 
   async get(data: any = {}) {
     let user = User.getByRequest(this.request);
-    let option: FindManyOptions<BaseMedia> = {
-      where: {
-        user: {
-          id: user.id,
+    return await Authorization(user, TypeFunction.QUERY, async (autho) => {
+      let option: FindManyOptions<BaseMedia> = {
+        where: {
+          id: data.id,
+          document: {
+            id: autho.document.id,
+          },
         },
-      },
-      relations: {
-        connect: {
-          property: true,
+        relations: {
+          connect: {
+            property: true,
+          },
+          user: true,
         },
-        user: true,
-      },
-    };
-    if (data.id) {
-      option.where = {
-        user: {
-          id: user.id,
-        },
-        id: data.id,
       };
-      return await this.mediaRepository.findOne(option);
-    }
-    return await this.mediaRepository.find(option);
+      if (data.id) {
+        return await this.mediaRepository.findOne(option);
+      }
+      return await this.mediaRepository.find(option);
+    });
   }
   async getByUrl(url: string) {
     return await this.mediaRepository.findOne({
@@ -275,52 +278,59 @@ export class MediaService {
   }
   async delete(id: string, softDelete = true): Promise<BaseResult> {
     let result = new BaseResult();
+    let user = User.getByRequest(this.request);
+    await Authorization(
+      user,
+      TypeFunction.DELETE,
+      async (autho) => {
+        let data = null;
+        if (softDelete) {
+          data = await this.mediaRepository.softDelete({
+            id: id,
+            document: { id: autho.document.id },
+          });
+        } else {
+          data = await this.mediaRepository.delete({
+            id: id,
+            document: { id: autho.document.id },
+          });
+        }
+        if (data && data.affected <= 0) {
+          result.success = false;
+          result.code = BaseResultCode.B002;
+        }
+      },
+      async (ex) => {
+        this.logger.error(`Delete failed.\n${ex}`);
+        result.success = false;
+        result.code = BaseResultCode.B001;
+      },
+    );
 
-    try {
-      let user = User.getByRequest(this.request);
-      if (softDelete) {
-        let data = await this.mediaRepository.softDelete({
-          id: id,
-          user: { id: user.id },
-        });
-        if (data.affected <= 0) {
-          result.success = false;
-          result.code = BaseResultCode.B002;
-        }
-      } else {
-        let data = await this.mediaRepository.delete({
-          id: id,
-          user: { id: user.id },
-        });
-        if (data.affected <= 0) {
-          result.success = false;
-          result.code = BaseResultCode.B002;
-        }
-      }
-    } catch (ex) {
-      this.logger.error(`Delete failed.\n${ex}`);
-      result.success = false;
-      result.code = BaseResultCode.B001;
-    }
     return result;
   }
   async restore(id: string): Promise<BaseResult> {
     let result = new BaseResult();
-    try {
-      let user = User.getByRequest(this.request);
-      let data = await this.mediaRepository.restore({
-        id: id,
-        user: { id: user.id },
-      });
-      if (data.affected <= 0) {
+    let user = User.getByRequest(this.request);
+    await Authorization(
+      user,
+      TypeFunction.DELETE,
+      async (autho) => {
+        let data = await this.mediaRepository.restore({
+          id: id,
+          document: { id: autho.document.id },
+        });
+        if (data.affected <= 0) {
+          result.success = false;
+          result.code = BaseResultCode.B002;
+        }
+      },
+      async (ex) => {
+        this.logger.error(`Restore failed.\n${ex}`);
         result.success = false;
-        result.code = BaseResultCode.B002;
-      }
-    } catch (ex) {
-      this.logger.error(`Restore failed.\n${ex}`);
-      result.success = false;
-      result.code = BaseResultCode.B001;
-    }
+        result.code = BaseResultCode.B001;
+      },
+    );
     return result;
   }
 }

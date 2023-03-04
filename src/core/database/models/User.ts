@@ -51,6 +51,8 @@ export class User {
   @OneToMany((type) => AuthContentDocument, (obj) => obj.user)
   connect: AuthContentDocument[];
 
+  @Field((type) => AuthContentDocument, { nullable: true })
+  currentDoc: AuthContentDocument;
   //@OneToMany((type) => BaseDocument, (obj) => obj.user, {
   //  onDelete: 'CASCADE',
   //})

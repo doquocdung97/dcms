@@ -101,6 +101,22 @@ export class DocumentsResult {
   @Field((type) => [BaseDocument], { nullable: true })
   data: BaseDocument[];
 }
+
+@ObjectType()
+export class AcitveDocumentResult {
+  @Field((type) => BaseResultCode, { defaultValue: BaseResultCode.B000 })
+  code: BaseResultCode;
+
+  @Field({ defaultValue: true })
+  success: boolean;
+
+  @Field({ nullable: true })
+  token: string;
+
+  @Field((type) => BaseDocument, { nullable: true })
+  data: BaseDocument;
+}
+
 registerEnumType(Role, {
   name: 'ResponseRole',
   description: 'Response Role user',

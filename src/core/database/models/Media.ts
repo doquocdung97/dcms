@@ -16,6 +16,7 @@ import { CustomUUID } from 'src/graphql';
 import { BasePropertyType, MainProperty } from '../common';
 import { User } from './User';
 import { Field, Int, ObjectType } from '@nestjs/graphql';
+import { BaseDocument } from './Document';
 
 @ObjectType()
 @Entity()
@@ -57,6 +58,12 @@ export class BaseMedia {
   user: User;
 
   file: File;
+
+  @ManyToOne(() => BaseDocument, (obj) => obj.medias, {
+    //nullable: false,
+    onDelete: 'CASCADE',
+  })
+  document: BaseDocument;
 
   @AfterLoad()
   AfterLoad() {

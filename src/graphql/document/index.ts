@@ -6,6 +6,7 @@ import {
   DocumentResult,
   InputCreateDocument,
   InputUpdateDocument,
+  AcitveDocumentResult,
 } from './schema';
 import { DocumentService } from 'src/api/document/document.service';
 import { BaseDocument } from 'core/database';
@@ -24,6 +25,11 @@ export class DocumentResolver {
   async documents() {
     var result = await this.documentService.get();
     return result;
+  }
+
+  @Mutation(() => AcitveDocumentResult)
+  async activeDocument(@Args('id') id: string) {
+    return await this.documentService.acitveDocument(id);
   }
 
   @Mutation(() => DocumentResult)

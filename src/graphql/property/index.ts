@@ -21,7 +21,12 @@ import {
 } from 'core/database';
 import { PropertyService } from 'src/api/property/property.service';
 import { BaseResult, BaseResultCode } from 'src/graphql';
-import { InputUpdateProperty, InputCreateProperty,PropertiesResult, PropertyResult } from 'src/graphql/property/schema';
+import {
+  InputUpdateProperty,
+  InputCreateProperty,
+  PropertiesResult,
+  PropertyResult,
+} from 'src/graphql/property/schema';
 @UseGuards(JwtAuthGuardGraphql)
 @Resolver((of) => PropertyBase)
 export class PropertyResolver {
@@ -31,12 +36,12 @@ export class PropertyResolver {
 
   @Query((returns) => PropertyBase, { nullable: true, name: 'property' })
   async getProperty(@Args('id', { type: () => Int }) id) {
-    var result = await this.propertyService.get({ id });
+    var result = await this.propertyService.get(id);
 
     return result;
   }
-  @Query((returns) => [PropertyBase], { nullable: true, name: 'properties' })
-  async getProperties() {
+  @Query((returns) => [PropertyBase], { nullable: true })
+  async properties() {
     var result = await this.propertyService.get();
     return result;
   }

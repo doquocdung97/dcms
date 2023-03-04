@@ -27,29 +27,38 @@ export default class DocumentRepository {
     if (!user) return;
     let option: FindManyOptions<BaseDocument> = {
       relations: {
-        // auths: {
-        //   //auth: true,
-        //   user: true,
-        // },
-        objects:{
-          properties:{
+        auths: {
+          //auth: true,
+          user: true,
+        },
+        objects: {
+          properties: {
             connectObject: true,
             connectMeida: true,
-          }
-        }
-        
+          },
+        },
       },
       where: {
         id: id,
       },
     };
     if (id) {
-      return await this._repository.findOne(option);
+      let result = await this._repository.findOne(option);
+      let hasuser = result.auths.find((x) => x.user.id == user.id);
+      if (hasuser) return result;
     }
-    return await this._repository.find(option);
+    let list = [];
+    let result = await this._repository.find(option);
+    result.map((doc) => {
+      let hasuser = doc.auths.find((x) => x.user.id == user.id);
+      if (hasuser) {
+        list.push(doc);
+      }
+    });
+    return list;
   }
-  getRepository(){
-    return this._repository
+  getRepository() {
+    return this._repository;
   }
   async create(input: BaseDocument) {
     await this._authconnectdocumentRepository.save(input.auths);
@@ -80,7 +89,6 @@ export default class DocumentRepository {
       let user_ids = input.auths
         .filter((auth) => auth.user.id != auth_create.user.id)
         .map((auth) => auth.user.id);
-      console.log(user_ids);
       let users = await this._userRepository.find({
         where: { id: In(user_ids) },
       });
@@ -115,8 +123,9 @@ export default class DocumentRepository {
         await this._authconnectdocumentRepository.remove(join.delete_item);
       }
       let result = await this._repository.save(input);
+      result = Object.assign(result, record);
       result.auths = await this._authconnectdocumentRepository.save(rowdata);
-      return Object.assign(result, record);
+      return result;
     }
     return null;
   }
