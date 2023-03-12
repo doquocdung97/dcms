@@ -84,6 +84,6 @@ export async function Authorization(
   try {
     return await success(autho);
   } catch (ex) {
-    if (!error) error(ex);
+    if (error) error(ex);
   }
 }

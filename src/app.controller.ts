@@ -15,6 +15,6 @@ export class AppController {
 
   @Get()
   async getHello(@Param() params: any, @Req() request: any) {
-    return 'Hello World!';
+    return this.appService.getHello();
   }
 }

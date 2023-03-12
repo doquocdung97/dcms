@@ -4,7 +4,7 @@ import {
   InputType,
   registerEnumType,
 } from '@nestjs/graphql';
-import { User } from 'core/database';
+import { BaseResultCode, User } from 'core/database';
 import { CustomUUID } from 'src/graphql';
 import {
   MinLength,
@@ -16,6 +16,7 @@ import {
   IsEmail,
   IsPhoneNumber,
 } from 'class-validator';
+import { UserResult as UserResultBase} from 'src/core/database/repository/UserRepository';
 @InputType()
 export class InputUpdateUser {
   @IsOptional()
@@ -64,40 +65,41 @@ export class InputUser {
   password: string;
 }
 
-export enum ResultCode {
-  /**
-   * succses
-   */
-  B000,
-  /**
-   * failed
-   */
-  B001,
-  /**
-   * item not found
-   */
-  B002,
-  /**
-   * can't update item
-   */
-  B003,
-  /**
-   * email has in database
-   */
-  B004,
-}
-registerEnumType(ResultCode, {
-  name: 'UserResultCode',
-  description: 'User result code',
-});
+// export enum ResultCode {
+//   /**
+//    * succses
+//    */
+//   B000,
+//   /**
+//    * failed
+//    */
+//   B001,
+//   /**
+//    * item not found
+//    */
+//   B002,
+//   /**
+//    * can't update item
+//    */
+//   B003,
+//   /**
+//    * email has in database
+//    */
+//   B004,
+// }
+// registerEnumType(ResultCode, {
+//   name: 'UserResultCode',
+//   description: 'User result code',
+// });
 
 @ObjectType()
-export class UserResult {
-  @Field((type) => ResultCode, { defaultValue: ResultCode.B000 })
-  code: ResultCode;
+export class UserResult implements UserResultBase {
+  @Field((type) => BaseResultCode, { defaultValue: BaseResultCode.B000 })
+  code: BaseResultCode;
 
   @Field({ defaultValue: true })
   success: boolean;
+
   @Field((type) => User, { nullable: true })
   data: User;
 }

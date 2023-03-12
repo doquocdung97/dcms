@@ -59,6 +59,11 @@ export class BaseDocument {
   @Field(() => [BaseMedia], { defaultValue: [] })
   @OneToMany(() => BaseMedia, (obj) => obj.document)
   medias: BaseMedia;
+  static create(id:string):BaseDocument{
+    let doc =  new BaseDocument()
+    doc.id = id
+    return doc
+  }
 }
 export enum InputRole {
   ADMIN,

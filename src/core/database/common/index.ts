@@ -78,3 +78,15 @@ export class BasePropertyType {
 }
 
 export enum TypeProperty {}
+
+export enum BaseResultCode {
+  B000,
+  B001,
+  B002,
+  B003,
+  B004,
+}
+export class BaseResult {
+  code: BaseResultCode;
+  success: boolean;
+}

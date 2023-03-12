@@ -11,7 +11,7 @@ import {
   ObjectType,
 } from '@nestjs/graphql';
 
-import { UseGuards } from '@nestjs/common';
+import { Inject, UseGuards } from '@nestjs/common';
 import {
   JwtAuthGuardGraphql,
   //LogInWithCredentialsGuard,
@@ -24,14 +24,18 @@ import {
   InputCreateUser,
   InputUser,
 } from 'src/graphql/user/schema';
-import { AuthService, UserService } from 'src/api/auth/auth.service';
+import { REQUEST } from '@nestjs/core';
+import UserRepository from 'src/core/database/repository/UserRepository';
 
 @Resolver((of) => User)
 export class AuthResolver {
+  private _repository: UserRepository
   constructor(
-    private authService: AuthService,
-    private userService: UserService,
-  ) {}
+    @Inject(REQUEST)
+    private request
+  ) {
+    this._repository = new UserRepository(request)
+  }
   @UseGuards(JwtAuthGuardGraphql)
   @Query((returns) => User)
   async user(@CurrentUserGraphql() user: User) {
@@ -42,14 +46,14 @@ export class AuthResolver {
   async updateUser(@Args('input') input: InputUpdateUser) {
     /** now you have the file as a stream **/
     let val = Object.assign(new User(), input);
-    let result = await this.userService.update(val);
+    let result = await this._repository.update(val);
     return result;
   }
   @Mutation(() => UserResult)
   async createUser(@Args('input') input: InputCreateUser) {
     /** now you have the file as a stream **/
     let val = Object.assign(new User(), input);
-    let result = await this.userService.create(val);
+    let result = await this._repository.create(val);
     return result;
   }
   //@UseGuards(LogInWithCredentialsGuard)
@@ -58,6 +62,6 @@ export class AuthResolver {
     /** now you have the file as a stream **/
     //let val = Object.assign(new User(), input);
     //let result = await this.userService.login(input.email, input.password);
-    return await this.userService.login();
+    //return await this._repository.login();
   }
 }

@@ -9,12 +9,13 @@ import { IsOptional, Length } from 'class-validator';
 import {
   AuthContentDocument,
   BaseDocument,
+  BaseResultCode,
   InputRole,
   Role,
   User,
 } from 'src/core/database';
 import { CustomUUID } from '../graphqlscalartype';
-import { BaseResultCode } from '../objecttype';
+import { DocumentResult as DocumentResultBase } from 'src/core/database/repository/DocumentRepository';
 
 @InputType()
 export class UserAuth {
@@ -81,12 +82,13 @@ export class InputCreateDocument {
 }
 
 @ObjectType()
-export class DocumentResult {
+export class DocumentResult implements DocumentResultBase {
   @Field((type) => BaseResultCode, { defaultValue: BaseResultCode.B000 })
   code: BaseResultCode;
 
   @Field({ defaultValue: true })
   success: boolean;
+  
   @Field((type) => BaseDocument, { nullable: true })
   data: BaseDocument;
 }

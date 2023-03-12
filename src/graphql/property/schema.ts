@@ -1,5 +1,5 @@
-import { BaseResultCode, CustomObject, CustomUUID } from 'src/graphql';
-import { TypeProperty } from 'core/database';
+import {  CustomObject, CustomUUID } from 'src/graphql';
+import { BaseResultCode, TypeProperty } from 'core/database';
 import {
   MinLength,
   MaxLength,

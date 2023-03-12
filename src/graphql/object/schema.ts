@@ -6,13 +6,12 @@ import {
 } from '@nestjs/graphql';
 import { plainToClass } from 'class-transformer';
 import { IsOptional, Length } from 'class-validator';
-import { BaseDocument, ObjectBase, PropertyBase } from 'core/database';
+import { BaseDocument, BaseResultCode, ObjectBase, PropertyBase } from 'core/database';
 import {
   InputUpdateProperty,
   InputCreateProperty,
 } from 'src/graphql/property/schema';
 import { CustomUUID } from '../graphqlscalartype';
-import { BaseResultCode } from '../objecttype';
 
 @ObjectType()
 export class ObjectResult {

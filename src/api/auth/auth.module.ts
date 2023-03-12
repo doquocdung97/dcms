@@ -1,5 +1,5 @@
 import { Module } from '@nestjs/common';
-import { AuthService, UserService } from './auth.service';
+import { AuthService } from './auth.service';
 import { PassportModule } from '@nestjs/passport';
 import { LocalStrategy } from './local.strategy';
 import { JwtModule } from '@nestjs/jwt';
@@ -7,56 +7,20 @@ import { JwtStrategy } from './jwt.strategy';
 import { AuthController } from './auth.controller';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { Config, DatabaseConfig, PasswordConfig } from '../../constants';
-import {
-  ObjectBase,
-  PropertyBase,
-  ValueObject,
-  ValueMedia,
-  BaseMedia,
-  User,
-  BaseDocument,
-  PropertySubscriber,
-  AuthContentDocument,
-  Authentication,
-  ObjectMain,
-} from 'core/database';
+import { Models } from 'core/database';
 @Module({
   imports: [
-    TypeOrmModule.forRoot({
-      type: 'mysql',
-      host: DatabaseConfig.HOST,
-      port: DatabaseConfig.PORT,
-      username: DatabaseConfig.USERNAME,
-      password: DatabaseConfig.PASSWORD,
-      database: DatabaseConfig.DATABASENAME,
-      entities: [
-        ObjectBase,
-        PropertyBase,
-        ValueObject,
-        ValueMedia,
-        BaseMedia,
-        User,
-        BaseDocument,
-        PropertySubscriber,
-        AuthContentDocument,
-        Authentication,
-        ObjectMain
-      ],
-      synchronize: true,
-    }),
-    TypeOrmModule.forFeature([
-      ObjectBase,
-      PropertyBase,
-      ValueObject,
-      ValueMedia,
-      BaseMedia,
-      User,
-      BaseDocument,
-      PropertySubscriber,
-      AuthContentDocument,
-      Authentication,
-      ObjectMain
-    ]),
+    // TypeOrmModule.forRoot({
+    //   type: 'mysql',
+    //   host: DatabaseConfig.HOST,
+    //   port: DatabaseConfig.PORT,
+    //   username: DatabaseConfig.USERNAME,
+    //   password: DatabaseConfig.PASSWORD,
+    //   database: DatabaseConfig.DATABASENAME,
+    //   entities: Models,
+    //   synchronize: true,
+    // }),
+    // TypeOrmModule.forFeature(Models),
     //UsersModule,
     PassportModule,
     JwtModule.register({
@@ -64,8 +28,8 @@ import {
       //signOptions: { expiresIn: '60s' },
     }),
   ],
-  providers: [AuthService, UserService, LocalStrategy, JwtStrategy],
-  exports: [AuthService, UserService],
+  providers: [AuthService, LocalStrategy, JwtStrategy],
+  exports: [AuthService],
   controllers: [AuthController],
 })
-export class AuthModule {}
+export class AuthModule { }

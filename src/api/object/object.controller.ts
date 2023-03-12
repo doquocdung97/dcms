@@ -1,9 +1,16 @@
-import { Controller, Post, Req, Param, Get } from '@nestjs/common';
-import { ObjectService } from './object.service';
+import { Controller, Post, Req, Param, Get, Inject } from '@nestjs/common';
+import { REQUEST } from '@nestjs/core';
+import ObjectRepository from 'src/core/database/repository/ObjectRepository';
 
 @Controller('object')
 export class ObjectController {
-  constructor(private readonly objectService: ObjectService) {}
+  private _repository: ObjectRepository
+  constructor(
+    @Inject(REQUEST)
+    private request
+  ) {
+    this._repository = new ObjectRepository(request)
+  }
   @Post('save')
   async save(@Req() rep: any) {
     //var data = await this.appService.create({
@@ -20,7 +27,7 @@ export class ObjectController {
   async getHello(@Param() params: any, @Req() request: any) {
     //console.log(request.params, request.query);
     const { id } = request.query;
-    var data = await this.objectService.get(null,id);
+    var data = await this._repository.get(id);
     return data;
   }
 }

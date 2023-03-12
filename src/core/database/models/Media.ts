@@ -60,7 +60,7 @@ export class BaseMedia {
   file: File;
 
   @ManyToOne(() => BaseDocument, (obj) => obj.medias, {
-    //nullable: false,
+    nullable: false,
     onDelete: 'CASCADE',
   })
   document: BaseDocument;

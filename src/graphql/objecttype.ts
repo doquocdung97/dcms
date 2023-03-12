@@ -11,25 +11,8 @@ import {
   Field,
   ObjectType,
 } from '@nestjs/graphql';
+import { BaseResultCode } from 'src/core/database';
 
-export enum BaseResultCode {
-  /**
-   * succses
-   */
-  B000,
-  /**
-   * failed
-   */
-  B001,
-  /**
-   * item not found
-   */
-  B002,
-  /**
-   *
-   */
-  B003,
-}
 registerEnumType(BaseResultCode, {
   name: 'BaseResultCode',
   description: 'Base Result Code',

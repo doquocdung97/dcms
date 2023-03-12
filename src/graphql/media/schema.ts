@@ -4,9 +4,9 @@ import {
   InputType,
   registerEnumType,
 } from '@nestjs/graphql';
-import { BaseMedia, PropertyBase } from 'core/database';
+import { BaseMedia, BaseResultCode, PropertyBase } from 'core/database';
 import * as GraphQLUpload from 'graphql-upload/GraphQLUpload.js';
-import { BaseResultCode, CustomUUID } from 'src/graphql';
+import {  CustomUUID } from 'src/graphql';
 import { FileUpload, getFileName } from 'core/common';
 import { plainToClass } from 'class-transformer';
 import { IsOptional, Length } from 'class-validator';
