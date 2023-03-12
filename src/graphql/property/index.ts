@@ -1,100 +1,96 @@
-import { CustomObject, CustomUUID } from 'src/graphql';
-import { TypeProperty } from 'core/database';
 import {
-  MinLength,
-  MaxLength,
-  Length,
-  IsEmpty,
-  IsNotEmpty,
-  IsOptional,
-} from 'class-validator';
-import {
-  Field,
-  InputType,
-  registerEnumType,
-  ObjectType,
+  Args,
+  Resolver,
+  Query,
+  Mutation,
+  Int,
 } from '@nestjs/graphql';
-import { PropertyBase } from 'core/database';
-@InputType()
-export class InputUpdateProperty {
-  @Field()
-  id: number;
 
-  @Field({ nullable: true })
-  @IsOptional()
-  @MinLength(5)
-  @MaxLength(50)
-  name?: string;
+import { Inject, UseGuards } from '@nestjs/common';
+import { JwtAuthGuardGraphql } from 'src/api/auth/jwt-auth.guard';
+import {
+  PropertyBase
+} from 'core/database';
+import { BaseResult } from 'src/graphql';
+import {
+  InputUpdateProperty,
+  InputCreateProperty,
+  PropertiesResult,
+  PropertyResult,
+} from 'src/graphql/property/schema';
+import PropertyRepository from 'src/core/database/repository/PropertyRepository';
+import { REQUEST } from '@nestjs/core';
+@UseGuards(JwtAuthGuardGraphql)
+@Resolver((of) => PropertyBase)
+export class PropertyResolver {
+  private _repository: PropertyRepository
+  constructor(
+    @Inject(REQUEST)
+    private request
+  ) {
+    this._repository = new PropertyRepository(request)
+  }
 
-  @Field((type) => TypeProperty, { nullable: true })
-  type: TypeProperty;
+  @Query((returns) => PropertyBase, { nullable: true, name: 'property' })
+  async getProperty(@Args('id', { type: () => Int }) id) {
+    var result = await this._repository.get(id);
 
-  @Field({ nullable: true })
-  description: string;
+    return result;
+  }
+  @Query((returns) => [PropertyBase], { nullable: true })
+  async properties() {
+    var result = await this._repository.get();
+    return result;
+  }
+  @Mutation((returns) => PropertyResult)
+  async updateProperty(@Args('input') input: InputUpdateProperty) {
+    let p = new PropertyBase();
+    let input_new = Object.assign(p, input);
+    var result = await this._repository.update(input_new);
 
-  @Field({ nullable: true })
-  status: number;
+    return result;
+  }
+  @Mutation((returns) => BaseResult)
+  async deleteProperty(
+    @Args('id') id: number,
+    @Args('soft', { defaultValue: true, nullable: true }) soft: boolean,
+  ) {
+    return await this._repository.delete(id, soft);
+  }
+  @Mutation((returns) => BaseResult)
+  async restoreProperty(@Args('id') id: number) {
+    return await this._repository.restore(id);
+  }
 
-  @Field((type) => CustomObject, { nullable: true })
-  value: any;
-}
+  @Mutation((returns) => PropertyResult)
+  async addProperty(
+    @Args('id') id: string,
+    @Args('input') input: InputCreateProperty,
+  ) {
+    let p = new PropertyBase();
+    let val = Object.assign(p, input);
+    let property = await this._repository.create(id, val);
+    return property;
+  }
 
-@InputType()
-export class InputCreateProperty {
-  @Field()
-  @MinLength(5)
-  @MaxLength(50)
-  name: string;
-
-  @Field((type) => TypeProperty)
-  type: TypeProperty;
-
-  @Field({ nullable: true })
-  description: string;
-
-  @Field({ nullable: true })
-  status: number;
-
-  @Field((type) => CustomObject)
-  value: any;
-}
-export enum ResultCode {
-  /**
-   * succses
-   */
-  B000,
-  /**
-   * failed
-   */
-  B001,
-  /**
-   * item not found
-   */
-  B002,
-}
-registerEnumType(ResultCode, {
-  name: 'PropertyResultCode',
-  description: 'Property result code',
-});
-
-@ObjectType()
-export class PropertyResult {
-  @Field((type) => ResultCode, { defaultValue: ResultCode.B000 })
-  code: ResultCode;
-
-  @Field({ defaultValue: true })
-  success: boolean;
-  @Field((type) => PropertyBase, { nullable: true })
-  data: PropertyBase;
-}
-
-@ObjectType()
-export class PropertiesResult {
-  @Field((type) => ResultCode, { defaultValue: ResultCode.B000 })
-  code: ResultCode;
-
-  @Field({ defaultValue: true })
-  success: boolean;
-  @Field((type) => [PropertyBase], { nullable: true })
-  data: PropertyBase[];
+  @Mutation((returns) => PropertiesResult)
+  async addPropertys(
+    @Args('id') id: string,
+    @Args('inputs', { type: () => [InputCreateProperty] })
+    inputs: [InputCreateProperty],
+  ) {
+    let vals = [];
+    inputs.map((input) => {
+      let p = new PropertyBase();
+      let val = Object.assign(p, input);
+      vals.push(val);
+    });
+    let propertys = await this._repository.creates(id, vals);
+    return propertys;
+  }
+  //@ResolveField()
+  //async posts(@Parent() author) {
+  //  const { id } = author;
+  //  return this.mediaService.findAll({ authorId: id });
+  //}
 }

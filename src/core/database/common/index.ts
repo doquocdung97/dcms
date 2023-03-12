@@ -1,8 +1,35 @@
 import { DataSource } from 'typeorm';
 
-class _MainProperty {
+/**
+ * Design Pattern
+ * Creational Pattern - Builder Pattern
+ */
+/**
+ * Design Pattern
+ * Structural Pattern - Composite Pattern
+ * Composite class
+ */
+export class MainProperty {
+  /**
+ * Design Pattern
+ * Creational Pattern - Singleton Pattern
+ */
+  private static instance: MainProperty;
   private properties = {};
-  constructor() {}
+  constructor() {
+    const instance = MainProperty.instance;
+    if (instance) {
+      return instance;
+    }
+    MainProperty.instance = this;
+  }
+  public static getInstance(): MainProperty {
+    if (!MainProperty.instance) {
+      MainProperty.instance = new MainProperty();
+    }
+    return MainProperty.instance;
+  }
+
   addProperty(name: string, property: any) {
     this.properties[name] = new property();
   }
@@ -15,6 +42,10 @@ class _MainProperty {
   checkType(name: string) {
     return this.properties[name.toLowerCase()] ? true : false;
   }
+  /**
+   * Design Pattern:
+   * Creational Pattern - Factory Method
+   */
   get(name: any): BasePropertyType {
     return this.properties[name.toLowerCase()];
   }
@@ -23,8 +54,11 @@ class _MainProperty {
   }
 }
 
-export const MainProperty = new _MainProperty();
-
+/**
+ * Design Pattern
+ * Structural Pattern - Composite Pattern
+ * Component interface
+ */
 export class BasePropertyType {
   dataInTable: boolean = true;
   constructor() {}
@@ -44,3 +78,15 @@ export class BasePropertyType {
 }
 
 export enum TypeProperty {}
+
+export enum BaseResultCode {
+  B000,
+  B001,
+  B002,
+  B003,
+  B004,
+}
+export class BaseResult {
+  code: BaseResultCode;
+  success: boolean;
+}

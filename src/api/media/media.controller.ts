@@ -10,18 +10,26 @@ import {
   Res,
   Param,
   UseGuards,
+  Inject,
 } from '@nestjs/common';
-import { MediaService } from './media.service';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { FileAPI, FileHelper, parseBoolean } from 'core/common';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 import { CurrentUser } from '../auth/currentuser';
 import { plainToClass } from 'class-transformer';
+import MediaRepository from 'src/core/database/repository/MediaRepository';
+import { REQUEST } from '@nestjs/core';
 @UseGuards(JwtAuthGuard)
 @Controller('media')
 export class MediaController {
   filehelper = new FileHelper();
-  constructor(private readonly mediaService: MediaService) {}
+  private _repository: MediaRepository
+  constructor(
+    @Inject(REQUEST)
+    private request
+    ) {
+      this._repository = new MediaRepository(request)
+    }
 
   @Post('/update')
   @UseInterceptors(FileInterceptor('file'))
@@ -31,19 +39,19 @@ export class MediaController {
     rowdata.public = parseBoolean(rowdata.public);
 
     rowdata.file = plainToClass(FileAPI, file).toFile();
-    let result = await this.mediaService.update(rowdata);
+    let result = await this._repository.update(rowdata);
     return result;
   }
 
   @Get()
   async get(@Req() request: any) {
     const { id } = request.query;
-    return await this.mediaService.get({ id });
+    return await this._repository.get({ id });
   }
   @Get('private/:file')
   async getfile(@Res() res, @Param('file') filename, @CurrentUser() user) {
-    let data = await this.mediaService.getByUrl('media/private/' + filename);
-    if (data && data.user && user && data.user.id == user.id) {
+    let data = await this._repository.getByUrl('media/private/' + filename);
+    if (data) {
       res.sendFile(filename, { root: './media/private' });
       return;
     }

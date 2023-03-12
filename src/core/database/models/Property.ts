@@ -17,41 +17,55 @@ import { BaseMedia } from './Media';
 import { ValueObject } from './ValueObject';
 import { ValueMedia } from './ValueMedia';
 import { BasePropertyType, MainProperty, TypeProperty } from '../common';
-
+let mainproperty = new MainProperty()
 class PropertyString extends BasePropertyType {
+  /**
+   * Design Pattern:
+   * Structural Pattern - Decorator Pattern
+   */
   get(object: PropertyBase) {
     return super.get(object) || String();
   }
 }
-MainProperty.addProperty('string', PropertyString);
+mainproperty.addProperty('string', PropertyString);
 
+/**
+ * Design Pattern:
+ * Structural Pattern - Bridge Pattern
+ */
+  
 class PropertyStrings extends BasePropertyType {
   get(object: PropertyBase) {
     return super.get(object) || [];
   }
 }
-MainProperty.addProperty('strings', PropertyStrings);
+mainproperty.addProperty('strings', PropertyStrings);
 
+/**
+ * Design Pattern
+ * Structural Pattern - Composite Pattern
+ * Leaf class
+ */
 class PropertyNumber extends BasePropertyType {
   get(object: PropertyBase) {
     return super.get(object) || 0;
   }
 }
-MainProperty.addProperty('number', PropertyNumber);
+mainproperty.addProperty('number', PropertyNumber);
 
 class PropertyNumbers extends BasePropertyType {
   get(object: PropertyBase) {
     return super.get(object) || [];
   }
 }
-MainProperty.addProperty('numbers', PropertyNumbers);
+mainproperty.addProperty('numbers', PropertyNumbers);
 
 class PropertyJson extends BasePropertyType {
   get(object: PropertyBase) {
     return super.get(object) || {};
   }
 }
-MainProperty.addProperty('json', PropertyJson);
+mainproperty.addProperty('json', PropertyJson);
 class PropertyMedia extends BasePropertyType {
   dataInTable = false;
   async set(object: PropertyBase, dataSource: DataSource) {
@@ -113,7 +127,7 @@ class PropertyMedia extends BasePropertyType {
     return val;
   }
 }
-MainProperty.addProperty('media', PropertyMedia);
+mainproperty.addProperty('media', PropertyMedia);
 
 class PropertyMedias extends BasePropertyType {
   dataInTable = false;
@@ -180,7 +194,7 @@ class PropertyMedias extends BasePropertyType {
     return val;
   }
 }
-MainProperty.addProperty('medias', PropertyMedias);
+mainproperty.addProperty('medias', PropertyMedias);
 import {
   createUnionType,
   Field,
@@ -191,7 +205,7 @@ import {
 import { handleUpdateJoinTable } from 'core/common';
 import { CustomObject } from 'src/graphql';
 //create value enum type property
-let typeproperties = MainProperty.getTypes();
+let typeproperties = mainproperty.getTypes();
 typeproperties.map((item) => {
   let property = item.toUpperCase();
   TypeProperty[property] = property;
@@ -210,7 +224,7 @@ export class PropertyBase extends BaseEntity {
   id: number;
 
   @Field()
-  @Column({ default: String() })
+  @Column({ default: String(), length: 50 })
   name: string;
 
   @Field()
@@ -261,14 +275,14 @@ export class PropertyBase extends BaseEntity {
   @AfterLoad()
   AfterLoad() {
     this.value = null;
-    let property = MainProperty.get(this.type);
+    let property = mainproperty.get(this.type);
     if (property) {
       this.value = property.get(this);
     }
   }
 
   async AfterUpdate(dataSource: DataSource) {
-    let property = MainProperty.get(this.type);
+    let property = mainproperty.get(this.type);
     if (property) {
       this.value = await property.set(this, dataSource);
     }

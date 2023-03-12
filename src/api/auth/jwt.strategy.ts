@@ -22,8 +22,11 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
 
   async validate(payload: any) {
     //let data = { userId: payload.sub, username: payload.username };
-    let user = await this.usersService.findOne(payload.email);
-    delete user['password'];
+    let user = await this.usersService.findOne(
+      payload.email,
+      payload.docmentId,
+    );
+    //delete user['password'];
     return user;
   }
 }

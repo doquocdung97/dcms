@@ -1,12 +1,19 @@
-import { Controller, Post, Req } from '@nestjs/common';
-import { PropertyService } from './property.service';
+import { Controller, Inject, Post, Req } from '@nestjs/common';
+import { REQUEST } from '@nestjs/core';
+import PropertyRepository from 'src/core/database/repository/PropertyRepository';
 
 @Controller('property')
 export class PropertyController {
-  constructor(private readonly propertyService: PropertyService) {}
+  private _repository: PropertyRepository
+  constructor(
+    @Inject(REQUEST)
+    private request
+  ) {
+    this._repository = new PropertyRepository(request)
+  }
   @Post('/update')
   async update(@Req() rep: any) {
     //var a = rep.body as PropertyBase;
-    return await this.propertyService.update(rep.body);
+    return await this._repository.update(rep.body);
   }
 }

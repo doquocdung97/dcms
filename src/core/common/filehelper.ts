@@ -51,9 +51,8 @@ export class FileHelper {
           resolve(true);
         });
       });
-      let pathfile = filepath.replace(/\\/g, '/');
-      this.logger.info(`Upload file success - path: ${pathfile}`);
-      return pathfile;
+      this.logger.info(`Upload file success - path: ${filepath}`);
+      return filepath;
     } catch (error) {
       this.logger.error(`Upload file - error: ${error}`);
     }
@@ -102,6 +101,12 @@ export class FileHelper {
   }
   joinpath(...path) {
     return join(...path);
+  }
+  parseUrl(str:string){
+    if(str){
+      str = str.replace(/\\/g, '/');
+      return str
+    }
   }
 }
 export function getFileName(path: string, type: boolean = false) {
