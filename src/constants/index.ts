@@ -3,10 +3,10 @@ import { parseBoolean } from 'core/common';
 export class DatabaseConfig {
   static TYPE = process.env.DB_TYPE || String();
   static PORT: number = parseInt(process.env.DB_PORT) || 3307;
-  static HOST = process.env.DB_HOST || String('dev-api.onecore.vn');
-  static USERNAME = process.env.DB_USERNAME || String('root');
-  static PASSWORD = process.env.DB_PASSWORD || String('Quangduy1');
-  static DATABASENAME = process.env.DB_DATABASE_NAME || String('dungdqtest');
+  static HOST = process.env.DB_HOST || String();
+  static USERNAME = process.env.DB_USERNAME || String();
+  static PASSWORD = process.env.DB_PASSWORD || String();
+  static DATABASENAME = process.env.DB_DATABASE_NAME || String();
   static MAIN = 'main'
   static CORE = 'core'
 }
