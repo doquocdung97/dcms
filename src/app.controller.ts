@@ -1,20 +1,17 @@
 import {
   Controller,
   Get,
-  Post,
-  Param,
-  Req,
-  UseGuards,
-  Request,
+  Redirect
 } from '@nestjs/common';
 import { AppService } from './app.service';
+import { Config } from './constants';
 
 @Controller()
 export class AppController {
-  constructor(private readonly appService: AppService) {}
-
+  constructor(private readonly appService: AppService) { }
+  @Redirect(Config.REDIRECT_URL)
   @Get()
-  async getHello(@Param() params: any, @Req() request: any) {
-    return this.appService.getHello();
+  async get() {
+    return null;
   }
 }

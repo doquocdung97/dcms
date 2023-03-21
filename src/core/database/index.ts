@@ -13,7 +13,6 @@ export * from './models/Property';
 export * from './models/Token';
 export * from './subscriber/PropertySubscriber';
 
-import { Token } from 'graphql';
 import { Authentication } from './models/Authentication';
 import { AuthContentDocument, BaseDocument } from './models/Document';
 import { BaseMedia } from './models/Media';
@@ -28,14 +27,14 @@ export const Models = [
 	ObjectBase,
 	ObjectMain,
 	PropertyBase,
-	ValueObject,
+	
 	ValueMedia,
+	ValueObject,
 	BaseMedia,
 	User,
 	BaseDocument,
 	AuthContentDocument,
-	Authentication,
-	Token
+	Authentication
 ]
 import { DataSource, EntityTarget, ObjectLiteral, Repository } from 'typeorm';
 import { DatabaseConfig } from 'src/constants';
@@ -69,25 +68,23 @@ export class DataBase {
 		DataBase.instance = this;
 	}
 	async connect() {
-		if (!this._datasource) {
-			this._logger.info('connecting')
-			await AppDataSource.initialize()
-				.then(async (data) => {
-					this._logger.info('connected')
-					this._datasource = data
-					return data
-				})
-				.catch(error => {
-					this._logger.error(error)
-					// throw new Error("can't connect to database")
-				});
-		}
-
-		return this._datasource
+		this._logger.info('connecting')
+		let data = await AppDataSource.initialize().then(async (data) => {
+			this._logger.info('connected')
+			return data
+		}).catch(error => {
+			this._logger.error(error)
+			// throw new Error("can't connect to database")
+		});
+		return data
 	}
 	async createDataSource(name: string) {
+		if (this._datasources[name]) {
+			return this._datasources[name]
+		}
 		let datasource = await this.connect()
 		this._datasources[name] = datasource
+		return datasource
 	}
 	getDataSource(name: string): DataSource | null {
 		return this._datasources[name]

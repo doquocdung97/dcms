@@ -19,8 +19,7 @@ export default class DocumentRepository {
   private _dataSource: DataSource;
   private _repository: Repository<BaseDocument>;
   private _userRepository: Repository<User>;
-  private _authRepository: Repository<Authentication>;
-  private _authconnectdocumentRepository: Repository<AuthContentDocument>;
+  private _acdRepository: Repository<AuthContentDocument>;
   private _request: any;
   constructor(request: any) {
     let data = new DataBase()
@@ -28,9 +27,7 @@ export default class DocumentRepository {
     this._request = request;
     this._repository = this._dataSource.getRepository(BaseDocument);
     this._userRepository = this._dataSource.getRepository(User);
-    this._authRepository = this._dataSource.getRepository(Authentication);
-    this._authconnectdocumentRepository =
-      this._dataSource.getRepository(AuthContentDocument);
+    this._acdRepository = this._dataSource.getRepository(AuthContentDocument);
   }
   async get(id: string = String()) {
     let user = User.getByRequest(this._request);
@@ -70,7 +67,7 @@ export default class DocumentRepository {
   async create(input: BaseDocument): Promise<DocumentResult> {
     let result = new DocumentResult()
     try {
-      await this._authconnectdocumentRepository.save(input.auths);
+      await this._acdRepository.save(input.auths);
       result.data = await this._repository.save(input);
     } catch (error) {
       this._logger.error(`Create failed ${error}`)
@@ -90,7 +87,7 @@ export default class DocumentRepository {
         if (autho.role == Role.SUPERADMIN && input.id == autho.document.id) {
           let record = (await this.get(input.id)) as BaseDocument;
           if (record) {
-            let connect = await this._authconnectdocumentRepository.find({
+            let connect = await this._acdRepository.find({
               relations: {
                 document: true,
                 user: true,
@@ -129,18 +126,18 @@ export default class DocumentRepository {
                   value.setValueByRole();
                   value.user = user;
                   value.document = record;
-                  value = this._authconnectdocumentRepository.create(value);
+                  value = this._acdRepository.create(value);
                   return value;
                 }
               },
             );
             let rowdata = join.create_item.concat(join.update_item, auth_create);
             if (join.delete_item.length > 0) {
-              await this._authconnectdocumentRepository.remove(join.delete_item);
+              await this._acdRepository.remove(join.delete_item);
             }
             let result = await this._repository.save(input);
             result = Object.assign(result, record);
-            result.auths = await this._authconnectdocumentRepository.save(rowdata);
+            result.auths = await this._acdRepository.save(rowdata);
             result_main.data = result
           } else {
             result_main.success = false
