@@ -20,6 +20,7 @@
     "test:e2e": "jest --config ./test/jest-e2e.json"
   },
   "dependencies": {
+    "@elastic/elasticsearch": "^8.6.0",
     "@graphql-tools/utils": "^9.2.1",
     "@nestjs/apollo": "^10.1.7",
     "@nestjs/common": "^9.0.0",

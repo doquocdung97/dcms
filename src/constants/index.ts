@@ -10,6 +10,10 @@ export class DatabaseConfig {
   static MAIN = 'main'
   static CORE = 'core'
 }
+export class ElasticSearchConfig {
+  static readonly HOST = process.env.SEASRCH_HOST || String();
+}
+
 export class PasswordConfig {
   static readonly ROUNDS = 10;
   static readonly AUTH_SECRET_KEY = 'secretKey';
@@ -21,11 +25,12 @@ export class MediaConfig {
   static readonly FORDER_FILE_PUBLIC_ROOT = 'media/public';
 }
 export class Config {
-  static readonly PRODUCTION: boolean = false;
+  static readonly PRODUCTION: boolean = parseBoolean(process.env.PRODUCTION);
   static readonly PORT = process.env.PORT || 3000;
   static readonly CACHE_MAXAGE = 36000; // cache 10 hours
   static readonly GRAPHQL_LINK = '/graphql';
   static readonly GRAPHQL_FILE = 'src/graphql/schema.graphql';
+  static readonly REDIRECT_URL = process.env.REDIRECT_URL || String();
 }
 export class LoggerConfig {
   static readonly FOLDER = 'logs';
