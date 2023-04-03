@@ -25,8 +25,6 @@ export class ObjectResult {
 }
 @InputType()
 export class InputCreateObject {
-  @Field(() => CustomUUID)
-  documentId: string;
 
   @Length(5, 50)
   @Field()
@@ -47,9 +45,6 @@ export class InputCreateObject {
       properties.push(p);
     });
     model.properties = properties;
-    let doc  = new BaseDocument()
-    doc.id = this.documentId
-    model.document = doc
     return model;
   }
 }

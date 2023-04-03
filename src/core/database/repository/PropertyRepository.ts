@@ -1,5 +1,5 @@
 import { Authorization, LoggerHelper, TypeFunction } from "src/core/common";
-import { DataSource, FindManyOptions, FindOptionsWhere, Repository } from "typeorm";
+import { DataSource, FindManyOptions, FindOptionsWhere, In, Repository } from "typeorm";
 import { ObjectBase } from "../models/ObjectBase";
 import { BaseResult, BaseResultCode, MainProperty } from "../common";
 import { User } from "../models/User";
@@ -33,8 +33,9 @@ export default class PropertyRepository {
 		this._dataSource = data.getDataSource(DatabaseConfig.MAIN);
 		this._request = request;
 		this._repository = this._dataSource.getRepository(PropertyBase);
+		this.objectRepository = this._dataSource.getRepository(ObjectBase)
 	}
-	getRepository(){
+	getRepository() {
 		return this._repository
 	}
 	async get(id: number = null) {
@@ -50,6 +51,7 @@ export default class PropertyRepository {
 						},
 						connectObject: true,
 						connectMeida: true,
+						connectStandard: true
 					},
 					where: {
 						id: id,
@@ -169,6 +171,57 @@ export default class PropertyRepository {
 		);
 		return result;
 	}
+	async updates(id: string, items: PropertyBase[]): Promise<PropertiesResult> {
+		let result = new PropertiesResult();
+		let user = User.getByRequest(this._request);
+		await Authorization(
+			user,
+			TypeFunction.EDIT,
+			async (autho) => {
+				var records = await this._repository.find({
+					relations: {
+						parent: true,
+					},
+					where: {
+						name: In(items.map(n => n.name)),
+						parent: {
+							id: id,
+							document: {
+								id: autho.document.id
+							}
+						},
+					},
+				});
+				let datas = []
+				records.map((record, index) => {
+					let item = items.find(x => x.name == record.name)
+					if (
+						record &&
+						(!item.type || new MainProperty().checkType(item.type.toString()))
+					) {
+						let data = Object.assign(record, item);
+						data.AfterUpdate(this._dataSource);
+						datas.push(data)
+						// let rowdata = await this._repository.save(data);
+						// rowdata.value = data.value;
+						// result.data = rowdata;
+					} else {
+						result.success = false;
+						result.code = BaseResultCode.B002;
+						return result
+					}
+				})
+				let rowdatas = await this._repository.save(datas);
+				result.data = rowdatas
+			},
+			async (ex) => {
+				this._logger.error(`Update failed.\n${ex}`);
+				result.success = false;
+				result.code = BaseResultCode.B001;
+			},
+		);
+		return result;
+	}
 
 	async delete(id: number, softDelete = true): Promise<BaseResult> {
 		let result = new BaseResult();
@@ -186,6 +239,38 @@ export default class PropertyRepository {
 					data = await this._repository.softDelete(option);
 				} else {
 					data = await this._repository.delete(option);
+				}
+				if (data && data.affected <= 0) {
+					result.success = false;
+					result.code = BaseResultCode.B002;
+				}
+			},
+			async (ex) => {
+				this._logger.error(`Delete failed.\n${ex}`);
+				result.success = false;
+				result.code = BaseResultCode.B001;
+			},
+		);
+		return result;
+	}
+
+	async deletes(ids: number[], softDelete = true): Promise<BaseResult> {
+		let result = new BaseResult();
+		let user = User.getByRequest(this._request);
+		await Authorization(
+			user,
+			TypeFunction.DELETE,
+			async (autho) => {
+				let data = null;
+				let option: FindOptionsWhere<PropertyBase> = {
+					id: In(ids),
+					parent: { document: { id: autho.document.id } },
+				};
+				let rowdata = await this._repository.findBy(option);
+				if (softDelete) {
+					data = await this._repository.softDelete({ id: In(rowdata.map(item => item.id)) });
+				} else {
+					data = await this._repository.delete({ id: In(rowdata.map(item => item.id)) });
 				}
 				if (data && data.affected <= 0) {
 					result.success = false;

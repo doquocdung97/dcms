@@ -1,5 +1,5 @@
 import { Authorization, LoggerHelper, TypeFunction } from "src/core/common";
-import { DataSource, FindManyOptions, Repository } from "typeorm";
+import { DataSource, FindManyOptions, In, Repository } from "typeorm";
 import { ObjectBase } from "../models/ObjectBase";
 import { BaseResult, BaseResultCode } from "../common";
 import { User } from "../models/User";
@@ -42,6 +42,7 @@ export default class ObjectRepository {
 						properties: {
 							connectObject: true,
 							connectMeida: true,
+							connectStandard: true
 						},
 					},
 					where: {
@@ -65,10 +66,41 @@ export default class ObjectRepository {
 			},
 		);
 	}
+	async getByName(name: string): Promise<ObjectBase> {
+		let user = User.getByRequest(this._request);
+		return await Authorization(
+			user,
+			TypeFunction.QUERY,
+			async (autho) => {
+				let option: FindManyOptions<ObjectBase> = {
+					relations: {
+						properties: {
+							connectObject: true,
+							connectMeida: true,
+							connectStandard: true
+						},
+					},
+					where: {
+						name: name,
+						document: {
+							id: autho.document.id,
+						},
+					},
+				};
+				let data = await this._repository.findOne(option);
+				return data;
+			},
+			(ex) => {
+				this._logger.error(
+					`GET failed.\nWith info:\nname: ${name}.\n${ex}`,
+				);
+			},
+		);
+	}
 
 	async getTree(documentId: string) {
-    return null;
-  }
+		return null;
+	}
 
 	async create(parentId: string, obj: ObjectBase): Promise<ObjectResult> {
 		let result = new ObjectResult();
@@ -76,7 +108,8 @@ export default class ObjectRepository {
 		await Authorization(
 			user,
 			TypeFunction.CREATE,
-			async () => {
+			async (autho) => {
+				obj.document = autho.document
 				let data = await this._repository.save(obj);
 				if (data && obj.properties) {
 					let record = await this._propertyRepository.creates(
@@ -135,7 +168,6 @@ export default class ObjectRepository {
 		return result;
 	}
 
-
 	async delete(id: string, softDelete = true): Promise<BaseResult> {
 		let result = new BaseResult();
 		let user = User.getByRequest(this._request);
@@ -153,6 +185,34 @@ export default class ObjectRepository {
 					await this._repository.softDelete({ id: id });
 				} else {
 					await this._repository.delete({ id: id });
+				}
+			},
+			(ex) => {
+				this._logger.error(`Delete failed.\n${ex}`);
+				result.success = false;
+				result.code = BaseResultCode.B001;
+			},
+		);
+		return result;
+	}
+
+	async deletes(id: string[], softDelete = true): Promise<BaseResult> {
+		let result = new BaseResult();
+		let user = User.getByRequest(this._request);
+		let data = await this._repository.findOne({ where: { id: In(id) } });
+		if (!data) {
+			result.success = false;
+			result.code = BaseResultCode.B002;
+			return result;
+		}
+		await Authorization(
+			user,
+			TypeFunction.DELETE,
+			async () => {
+				if (softDelete) {
+					await this._repository.softDelete({ id: In(id) });
+				} else {
+					await this._repository.delete({ id: In(id) });
 				}
 			},
 			(ex) => {

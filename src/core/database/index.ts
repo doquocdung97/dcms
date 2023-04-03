@@ -1,20 +1,7 @@
-
-
-export * from './common';
-export * from './models/Media';
-export * from './models/ObjectBase';
-export * from './models/ObjectMain';
-export * from './models/User';
-export * from './models/Document';
-export * from './models/Authentication';
-export * from './models/ValueMedia';
-export * from './models/ValueObject';
-export * from './models/Property';
-export * from './models/Token';
-export * from './subscriber/PropertySubscriber';
-
+import { ValueStandard } from './models/ValueStandard';
+import { BaseResultCode, TypeProperty } from './common'
 import { Authentication } from './models/Authentication';
-import { AuthContentDocument, BaseDocument } from './models/Document';
+import { AuthContentDocument, BaseDocument, InputRole, Role } from './models/Document';
 import { BaseMedia } from './models/Media';
 import { ObjectBase } from './models/ObjectBase';
 import { ObjectMain } from './models/ObjectMain';
@@ -22,12 +9,11 @@ import { PropertyBase } from './models/Property';
 import { User } from './models/User';
 import { ValueMedia } from './models/ValueMedia';
 import { ValueObject } from './models/ValueObject';
-
 export const Models = [
 	ObjectBase,
 	ObjectMain,
 	PropertyBase,
-	
+	ValueStandard,
 	ValueMedia,
 	ValueObject,
 	BaseMedia,
@@ -38,27 +24,15 @@ export const Models = [
 ]
 import { DataSource, EntityTarget, ObjectLiteral, Repository } from 'typeorm';
 import { DatabaseConfig } from 'src/constants';
-import { LoggerHelper } from '../common';
+import { DirRoot, LoggerHelper } from '../common';
 import { PropertySubscriber } from './subscriber/PropertySubscriber';
+import { join } from 'path';
+import { readFileSync } from 'fs';
 
-const AppDataSource = new DataSource({
-	type: 'mysql',
-	host: DatabaseConfig.HOST,
-	port: DatabaseConfig.PORT,
-	username: DatabaseConfig.USERNAME,
-	password: DatabaseConfig.PASSWORD,
-	database: DatabaseConfig.DATABASENAME,
-	synchronize: true,
-	//logging: true,
-	entities: Models,//['src/core/database/models/**/*.ts'],
-	subscribers: [PropertySubscriber],//['subscriber/**/*.ts'],
-	migrations: [],
-});
 
 export class DataBase {
 	private _logger = new LoggerHelper('Database');
 	private static instance: DataBase;
-	private _datasource: DataSource;
 	private _datasources = {};
 	constructor() {
 		const instance = DataBase.instance;
@@ -69,6 +43,26 @@ export class DataBase {
 	}
 	async connect() {
 		this._logger.info('connecting')
+		let fullname = join(DirRoot, 'config.json')
+		let rawdata = readFileSync(fullname);
+		let config = JSON.parse(rawdata.toString());
+		let AppDataSource: DataSource = null
+
+		if (config.database.type == DatabaseConfig.SQLITE_TYPE) {
+			let path = config.database.path
+			let filedata = join(DirRoot, path)
+			this._logger.info(filedata)
+			AppDataSource = new DataSource({
+				type: DatabaseConfig.SQLITE_TYPE,
+				database: filedata,
+				synchronize: true,
+				//logging: true,
+				entities: Models,//['src/core/database/models/**/*.ts'],
+				subscribers: [PropertySubscriber],//['subscriber/**/*.ts'],
+				migrations: [],
+			});
+		}
+
 		let data = await AppDataSource.initialize().then(async (data) => {
 			this._logger.info('connected')
 			return data
@@ -89,4 +83,23 @@ export class DataBase {
 	getDataSource(name: string): DataSource | null {
 		return this._datasources[name]
 	}
+}
+
+export {
+	InputRole,
+	Role,
+	TypeProperty,
+	BaseResultCode,
+	PropertySubscriber,
+	Authentication,
+	AuthContentDocument,
+	BaseDocument,
+	BaseMedia,
+	ObjectBase,
+	ObjectMain,
+	PropertyBase,
+	User,
+	ValueMedia,
+	ValueObject,
+	ValueStandard,
 }

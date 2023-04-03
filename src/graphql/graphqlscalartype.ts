@@ -16,6 +16,18 @@ export const CustomUUID = new GraphQLScalarType({
   parseValue: (value) => validate(value),
   parseLiteral: (ast: any) => validate(ast.value),
 });
+
+/**
+ * name for object
+ */
+export const CustomName = new GraphQLScalarType({
+  name: 'Name',
+  description: 'A simple Name parser',
+  serialize: (value) => validate(value),
+  parseValue: (value) => validate(value),
+  parseLiteral: (ast: any) => validate(ast.value),
+});
+
 export const CustomObject = new GraphQLScalarType({
   name: 'Object',
   description: 'Arbitrary object',

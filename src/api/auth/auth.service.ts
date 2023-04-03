@@ -1,13 +1,7 @@
 import { Injectable, Inject } from '@nestjs/common';
-import { REQUEST } from '@nestjs/core';
 import { JwtService } from '@nestjs/jwt';
-
-import { In, Repository, DataSource } from 'typeorm';
-import { InjectRepository } from '@nestjs/typeorm';
 import { User } from 'core/database';
-import { LoggerHelper } from 'core/common';
-import { UserResult } from 'src/graphql/user/schema';
-import UserRepository from 'src/core/database/repository/UserRepository';
+import UserRepository from 'core/database/repository/UserRepository';
 @Injectable()
 export class AuthService {
 	private _repository: UserRepository
@@ -46,9 +40,7 @@ export class AuthService {
 	}
 
 	async save(data: User) {
-		// let user = this.userRepository.create(data);
-		// return this.userRepository.save(user);
-		return
+		return this._repository.create(data);
 	}
 	async validateUser(email: string, pass: string): Promise<any> {
 		const user = await this.findOne(email);

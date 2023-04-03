@@ -15,7 +15,6 @@ import { MediaResolver } from './graphql/media';
 import { PropertyResolver } from './graphql/property';
 import { CommandResolver, ObjectResolver } from './graphql/object';
 import { AuthResolver } from './graphql/user';
-import { PropertySubscriber, Models } from 'core/database';
 import { PubSub } from 'graphql-subscriptions';
 import { ApolloServerPluginLandingPageLocalDefault } from 'apollo-server-core';
 import { DocumentController } from './api/document/document.controller';
@@ -79,7 +78,7 @@ import { DocumentResolver } from './graphql/document';
 		AppService,
 		// MediaService,
 		DocumentService,
-		// MediaResolver,
+		MediaResolver,
 		PropertyResolver,
 		ObjectResolver,
 		// CommandResolver,

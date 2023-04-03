@@ -11,6 +11,7 @@ import {
   DeleteDateColumn,
   UpdateDateColumn,
   CreateDateColumn,
+  Index,
 } from 'typeorm';
 
 import { BaseMedia } from './Media';
@@ -26,6 +27,11 @@ class PropertyString extends BasePropertyType {
   get(object: PropertyBase) {
     return super.get(object) || String();
   }
+  validate(val: any): boolean {
+    if ((typeof val) == VariableMain.STRING) {
+      return true
+    }
+  }
 }
 mainproperty.addProperty('string', PropertyString);
 
@@ -33,10 +39,20 @@ mainproperty.addProperty('string', PropertyString);
  * Design Pattern:
  * Structural Pattern - Bridge Pattern
  */
-  
+
 class PropertyStrings extends BasePropertyType {
   get(object: PropertyBase) {
     return super.get(object) || [];
+  }
+  validate(val: any): boolean {
+    if (val instanceof Array) {
+      let vals = [];
+      val.map(v=>{
+        vals.push(String(v))
+      })
+      val = vals
+      return true
+    }
   }
 }
 mainproperty.addProperty('strings', PropertyStrings);
@@ -50,12 +66,27 @@ class PropertyNumber extends BasePropertyType {
   get(object: PropertyBase) {
     return super.get(object) || 0;
   }
+  validate(val: any): boolean {
+    if ((typeof val) == VariableMain.NUMBER) {
+      return true
+    }
+  }
 }
 mainproperty.addProperty('number', PropertyNumber);
 
 class PropertyNumbers extends BasePropertyType {
   get(object: PropertyBase) {
     return super.get(object) || [];
+  }
+  validate(val: any): boolean {
+    if (val instanceof Array) {
+      val.map(v=>{
+        if ((typeof val) != VariableMain.NUMBER) {
+          return false;
+        }
+      })
+      return true;
+    }
   }
 }
 mainproperty.addProperty('numbers', PropertyNumbers);
@@ -69,6 +100,10 @@ mainproperty.addProperty('json', PropertyJson);
 class PropertyMedia extends BasePropertyType {
   dataInTable = false;
   async set(object: PropertyBase, dataSource: DataSource) {
+    var val = object.value;
+    if (!this.validate(val)) {
+      return null;
+    }
     const queryRunner = dataSource.createQueryRunner();
     let mediaRepository = queryRunner.manager.getRepository(BaseMedia);
     let connectRepository = queryRunner.manager.getRepository(ValueMedia);
@@ -119,6 +154,11 @@ class PropertyMedia extends BasePropertyType {
     }
     return media;
   }
+  validate(val: any): boolean {
+    if ((typeof val) == VariableMain.STRING && validateUUID(val)) {
+      return true
+    }
+  }
   get(object: PropertyBase) {
     let val = null;
     if (object.connectMeida && object.connectMeida.length > 0) {
@@ -132,6 +172,10 @@ mainproperty.addProperty('media', PropertyMedia);
 class PropertyMedias extends BasePropertyType {
   dataInTable = false;
   async set(object: PropertyBase, dataSource: DataSource) {
+    var val = object.value;
+    if (!this.validate(val)) {
+      return null;
+    }
     const queryRunner = dataSource.createQueryRunner();
     let mediaRepository = queryRunner.manager.getRepository(BaseMedia);
     let connectRepository = queryRunner.manager.getRepository(ValueMedia);
@@ -181,6 +225,16 @@ class PropertyMedias extends BasePropertyType {
     }
     return medias || [];
   }
+  validate(val: any): boolean {
+    if (val instanceof Array) {
+      val.map(item => {
+        if (!validateUUID(item)) {
+          return null
+        }
+      })
+      return true
+    }
+  }
   get(object: PropertyBase) {
     let val = [];
     if (object.connectMeida && object.connectMeida.length > 0) {
@@ -202,7 +256,7 @@ import {
   ObjectType,
   registerEnumType,
 } from '@nestjs/graphql';
-import { handleUpdateJoinTable } from 'core/common';
+import { handleUpdateJoinTable, validateUUID } from 'core/common';
 import { CustomObject } from 'src/graphql';
 //create value enum type property
 let typeproperties = mainproperty.getTypes();
@@ -216,8 +270,11 @@ registerEnumType(TypeProperty, {
   valuesMap: {},
 });
 import { ObjectBase } from './ObjectBase';
+import { ValueStandard } from './ValueStandard';
+import { VariableMain } from 'src/constants';
 @ObjectType()
 @Entity()
+@Index(['name', 'parent'], { unique: true })
 export class PropertyBase extends BaseEntity {
   @Field()
   @PrimaryGeneratedColumn()
@@ -232,15 +289,23 @@ export class PropertyBase extends BaseEntity {
   description: string;
 
   @Field((type) => TypeProperty)
-  @Column({ enum: TypeProperty, type: 'enum' })
+  @Column()
   type: TypeProperty;
+
+  @Column({ default: 0 })
+  max: number;
+
+  @Column({ default: 0 })
+  min: number;
 
   @Field()
   @Column({ default: 1 })
   status: number;
 
-  @Column({ type: 'json', default: null })
-  attribute: Object;
+  // @Column({ default: null })
+  // attribute_str: string;
+
+  attribute: any;
 
   @ManyToOne((type) => ObjectBase, (obj) => obj.properties, {
     onDelete: 'CASCADE',
@@ -256,6 +321,11 @@ export class PropertyBase extends BaseEntity {
     onDelete: 'CASCADE',
   })
   connectMeida: ValueMedia[];
+
+  @OneToMany((type) => ValueStandard, (obj) => obj.property, {
+    onDelete: 'CASCADE',
+  })
+  connectStandard: ValueStandard[];
 
   @Field((type) => CustomObject, { nullable: true })
   value: any = {};
