@@ -1,4 +1,6 @@
 import { DataSource } from 'typeorm';
+import { ValueStandard } from '../models/ValueStandard';
+import { VariableMain } from 'src/constants';
 
 /**
  * Design Pattern
@@ -61,23 +63,53 @@ export class MainProperty {
  */
 export class BasePropertyType {
   dataInTable: boolean = true;
-  constructor() {}
-  async set(object: any, dataSource: DataSource) {
-    if (!object.attribute) {
-      object.attribute = new Object();
+  constructor() { }
+  get(object: any) {
+    let val = null;
+    if (object.connectStandard && object.connectStandard.length > 0) {
+      val = object.connectStandard[0].value;
     }
-    var val = object.value;
-    object.attribute['value'] = val;
-    return val;
+    try {
+      val = JSON.parse(val)
+      if (this.validate(val)) {
+        return val
+      }
+    } catch (error) { }
+    return null
   }
-  get(object: any): any {
-    if (object.attribute) {
-      return object.attribute['value'];
+  validate(val: any): boolean {
+    return true
+  }
+
+  async set(object: any, dataSource: DataSource): Promise<any> {
+    var val = object.value;
+    if (this.validate(val)) {
+      const queryRunner = dataSource.createQueryRunner();
+      let connectRepository = queryRunner.manager.getRepository(ValueStandard);
+
+      let connect = await connectRepository.findOne({
+        relations: {
+          property: true,
+        },
+        where: {
+          property: {
+            id: object.id,
+          },
+        },
+      });
+      if (!connect) {
+        connect = new ValueStandard()
+        connect.property = object
+      }
+      connect.value = JSON.stringify(val)
+      await connectRepository.save(connect)
+      return val;
     }
+    return null
   }
 }
 
-export enum TypeProperty {}
+export enum TypeProperty { }
 
 export enum BaseResultCode {
   B000,

@@ -50,7 +50,7 @@ export class InputUpdateDocument {
   @Field({ nullable: true })
   name: string;
 
-  @Field(() => [UserAuth])
+  @Field(() => [UserAuth], { nullable: true })
   auths: UserAuth[];
 
   async createModel(): Promise<BaseDocument> {
@@ -88,7 +88,7 @@ export class DocumentResult implements DocumentResultBase {
 
   @Field({ defaultValue: true })
   success: boolean;
-  
+
   @Field((type) => BaseDocument, { nullable: true })
   data: BaseDocument;
 }

@@ -1,4 +1,4 @@
-import { handleUpdateJoinTable } from 'core/common';
+import { handleUpdateJoinTable, validateUUID } from 'core/common';
 import { CustomUUID } from 'src/graphql';
 import {
   Entity,
@@ -23,6 +23,7 @@ import { ValueObject } from './ValueObject';
 import { Field, Int, ObjectType } from '@nestjs/graphql';
 import { ObjectMain, } from './ObjectMain';
 import { BaseDocument } from './Document';
+import { VariableMain } from 'src/constants';
 
 
 @ObjectType()
@@ -74,8 +75,16 @@ export class ObjectBase {
 
 let mainproperty = new MainProperty()
 class PropertyRelationship extends BasePropertyType {
-  dataInTable = false;
+  validate(val: any): boolean {
+    if ((typeof val) == VariableMain.STRING && validateUUID(val)) {
+      return true
+    }
+  }
   async set(property: PropertyBase, dataSource: DataSource) {
+    var val = property.value;
+    if (!this.validate(val)) {
+      return null;
+    }
     const queryRunner = dataSource.createQueryRunner();
     let objectRepository = queryRunner.manager.getRepository(ObjectBase);
     let connectRepository = queryRunner.manager.getRepository(ValueObject);
@@ -138,8 +147,21 @@ class PropertyRelationship extends BasePropertyType {
 mainproperty.addProperty('relationship', PropertyRelationship);
 
 class PropertyRelationships extends BasePropertyType {
-  dataInTable = false;
+  validate(val: any): boolean {
+    if (val instanceof Array) {
+      val.map(item => {
+        if (!validateUUID(item)) {
+          return null
+        }
+      })
+      return true
+    }
+  }
   async set(property: PropertyBase, dataSource: DataSource) {
+    var val = property.value;
+    if (!this.validate(val)) {
+      return null;
+    }
     const queryRunner = dataSource.createQueryRunner();
     let objectRepository = queryRunner.manager.getRepository(ObjectBase);
     let connectRepository = queryRunner.manager.getRepository(ValueObject);

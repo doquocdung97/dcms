@@ -1,5 +1,6 @@
 import { UnauthorizedException } from '@nestjs/common';
 import { BaseDocument, User, AuthContentDocument } from '../database';
+import { resolve } from 'path';
 
 export function handleUpdateJoinTable<T, B>(
   objects: B[],
@@ -86,4 +87,17 @@ export async function Authorization(
   } catch (ex) {
     if (error) error(ex);
   }
+}
+/**
+ * @returns dir
+ */
+export const DirRoot: string = resolve(__dirname, "..", "..","..")
+
+export function validateUUID(uuid: unknown): string | never {
+  const regex =
+    /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+  if (typeof uuid !== 'string' || !regex.test(uuid)) {
+    return null
+  }
+  return uuid;
 }

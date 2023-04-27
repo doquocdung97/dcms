@@ -28,7 +28,7 @@ export class User {
   @Field()
   @Column({
     length: 100,
-    //unique: true,
+    unique: true,
   })
   email: string;
 

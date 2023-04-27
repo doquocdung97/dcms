@@ -11,7 +11,7 @@ import {
   Field,
   ObjectType,
 } from '@nestjs/graphql';
-import { BaseResultCode } from 'src/core/database';
+import { BaseResultCode } from 'src/core/database/common';
 
 registerEnumType(BaseResultCode, {
   name: 'BaseResultCode',

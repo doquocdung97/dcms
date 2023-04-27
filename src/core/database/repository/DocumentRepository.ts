@@ -67,6 +67,9 @@ export default class DocumentRepository {
   async create(input: BaseDocument): Promise<DocumentResult> {
     let result = new DocumentResult()
     try {
+      let user = User.getByRequest(this._request);
+      let autho = new AuthContentDocument(Role.SUPERADMIN,user)
+      input.auths = [autho]
       await this._acdRepository.save(input.auths);
       result.data = await this._repository.save(input);
     } catch (error) {
