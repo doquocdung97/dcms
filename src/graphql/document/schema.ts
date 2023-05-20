@@ -14,8 +14,9 @@ import {
   Role,
   User,
 } from 'src/core/database';
-import { CustomUUID } from '../graphqlscalartype';
+import { CustomObject, CustomUUID } from '../graphqlscalartype';
 import { DocumentResult as DocumentResultBase } from 'src/core/database/repository/DocumentRepository';
+import { TypeFunction } from 'src/core/common';
 
 @InputType()
 export class UserAuth {
@@ -127,3 +128,23 @@ registerEnumType(InputRole, {
   name: 'InputRole',
   description: 'Input Role user',
 });
+
+registerEnumType(TypeFunction, {
+  name: 'EventType',
+  // description: 'Response Role user',
+})
+
+@ObjectType()
+export class CommandDocument {
+  @Field()
+  key: string;
+
+  @Field()
+  cmd: string;
+
+  @Field(() => TypeFunction)
+  event: TypeFunction;
+
+  @Field((type) => CustomObject, { nullable: true })
+  value: any;
+}

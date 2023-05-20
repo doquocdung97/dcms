@@ -34,6 +34,7 @@ export class Config {
   static readonly GRAPHQL_LINK = '/graphql';
   static readonly GRAPHQL_FILE = 'src/graphql/schema.graphql';
   static readonly REDIRECT_URL = process.env.REDIRECT_URL || String();
+  static readonly EXPORT_DIR = 'exports'
 }
 export class LoggerConfig {
   static readonly FOLDER = 'logs';

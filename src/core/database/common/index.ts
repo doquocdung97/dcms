@@ -1,6 +1,7 @@
 import { DataSource } from 'typeorm';
 import { ValueStandard } from '../models/ValueStandard';
 import { VariableMain } from 'src/constants';
+import { App } from 'src/core/base';
 
 /**
  * Design Pattern
@@ -104,6 +105,20 @@ export class BasePropertyType {
       connect.value = JSON.stringify(val)
       await connectRepository.save(connect)
       return val;
+    }
+    return null
+  }
+  async setData(object: any, dataSource: DataSource): Promise<any> {
+    var val = object.value;
+    if (this.validate(val)) {
+      let data = await this.set(object, dataSource)
+      let app = new App();
+      let doc = app.document(object.parent.document.id)
+      if (doc) {
+        let property = object;
+        doc.onChange(property.parent, property.name, data)
+      }
+      return data
     }
     return null
   }

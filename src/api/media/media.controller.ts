@@ -50,7 +50,7 @@ export class MediaController {
   }
   @Get('private/:file')
   async getfile(@Res() res, @Param('file') filename, @CurrentUser() user) {
-    let data = await this._repository.getByUrl('media/private/' + filename);
+    let data = await this._repository.getByUrl('private/' + filename);
     if (data) {
       res.sendFile(filename, { root: './media/private' });
       return;

@@ -47,7 +47,7 @@ class PropertyStrings extends BasePropertyType {
   validate(val: any): boolean {
     if (val instanceof Array) {
       let vals = [];
-      val.map(v=>{
+      val.map(v => {
         vals.push(String(v))
       })
       val = vals
@@ -80,12 +80,13 @@ class PropertyNumbers extends BasePropertyType {
   }
   validate(val: any): boolean {
     if (val instanceof Array) {
-      val.map(v=>{
-        if ((typeof val) != VariableMain.NUMBER) {
-          return false;
+      let status = true;
+      val.map(v => {
+        if ((typeof v) != VariableMain.NUMBER) {
+          status = false;
         }
       })
-      return true;
+      return status;
     }
   }
 }
@@ -127,6 +128,9 @@ class PropertyMedia extends BasePropertyType {
     let media = await mediaRepository.findOne({
       where: { id: object.value },
     });
+    if (!media) {
+      return null
+    }
     let join = handleUpdateJoinTable<ValueMedia, BaseMedia>(
       [media],
       connect,
@@ -354,7 +358,7 @@ export class PropertyBase extends BaseEntity {
   async AfterUpdate(dataSource: DataSource) {
     let property = mainproperty.get(this.type);
     if (property) {
-      this.value = await property.set(this, dataSource);
+      this.value = await property.setData(this, dataSource);
     }
   }
 }
