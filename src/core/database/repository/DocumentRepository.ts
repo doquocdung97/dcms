@@ -1,13 +1,13 @@
 import { DataSource, Repository, In, FindManyOptions, Not } from 'typeorm';
 import { AuthContentDocument, BaseDocument, Role } from '../models/Document';
-import { Authorization, handleUpdateJoinTable, LoggerHelper, TypeFunction } from 'core/common';
+import { Authorization, DirRoot, FileHelper, handleUpdateJoinTable, LoggerHelper, TypeFunction } from 'core/common';
 import { plainToClass } from 'class-transformer';
 import { Authentication } from '../models/Authentication';
 import { User } from '../models/User';
 import { BaseResultCode } from '../common';
 import { DataBase } from '..';
-import { DatabaseConfig } from 'src/constants';
-
+import { Config, DatabaseConfig, MediaConfig } from 'src/constants';
+import { join, basename, extname, dirname } from 'path';
 export class DocumentResult {
   code: BaseResultCode;
   success: boolean;
@@ -63,12 +63,34 @@ export default class DocumentRepository {
     });
     return list;
   }
+  async getTemp(id: string) {
+    let option: FindManyOptions<BaseDocument> = {
+      relations: {
+        auths: {
+          user: true,
+        },
+        objects: {
+          properties: {
+            connectObject: true,
+            connectMeida: true,
+            connectStandard: true
+          },
+        },
+        medias: true
+      },
+      where: {
+        id: id,
+      },
+    };
+    let result = await this._repository.findOne(option);
+    return result;
+  }
 
   async create(input: BaseDocument): Promise<DocumentResult> {
     let result = new DocumentResult()
     try {
       let user = User.getByRequest(this._request);
-      let autho = new AuthContentDocument(Role.SUPERADMIN,user)
+      let autho = new AuthContentDocument(Role.SUPERADMIN, user)
       input.auths = [autho]
       await this._acdRepository.save(input.auths);
       result.data = await this._repository.save(input);
@@ -158,5 +180,25 @@ export default class DocumentRepository {
       },
     );
     return result_main;
+  }
+  async export(id) {
+    let doc = await this.getTemp(id);
+    if (!doc) {
+      return null;
+    }
+    let filehelper = new FileHelper();
+    let path_doc = join(Config.EXPORT_DIR, doc.id)
+    doc.medias.map(media => {
+      // let filename = filehelper.getFileName(media.url, true)
+      filehelper.copy(join(MediaConfig.FORDER_FILE, media.url), join(path_doc, media.url))
+    })
+    // filehelper.deleteDir(path_doc)
+    let data = JSON.stringify(doc, function (name, value) {
+      if (name == "auths" || name.search('connect') == 0)
+        return
+      return value;
+    });
+    filehelper.saveFile(join(path_doc,'data.json'),data)
+    return doc;
   }
 }

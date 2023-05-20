@@ -1,21 +1,21 @@
 import { Module } from '@nestjs/common';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
-import { TypeOrmModule } from '@nestjs/typeorm';
+// import { TypeOrmModule } from '@nestjs/typeorm';
 import { GraphQLModule } from '@nestjs/graphql';
 import { ServeStaticModule } from '@nestjs/serve-static';
 import { join } from 'path';
 import { ApolloDriver, ApolloDriverConfig } from '@nestjs/apollo';
-import { Config, DatabaseConfig, MediaConfig } from './constants';
+import { Config, MediaConfig } from './constants';
 import { PropertyController } from './api/property/property.controller';
 import { MediaController } from './api/media/media.controller';
 import { ObjectController } from './api/object/object.controller';
 import { AuthModule } from './api/auth/auth.module';
 import { MediaResolver } from './graphql/media';
 import { PropertyResolver } from './graphql/property';
-import { CommandResolver, ObjectResolver } from './graphql/object';
+import { ObjectResolver } from './graphql/object';
 import { AuthResolver } from './graphql/user';
-import { PubSub } from 'graphql-subscriptions';
+// import { PubSub } from 'graphql-subscriptions';
 import { ApolloServerPluginLandingPageLocalDefault } from 'apollo-server-core';
 import { DocumentController } from './api/document/document.controller';
 import { DocumentService } from './api/document/document.service';
@@ -84,10 +84,10 @@ import { DocumentResolver } from './graphql/document';
 		// CommandResolver,
 		AuthResolver,
 		DocumentResolver,
-		{
-			provide: 'PUB_SUB',
-			useValue: new PubSub(),
-		},
+		// {
+		// 	provide: 'PUB_SUB',
+		// 	useValue: new PubSub(),
+		// },
 		
 	],
 	exports: [AppService],

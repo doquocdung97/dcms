@@ -232,10 +232,11 @@ export default class MediaRepository {
       );
       if (pathfile) {
         pathfile = this._filehelper.parseUrl(pathfile)
-        input.url = pathfile;
-        if (input.public) {
-          input.url = pathfile.replace(MediaConfig.FORDER_FILE, String());
-        }
+        // input.url = pathfile;
+        // if (input.public) {
+        //   input.url = pathfile.replace(MediaConfig.FORDER_FILE, String());
+        // }
+        input.url = pathfile.replace(MediaConfig.FORDER_FILE, String());
       }
     }
     input.user = User.getByRequest(this._request);

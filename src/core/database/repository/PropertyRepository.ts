@@ -86,6 +86,7 @@ export default class PropertyRepository {
 				});
 				if (obj) {
 					data.parent = obj;
+					data.parent.document = autho.document;
 					let record = await this._repository.save(data);
 					result.data = record;
 				} else {
@@ -116,6 +117,7 @@ export default class PropertyRepository {
 				if (obj) {
 					items.map((data) => {
 						data.parent = obj;
+						data.parent.document = autho.document;
 					});
 					let record = await this._repository.save(items);
 					result.data = record;
@@ -154,6 +156,7 @@ export default class PropertyRepository {
 					(!item.type || new MainProperty().checkType(item.type.toString()))
 				) {
 					let data = Object.assign(record, item);
+					data.parent.document = autho.document;
 					data.AfterUpdate(this._dataSource);
 					let rowdata = await this._repository.save(data);
 					rowdata.value = data.value;
@@ -200,6 +203,7 @@ export default class PropertyRepository {
 						(!item.type || new MainProperty().checkType(item.type.toString()))
 					) {
 						let data = Object.assign(record, item);
+						data.parent.document = autho.document;
 						data.AfterUpdate(this._dataSource);
 						datas.push(data)
 						// let rowdata = await this._repository.save(data);

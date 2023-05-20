@@ -5,6 +5,9 @@ import {
   mkdirSync,
   unlinkSync,
   copyFileSync,
+  rmSync,
+  rm,
+  writeFileSync
 } from 'fs';
 import { LoggerHelper } from 'core/common';
 import { join, basename, extname, dirname } from 'path';
@@ -18,8 +21,11 @@ export class FileHelper {
    * @param path
    * @returns fullpath
    */
-  createDir(filepath: string) {
-    let path = dirname(filepath);
+  createDir(filepath: string, hasfilename = true) {
+    let path = this.parseUrl(filepath);;
+    if(hasfilename){
+      path = dirname(path);
+    }
     if (!existsSync(path)) {
       let paths = path.split('/');
       let new_path = String();
@@ -70,6 +76,25 @@ export class FileHelper {
       this.logger.error(`Delete file - error: ${error}`);
     }
     return false;
+  }
+  async saveFile(filePath,data){
+    try {
+      this.logger.info(`Save file - path: ${filePath}`);
+      writeFileSync(filePath, data);
+      return true;
+    } catch (error) {
+      this.logger.error(`Save file - error: ${error}`);
+    }
+    return false;
+  }
+  deleteDir(filePath){
+    try {
+      this.logger.info(`Delete directory - path: ${filePath}`);
+      rmSync(filePath, { recursive: true });
+      return true;
+    } catch (error) {
+      this.logger.error(`Save directory - error: ${error}`);
+    }
   }
   /**
    *
