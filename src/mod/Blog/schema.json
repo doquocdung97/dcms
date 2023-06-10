@@ -1,0 +1,71 @@
+{
+    "name": "Blog",
+    "type":"list",
+    "fields": [
+        {
+            "name": "id",
+            "type": "UUID",
+            "required": true,
+            "default": null,
+            "manylang": false
+        },
+        {
+            "name": "name",
+            "type": "string",
+            "required": true,
+            "default": "test",
+            "manylang": true,
+            "option": {
+                "min": 10,
+                "max": 50
+            }
+        },
+        {
+            "name": "age",
+            "type": "number",
+            "option": {
+                "min": 1,
+                "max": 100
+            },
+            "required": true,
+            "default": 0,
+            "manylang": true
+        },
+        {
+            "name": "image",
+            "type": "media",
+            "required": true,
+            "manylang": true
+        },
+        {
+            "name": "images",
+            "type": "medias",
+            "option": {
+                "min": 1,
+                "max": 100
+            },
+            "required": true,
+            "manylang": true
+        },
+        {
+            "name": "user",
+            "type": "relationship",
+            "option": {
+                "map": "user"
+            },
+            "required": true,
+            "manylang": true
+        },
+        {
+            "name": "users",
+            "type": "relationships",
+            "option": {
+                "map": "user",
+                "min": 1,
+                "max": 100
+            },
+            "required": true,
+            "manylang": true
+        }
+    ]
+}

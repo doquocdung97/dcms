@@ -390,3 +390,8 @@ Temporary Items
 docker-compose.yml
 .env
 dist
+src/graphql/schema.graphql
+/media
+/exports
+logs
+.vscode

@@ -2,10 +2,7 @@ import {
   Entity,
   PrimaryGeneratedColumn,
   Column,
-  TreeChildren,
-  TreeParent,
   ManyToOne,
-  OneToMany,
 } from 'typeorm';
 import { PropertyBase } from './Property';
 import { ObjectBase } from './ObjectBase';
@@ -15,12 +12,17 @@ export class ValueObject {
   @PrimaryGeneratedColumn()
   id: string;
 
-  @ManyToOne((type) => ObjectBase, (obj) => obj.connect)
+  @ManyToOne((type) => ObjectBase, (obj) => obj.connect, {
+    onDelete: 'CASCADE',
+    eager: true
+  })
   object: ObjectBase;
 
-  @ManyToOne((type) => PropertyBase, (obj) => obj.connectObject)
+  @ManyToOne((type) => PropertyBase, (obj) => obj.connectObject, {
+    onDelete: 'CASCADE',
+  })
   property: PropertyBase;
 
-  @Column()
+  @Column({default:String()})
   lang: string;
 }

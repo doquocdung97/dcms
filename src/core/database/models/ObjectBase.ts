@@ -1,60 +1,90 @@
-import { handleUpdateJoinTable } from 'core/common';
+import { handleUpdateJoinTable, validateUUID } from 'core/common';
+import { CustomUUID } from 'src/graphql';
 import {
   Entity,
-  BaseEntity,
   PrimaryGeneratedColumn,
   Column,
   TreeChildren,
   TreeParent,
   OneToMany,
-  VirtualColumn,
-  AfterLoad,
   DataSource,
+  CreateDateColumn,
+  UpdateDateColumn,
+  DeleteDateColumn,
   In,
+  Tree,
+  OneToOne,
+  JoinColumn,
+  ManyToOne,
 } from 'typeorm';
 import { BasePropertyType, MainProperty } from '../common';
 import { PropertyBase } from './Property';
 import { ValueObject } from './ValueObject';
+import { Field, Int, ObjectType } from '@nestjs/graphql';
+import { ObjectMain, } from './ObjectMain';
+import { BaseDocument } from './Document';
+import { VariableMain } from 'src/constants';
 
+
+@ObjectType()
 @Entity()
 export class ObjectBase {
+  @Field((type) => CustomUUID)
+  
   @PrimaryGeneratedColumn('uuid')
   id: string;
 
+  @OneToOne(() => ObjectMain,(obj) => obj.detail)
+  main: ObjectMain
+ 
+  @Field()
   @Column({ default: String() })
   name: string;
 
+  @Field({ nullable: true })
   @Column({ nullable: true, default: String() })
   type: string;
-
-  @TreeChildren()
-  children: ObjectBase[];
-
-  @TreeParent()
-  parent: ObjectBase;
 
   //@Column()
   //public get fullName(): string {
   //  return `${this.name} test`;
   //}
 
-  value: any = {};
-
+  @Field((type) => [PropertyBase], { defaultValue: [] })
   @OneToMany((type) => PropertyBase, (obj) => obj.parent)
   properties: PropertyBase[];
 
-  @OneToMany((type) => ValueObject, (obj) => obj.object)
+  @OneToMany((type) => ValueObject, (obj) => obj.object, {
+    onDelete: 'CASCADE',
+  })
   connect: ValueObject[];
 
-  //@CreateDateColumn()
-  //createdDate: Date;
+  @CreateDateColumn()
+  createdAt: Date;
 
-  //@UpdateDateColumn()
-  //lastUpdatedDate: Date;
+  @UpdateDateColumn()
+  updatedAt: Date;
+
+  @Field({ nullable: true })
+  @DeleteDateColumn()
+  deleteAt: Date;
+
+  @ManyToOne(()=>BaseDocument,obj=>obj.objects,{nullable:false})
+  document:BaseDocument
 }
 
+let mainproperty = new MainProperty()
 class PropertyRelationship extends BasePropertyType {
+  validate(val: any): boolean {
+    if ((typeof val) == VariableMain.STRING && validateUUID(val)) {
+      return true
+    }
+  }
   async set(property: PropertyBase, dataSource: DataSource) {
+    var val = property.value;
+    if (!this.validate(val)) {
+      return null;
+    }
     const queryRunner = dataSource.createQueryRunner();
     let objectRepository = queryRunner.manager.getRepository(ObjectBase);
     let connectRepository = queryRunner.manager.getRepository(ValueObject);
@@ -77,11 +107,11 @@ class PropertyRelationship extends BasePropertyType {
       connectRepository.remove(connect);
       return;
     }
-    let objects = await objectRepository.find({
+    let object = await objectRepository.findOne({
       where: { id: id },
     });
     let join = handleUpdateJoinTable<ValueObject, ObjectBase>(
-      objects,
+      [object],
       connect,
       (item, properties, index) => {
         return (
@@ -95,7 +125,6 @@ class PropertyRelationship extends BasePropertyType {
         let newvalue = new ValueObject();
         newvalue.object = media;
         newvalue.property = property;
-        newvalue.lang = String();
         return newvalue;
       },
     );
@@ -105,6 +134,7 @@ class PropertyRelationship extends BasePropertyType {
     if (join.delete_item.length > 0) {
       connectRepository.remove(join.delete_item);
     }
+    return object;
   }
   get(object: PropertyBase) {
     let val = null;
@@ -114,10 +144,24 @@ class PropertyRelationship extends BasePropertyType {
     return val;
   }
 }
-MainProperty.addProperty('relationship', PropertyRelationship);
+mainproperty.addProperty('relationship', PropertyRelationship);
 
 class PropertyRelationships extends BasePropertyType {
+  validate(val: any): boolean {
+    if (val instanceof Array) {
+      val.map(item => {
+        if (!validateUUID(item)) {
+          return null
+        }
+      })
+      return true
+    }
+  }
   async set(property: PropertyBase, dataSource: DataSource) {
+    var val = property.value;
+    if (!this.validate(val)) {
+      return null;
+    }
     const queryRunner = dataSource.createQueryRunner();
     let objectRepository = queryRunner.manager.getRepository(ObjectBase);
     let connectRepository = queryRunner.manager.getRepository(ValueObject);
@@ -142,7 +186,7 @@ class PropertyRelationships extends BasePropertyType {
     });
     if (ids.length == 0) {
       connectRepository.remove(connect);
-      return;
+      return [];
     }
     let objects = await objectRepository.find({
       where: { id: In(ids) },
@@ -162,7 +206,6 @@ class PropertyRelationships extends BasePropertyType {
         let newvalue = new ValueObject();
         newvalue.object = media;
         newvalue.property = property;
-        newvalue.lang = String();
         return newvalue;
       },
     );
@@ -172,6 +215,7 @@ class PropertyRelationships extends BasePropertyType {
     if (join.delete_item.length > 0) {
       connectRepository.remove(join.delete_item);
     }
+    return objects;
   }
   get(object: PropertyBase) {
     let val = [];
@@ -186,4 +230,4 @@ class PropertyRelationships extends BasePropertyType {
     return val;
   }
 }
-MainProperty.addProperty('relationships', PropertyRelationships);
+mainproperty.addProperty('relationships', PropertyRelationships);
