@@ -1,0 +1,33 @@
+{
+  "name": "client",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "start": "ts-node src/index.ts",
+    "watch": "nodemon -e ts -w ./src -x npm run start",
+    "build": "cross-env NODE_ENV=production tsc -p ."
+  },
+  "author": "",
+  "license": "ISC",
+  "devDependencies": {
+    "@types/node": "^16.18.35",
+    "nodemon": "^2.0.21",
+    "ts-node": "^10.9.1",
+    "typescript": "^4.5.2"
+  },
+  "dependencies": {
+    "apollo-server-express": "^3.12.0",
+    "body-parser": "^1.19.1",
+    "cms": "file:../core",
+    "cross-env": "^7.0.3",
+    "dotenv": "^16.0.3",
+    "express": "^4.18.2",
+    "graphql": "^16.6.0",
+    "jsonwebtoken": "^9.0.0",
+    "moment": "^2.29.4",
+    "reflect-metadata": "^0.1.13",
+    "typegql": "^0.7.1",
+    "winston": "^3.8.2"
+  }
+}

@@ -117,6 +117,8 @@ export class Document extends EventDispatcher {
 
     //object
     async object(id: string, fetch = true): Promise<Objective | null> {
+        if (!id)
+            return null;
         if (fetch) {
             let user = this._parent.model()
             let obj = await this._objectrepository.get(user, id)
@@ -136,6 +138,16 @@ export class Document extends EventDispatcher {
         })
         return data
     }
+    async objectsByType(type: string, skip: number = 0, take: number = null): Promise<[Objective[], number]> {
+        let user = this._parent.model()
+        let [objs, total] = await this._objectrepository.getfilter(user, type, skip, take)
+        let data = []
+        objs.map(obj => {
+            data.push(new Objective(this, obj))
+        })
+        return [data, total]
+    }
+
     async createObject(input: InputCreateObjective): Promise<Objective> {
         let user = this._parent.model()
         let obj = await this._objectrepository.create(user, input.parentId, input.model())

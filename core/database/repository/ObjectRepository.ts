@@ -31,7 +31,7 @@ export default class ObjectRepository {
 		// this._propertyRepository = new PropertyRepository(request)
 	}
 	
-	async get(user: User, id): Promise<ObjectBase>
+	async get(user: User, id:string): Promise<ObjectBase>
 	async get(user: User): Promise<ObjectBase[]>
 	async get(user: User, id: string = null) {
 		return await Authorization(
@@ -65,6 +65,36 @@ export default class ObjectRepository {
 					`GET failed.\nWith info:\nid: ${id}.\n${ex}`,
 				);
 			},
+		);
+	}
+	async getfilter(user: User, type: string = null,skip:number = 0,take:number = null): Promise<[ObjectBase[],number]>{
+		return await Authorization(
+			user,
+			TypeFunction.QUERY,
+			async (autho) => {
+				let option: FindManyOptions<ObjectBase> = {
+					relations: {
+						properties: {
+							connectObject: true,
+							connectMeida: true,
+							connectStandard: true
+						},
+					},
+					where: {
+						type: type,
+						document: {
+							id: autho.document.id,
+						},
+					},
+					skip:skip,
+					take:take,
+					order:{
+						createdAt:"desc"
+					}
+				};
+				let data = await this._repository.findAndCount(option);
+				return data;
+			}
 		);
 	}
 	async getByName(user: User, name: string): Promise<ObjectBase> {
@@ -162,7 +192,7 @@ export default class ObjectRepository {
 					 });
 				} else {
 					data = await this._repository.delete({ 
-						id: id ,
+						// id: id ,
 						document: { id: autho.document.id },
 					});
 				}
