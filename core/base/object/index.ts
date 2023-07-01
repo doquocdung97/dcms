@@ -44,9 +44,26 @@ export class Objective {
     constructor(parent: Document, model: ObjectBase) {
         this._model = model
         this._parent = parent
-        this._repository = new ObjectRepository()
-        this._propertyrepository = new PropertyRepository()
+        // this.mainRepository = new ObjectRepository()
+        // this.propertyRepository = new PropertyRepository()
+
     }
+    get mainRepository(){
+        if (!this._repository)
+            this._repository = new ObjectRepository()
+        return this._repository
+    }
+    get propertyRepository(){
+        if (!this._propertyrepository)
+            this._propertyrepository = new PropertyRepository()
+        return this._propertyrepository
+    }
+    // init() {
+    //     if (!this.mainRepository)
+    //         this.mainRepository = new ObjectRepository()
+    //     if (!this.propertyRepository)
+    //         this.propertyRepository = new PropertyRepository()
+    // }
     model() {
         return this._model
     }
@@ -55,7 +72,7 @@ export class Objective {
     }
     async update(input: InputUpdateObjective): Promise<boolean> {
         let input_model = input.model()
-        let result = await this._repository.update(this._parent.user, input_model)
+        let result = await this.mainRepository.update(this._parent.user, input_model)
         if (result) {
             this._model = result
             return true
@@ -65,17 +82,19 @@ export class Objective {
 
     async delete(softDelete = true): Promise<boolean> {
         let user = this._parent.user
-        return await this._repository.delete(user, this._model.id, softDelete)
+        return await this.mainRepository.delete(user, this._model.id, softDelete)
     }
     async restore(): Promise<boolean> {
         let user = this._parent.user
-        return await this._repository.restore(user, this._model.id)
+         
+        return await this.mainRepository.restore(user, this._model.id)
     }
 
     async property(id: number, fetch = true): Promise<Property | null> {
         if (fetch) {
             let user = this._parent.user;
-            let pro = await this._propertyrepository.get(user, this._model.id, id);
+             
+            let pro = await this.propertyRepository.get(user, this._model.id, id);
             if (pro) {
                 return new Property(this, pro);
             }
@@ -88,7 +107,8 @@ export class Objective {
     }
     async properties(): Promise<Property[]> {
         let user = this._parent.user
-        let pros = await this._propertyrepository.get(user, this._model.id)
+         
+        let pros = await this.propertyRepository.get(user, this._model.id)
         let data = []
         pros.map(pro => {
             data.push(new Property(this, pro))
@@ -97,13 +117,105 @@ export class Objective {
     }
     async createProperty(input: InputCreateProperty): Promise<Property | null> {
         let user = this._parent.user
-        let pro = await this._propertyrepository.create(user, this._model.id, input.model())
+         
+        let pro = await this.propertyRepository.create(user, this._model.id, input.model())
         if (pro) {
             return new Property(this, pro)
         }
         return null
     }
-    onChange(pro,value){
-        this._parent.onChange(this,pro,value)
+    async createPropertys(inputs: InputCreateProperty[]): Promise<Property[] | null> {
+        let user = this._parent.user
+        let models = []
+        inputs.map(input => {
+            models.push(input.model())
+        })
+         
+        let pros = await this.propertyRepository.creates(user, this._model.id, models)
+        if (pros && pros.length > 0) {
+            let propertys: Property[] = []
+            pros.map(pro => {
+                propertys.push(new Property(this, pro))
+            })
+            if (!this._model.properties) {
+                this._model.properties = []
+            }
+            this._model.properties.push(...pros)
+            return propertys
+        }
+        return null
+    }
+
+    private async updatePropertys(inputs: PropertyBase[]): Promise<PropertyBase[] | null> {
+        let user = this._parent.user
+        // let models = []
+        // inputs.map(input => {
+        //     models.push(input.model())
+        // })
+         
+        let pros = await this.propertyRepository.updates(user, this._model.id, inputs)
+        // if (pros && pros.length > 0) {
+        //     let propertys: Property[] = []
+        //     pros.map(pro => {
+        //         propertys.push(new Property(this, pro))
+        //     })
+        //     return propertys
+        // }
+        return pros
+    }
+    toJson() {
+        let property = {}
+        if (this._model) {
+            this._model.properties.map(pro => {
+                property[pro.name] = pro.value
+            })
+            let fields = ['id', 'updatedAt', 'createdAt']
+            fields.map(field => {
+                property[field] = this._model[field]
+            })
+        }
+        return property
+    }
+    async updateProperty(pro: Object): Promise<Object> {
+        let fields = Object.keys(pro)
+        let propertys = []
+        fields.map(field => {
+            let property = this._model.properties.find(x => x.name == field)
+            let p = pro[field]
+            if (property) {
+                property.value = p.value
+                propertys.push(property)
+            } else {
+                let pro_new = new PropertyBase();
+                let schema = p.schema
+                pro_new.name = field
+                pro_new.type = schema.type
+                pro_new.value = p.value
+                propertys.push(pro_new)
+            }
+        })
+        propertys = await this.updatePropertys(propertys)
+        if (propertys) {
+            propertys.map(p => {
+                let pro = this._model.properties.find(x => x.name == p.name)
+                if (!pro) {
+                    this._model.properties.push(p)
+                }
+            })
+            // this._model.properties
+            return this.toJson()
+        }
+        return {}
+    }
+    // getValue(name): any {
+    //     if (this._model) {
+    //         if (name == 'id' || name == 'updatedAt' || name == 'createdAt') {
+    //             return this._model[name]
+    //         }
+    //         return this._model.properties.find(x => x.name == name)?.value
+    //     }
+    // }
+    onChange(pro, value) {
+        this._parent.onChange(this, pro, value)
     }
 } 

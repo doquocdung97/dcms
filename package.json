@@ -5,8 +5,13 @@
   "main": "index.js",
   "scripts": {
     "start": "npm-run-all --parallel start:**",
-    "start:server": "cd middleware && npm run start:debug",
+    "start:server": "cd middleware && npm start",
     "start:core": "cd core && npm run build:watch",
+    "start:client": "cd client && npm start",
+    "watch": "npm-run-all --parallel watch:**",
+    "watch:server": "cd middleware && npm run start:debug",
+    "watch:core": "cd core && npm run build:watch",
+    "watch:client": "cd client && npm run watch",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "repository": {
@@ -20,6 +25,7 @@
   },
   "homepage": "https://github.com/doquocdung97/dcms#readme",
   "dependencies": {
+    "graphql-tag": "^2.12.6",
     "npm-run-all": "^4.1.5"
   }
 }

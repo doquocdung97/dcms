@@ -1,0 +1,82 @@
+{
+  "name": "Blog",
+  "type": "list",
+  "fields": [
+    {
+      "name": "name",
+      "type": "string",
+      "required": true,
+      "default": "test",
+      "manylang": true,
+      "option": {
+        "min": 10,
+        "max": 50
+      }
+    },
+    {
+      "name": "age",
+      "type": "number",
+      "option": {
+        "min": 1,
+        "max": 100
+      },
+      "required": true,
+      "default": 0,
+      "manylang": true
+    },
+    {
+      "name": "image",
+      "type": "media",
+      "required": false,
+      "manylang": true
+    },
+    {
+      "name": "images",
+      "type": "medias",
+      "option": {
+        "min": 1,
+        "max": 100
+      },
+      "required": true,
+      "manylang": true
+    },
+    {
+      "name": "user",
+      "type": "media",
+      "option": {
+        "map": "user"
+      },
+      "required": true,
+      "manylang": true
+    },
+    {
+      "name": "users",
+      "type": "media",
+      "option": {
+        "map": "user",
+        "min": 1,
+        "max": 100
+      },
+      "required": true,
+      "manylang": true
+    },
+    {
+      "name": "type",
+      "type": "enum",
+      "option": {
+        "value": ["TEST1", "TEST2", "TEST3"]
+      },
+      "required": true,
+      "manylang": true
+    },
+    {
+      "name": "listtype",
+      "type": "enums",
+      "option": {
+        "value": ["TEST1", "TEST2", "TEST3", "TEST4"]
+      },
+      "required": true,
+      "manylang": true
+    }
+  ]
+}

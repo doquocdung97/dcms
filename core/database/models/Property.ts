@@ -498,3 +498,32 @@ class PropertyRelationships extends BasePropertyType {
   }
 }
 mainproperty.addProperty('relationships', PropertyRelationships);
+class PropertyEnum extends BasePropertyType {
+  get(object: PropertyBase) {
+    return super.get(object) || 0;
+  }
+  validate(val: any): boolean {
+    if ((typeof val) == Variable.NUMBER) {
+      return true
+    }
+  }
+}
+mainproperty.addProperty('enum', PropertyEnum);
+
+class PropertyEnums extends BasePropertyType {
+  get(object: PropertyBase) {
+    return super.get(object) || [];
+  }
+  validate(val: any): boolean {
+    if (val instanceof Array) {
+      let status = true;
+      val.map(v => {
+        if ((typeof v) != Variable.NUMBER) {
+          status = false;
+        }
+      })
+      return status;
+    }
+  }
+}
+mainproperty.addProperty('enums', PropertyEnums);

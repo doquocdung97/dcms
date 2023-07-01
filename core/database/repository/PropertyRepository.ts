@@ -93,9 +93,8 @@ export default class PropertyRepository {
 		return result;
 	}
 
-	async creates(user: User, id: string, items: PropertyBase[]): Promise<PropertiesResult> {
-		let result = new PropertiesResult();
-		await Authorization(
+	async creates(user: User, id: string, items: PropertyBase[]): Promise<PropertyBase[]> {
+		let result = await Authorization(
 			user,
 			TypeFunction.CREATE,
 			async (autho) => {
@@ -108,18 +107,11 @@ export default class PropertyRepository {
 						data.parent = obj;
 						data.parent.document = autho.document;
 					});
-					let record = await this._repository.save(items);
-					result.data = record;
+					return await this._repository.save(items);
 				} else {
-					result.success = false;
-					result.code = BaseResultCode.B002;
+					throw new BaseError(BaseResultCode.B002);
 				}
-			},
-			async (ex) => {
-				this._logger.error(`Creates failed.\n${ex}`);
-				result.success = false;
-				result.code = BaseResultCode.B001;
-			},
+			}
 		);
 		return result;
 	}
@@ -155,9 +147,8 @@ export default class PropertyRepository {
 		);
 		return result;
 	}
-	async updates(user: User, id: string, items: PropertyBase[]): Promise<PropertiesResult> {
-		let result = new PropertiesResult();
-		await Authorization(
+	async updates(user: User, id: string, items: PropertyBase[]): Promise<PropertyBase[]> {
+		let result = await Authorization(
 			user,
 			TypeFunction.EDIT,
 			async (autho) => {
@@ -166,7 +157,7 @@ export default class PropertyRepository {
 						parent: true,
 					},
 					where: {
-						name: In(items.map(n => n.name)),
+						id: In(items.map(n => n.id)),
 						parent: {
 							id: id,
 							document: {
@@ -176,33 +167,37 @@ export default class PropertyRepository {
 					},
 				});
 				let datas = []
-				records.map((record, index) => {
-					let item = items.find(x => x.name == record.name)
+				for (let index = 0; index < records.length; index++) {
+					const record = records[index];
+					let item = items.find(x => x.id == record.id)
 					if (
 						record &&
 						(!item.type || new MainProperty().checkType(item.type.toString()))
 					) {
 						let data = Object.assign(record, item);
 						data.parent.document = autho.document;
-						data.AfterUpdate(this._dataSource);
+						await data.AfterUpdate(this._dataSource);
 						datas.push(data)
+						item.value = data.value
 						// let rowdata = await this._repository.save(data);
 						// rowdata.value = data.value;
 						// result.data = rowdata;
+						// return datas
 					} else {
-						result.success = false;
-						result.code = BaseResultCode.B002;
-						return result
+						throw new BaseError(BaseResultCode.B002);
 					}
-				})
+				}
+				
+				items.map((data) => {
+					if(!data.id){
+						data.parent = ObjectBase.create(id);
+						data.parent.document = autho.document;
+						datas.push(data)
+					}
+				});
 				let rowdatas = await this._repository.save(datas);
-				result.data = rowdatas
-			},
-			async (ex) => {
-				this._logger.error(`Update failed.\n${ex}`);
-				result.success = false;
-				result.code = BaseResultCode.B001;
-			},
+				return rowdatas
+			}
 		);
 		return result;
 	}
