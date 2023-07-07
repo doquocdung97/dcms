@@ -38,8 +38,8 @@ export class BaseDocument {
   @OneToMany(() => BaseMedia, (obj) => obj.document)
   medias: [BaseMedia];
 
-  static create(id:string):BaseDocument{
-    let doc =  new BaseDocument()
+  static create(id: string): BaseDocument {
+    let doc = new BaseDocument()
     doc.id = id
     return doc
   }
@@ -54,7 +54,7 @@ export enum InputRole {
   EDITTOR,
   ONLYVIEW,
   QC,
-  CUSTOM,
+  SUBADMIN,
 }
 
 export enum Role {
@@ -62,7 +62,7 @@ export enum Role {
   EDITTOR,
   ONLYVIEW,
   QC,
-  CUSTOM,
+  SUBADMIN,
   SUPERADMIN,
 }
 
@@ -82,7 +82,7 @@ export class AuthContentDocument {
   //})
   //auth: Authentication;
 
-  @Column({ default: Role.CUSTOM })
+  @Column({ default: Role.SUBADMIN })
   role: Role;
 
   @Column({ default: true })
@@ -105,6 +105,14 @@ export class AuthContentDocument {
   })
   user: User;
 
+  @Column({ length: 50})
+  name: string; 
+
+  @Column({ nullable: true, length: 500 })
+  token: string;
+  // @OneToMany((type) => Token, (obj) => obj.autho)
+  // tokens: Token[];
+
   @AfterLoad()
   AfterLoad() {
     this.setValueByRole();
@@ -122,7 +130,7 @@ export class AuthContentDocument {
       this.create = true;
       this.edit = true;
       this.delete = true;
-      this.setting = false;
+      this.setting = true;
     } else if (this.role == Role.EDITTOR) {
       this.query = true;
       this.create = true;
@@ -136,6 +144,12 @@ export class AuthContentDocument {
       this.delete = false;
       this.setting = false;
     } else if (this.role == Role.QC) {
+      this.query = true;
+      this.create = true;
+      this.edit = true;
+      this.delete = true;
+      this.setting = false;
+    }else if(this.role == Role.SUBADMIN){
       this.query = true;
       this.create = true;
       this.edit = true;

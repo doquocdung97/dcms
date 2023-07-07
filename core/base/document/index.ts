@@ -15,8 +15,10 @@ import { ObjectBase } from "../../database/models/ObjectBase"
 import { InputCreateObjective } from '../object'
 // import { PubSub, PubSubEngine } from 'graphql-subscriptions';
 
-class UserAuth {
+class Auth {
     id: string;
+
+    name: string;
 
     role: InputRole;
 
@@ -29,7 +31,18 @@ class UserAuth {
     setting: boolean;
 
     delete: boolean;
+    model():AuthContentDocument{
+        let auth = plainToClass(AuthContentDocument, this);
+        return auth;
+    }
 }
+export class UserAuth extends Auth{
+    userId: string;
+}
+export class TokenAuth extends Auth{
+    token: string;
+}
+
 export class InputCreateDocument {
     name: string
     model() {
@@ -39,20 +52,20 @@ export class InputCreateDocument {
 }
 export class InputUpdateDocument {
     name: string;
-    auths: UserAuth[];
+    // auths: UserAuth[];
     model() {
         let model = new BaseDocument();
         if (this.name)
             model.name = this.name;
         let auths = [];
-        this.auths?.map((item) => {
-            let user = new DBUser();
-            let auth = plainToClass(AuthContentDocument, item);
-            delete auth['id'];
-            user.id = item.id;
-            auth.user = user;
-            auths.push(auth);
-        });
+        // this.auths?.map((item) => {
+        //     let user = new DBUser();
+        //     let auth = item.model();
+        //     delete auth['id'];
+        //     user.id = item.id;
+        //     auth.user = user;
+        //     auths.push(auth);
+        // });
         model.auths = auths
         return model
     }
@@ -191,6 +204,47 @@ export class Document extends EventDispatcher {
             data.push(new Media(this, media))
         })
         return data
+    }
+    async createAuth(auth:TokenAuth):Promise<TokenAuth>
+    async createAuth(auth:UserAuth):Promise<UserAuth>
+    async createAuth(auth:TokenAuth|UserAuth){
+        let user_model = this._parent.model();
+        let input = auth.model()
+        if(auth instanceof TokenAuth){
+            let tokenhelper = new Token()
+            input.token = tokenhelper.get({data:'test'})
+        }else{
+            let user = new DBUser()
+            user.id = auth.userId
+            input.user = user
+        }
+        input.document = this._model
+        let result = await this._repository.createAuth(user_model , input)
+        if (result) {
+            if(auth instanceof TokenAuth){
+                return plainToClass(TokenAuth,result)
+            }else{
+                return plainToClass(UserAuth,result)
+            }
+        }
+        return null
+    }
+    async updateAuth(auth:UserAuth):Promise<UserAuth>{
+        let user_model = this._parent.model();
+        let input = auth.model()
+        let user = new DBUser()
+        user.id = auth.userId
+        input.user = user
+        input.document = this._model
+        let result = await this._repository.updateAuth(user_model , input)
+        if (result) {
+            return plainToClass(UserAuth,result)
+        }
+        return null
+    }
+    async deleteAuth(id:number):Promise<boolean>{
+        let user_model = this._parent.model();
+        return await this._repository.deleteAuth(user_model , id)
     }
     onChange(obj: any, pop: any, value: any) {
         let event = { type: 'onChange', obj, pop, value }

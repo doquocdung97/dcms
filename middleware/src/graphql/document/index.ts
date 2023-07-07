@@ -1,4 +1,4 @@
-import { Args, Resolver, Query, Mutation, Subscription } from '@nestjs/graphql';
+import { Args, Resolver, Query, Mutation, Subscription, Int } from '@nestjs/graphql';
 import { Request, UseGuards } from '@nestjs/common';
 // import 'cms/Extensions/StringExtensions'
 import {
@@ -8,6 +8,11 @@ import {
   InputUpdateDocument,
   AcitveDocumentResult,
   BaseDocument,
+  TokenAuthResult,
+  UserAuthResult,
+  UserAuth, TokenAuth,
+  UserAuthContentDocument,
+  TokenAuthContentDocument
 } from './schema';
 
 import { CustomUUID } from '../graphqlscalartype';
@@ -16,6 +21,7 @@ import { BaseResultCode, CMS, User } from 'cms';
 import { PubSub, PubSubEngine, PubSubOptions } from 'graphql-subscriptions';
 import { CurrentUserGraphql, JwtAuthGuardGraphql } from '../user/guard';
 import { plainToClass } from 'class-transformer';
+import { BaseResult } from '../objecttype';
 
 
 class CustomPubSub extends PubSub {
@@ -89,8 +95,8 @@ export class DocumentResolver {
   async activeDocument(@CurrentUserGraphql() user: User.User, @Args('id') id: string) {
     let result = new AcitveDocumentResult()
     let doc = await user.document(id);
-    if(doc){
-      result.data = plainToClass(BaseDocument,doc.model())
+    if (doc) {
+      result.data = plainToClass(BaseDocument, doc.model())
       result.token = doc.token()
     }
     return result
@@ -114,13 +120,13 @@ export class DocumentResolver {
   async updateDocument(@CurrentUserGraphql() user: User.User, @Args('input') input: InputUpdateDocument) {
     let result = new DocumentResult()
     try {
-      let doc = await user.document(input.id,false);
+      let doc = await user.document(input.id, false);
       input = plainToClass(InputUpdateDocument, input);
       let status = await doc.update(input.createModel())
-      if(status){
+      if (status) {
         result.data = plainToClass(BaseDocument, doc?.model());
       }
-      
+
     } catch (error) {
       console.log(error)
     }
@@ -138,5 +144,92 @@ export class DocumentResolver {
   })
   listeningDocument(@Args('id', { type: () => CustomUUID }) id: string, @Request() req, @CurrentUserGraphql() user) {
     return _pubSub.asyncIterator(id)
+  }
+
+  @Mutation(() => TokenAuthResult)
+  async createTokenAuthDocument(
+    @Args('input') input: TokenAuth,
+    @CurrentUserGraphql() user: User.User) {
+
+    let result = new TokenAuthResult()
+    try {
+      input = plainToClass(TokenAuth, input);
+      let doc = await user.activeDocument();
+      let data = await doc.createAuth(input.createModel())
+      if (data) {
+        result.data = plainToClass(TokenAuthContentDocument, data)
+      } else {
+        result.code = BaseResultCode.B002;
+        result.success = false;
+      }
+
+    } catch (error) {
+      result.code = BaseResultCode.B001;
+      result.success = false;
+    }
+    return result;
+  }
+  @Mutation(() => UserAuthResult)
+  async createUserAuthDocument(
+    @Args('input') input: UserAuth,
+    @CurrentUserGraphql() user: User.User) {
+
+    let result = new UserAuthResult()
+    try {
+      input = plainToClass(UserAuth, input);
+      let doc = await user.activeDocument();
+      let data = await doc.createAuth(input.createModel())
+      if (data) {
+        result.data = plainToClass(UserAuthContentDocument, data)
+      } else {
+        result.code = BaseResultCode.B002;
+        result.success = false;
+      }
+    } catch (error) {
+      result.code = BaseResultCode.B001;
+      result.success = false;
+    }
+    return result;
+  }
+  @Mutation(() => UserAuthResult)
+  async updateUserAuthDocument(
+    @Args('input') input: UserAuth,
+    @CurrentUserGraphql() user: User.User) {
+
+    let result = new UserAuthResult()
+    try {
+      input = plainToClass(UserAuth, input);
+      let doc = await user.activeDocument();
+      let data = await doc.updateAuth(input.createModel())
+      if (data) {
+        result.data = plainToClass(UserAuthContentDocument, data)
+      } else {
+        result.code = BaseResultCode.B002;
+        result.success = false;
+      }
+    } catch (error) {
+      result.code = BaseResultCode.B001;
+      result.success = false;
+    }
+    return result;
+  }
+  @Mutation(() => BaseResult)
+  async deleteAuthDocument(
+    @Args('id', { type: () => Int }) id: number,
+    @CurrentUserGraphql() user: User.User) {
+
+    let result = new BaseResult()
+    try {
+      let doc = await user.activeDocument();
+      let data = await doc.deleteAuth(id)
+      if(!data){
+        result.code = BaseResultCode.B002;
+        result.success = false;
+      }
+    } catch (error) {
+      result.code = BaseResultCode.B001;
+      result.success = false;
+    }
+    return result;
   }
 }

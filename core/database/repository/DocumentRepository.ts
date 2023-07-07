@@ -47,28 +47,28 @@ export default class DocumentRepository {
       },
       where: {
         id: id,
-        auths: {
-          user: {
-            id: user.id
-          }
-        }
+        // auths: {
+        //   user: {
+        //     id: user.id
+        //   }
+        // }
       },
     };
     if (id) {
       let result = await this._repository.findOne(option);
-      // let hasuser = result.auths.find((x) => x.user.id == user.id);
-      // if (hasuser) 
-      return result;
+      let hasuser = result.auths.find((x) => x.user.id == user.id);
+      if (hasuser)
+        return result;
     }
     let list: BaseDocument[] = [];
     let result = await this._repository.find(option);
-    // result.map((doc) => {
-    //   let hasuser = doc.auths.find((x) => x.user.id == user.id);
-    //   if (hasuser) {
-    //     list.push(doc);
-    //   }
-    // });
-    return result;
+    result.map((doc) => {
+      let hasuser = doc.auths.find((x) => x.user.id == user.id);
+      if (hasuser) {
+        list.push(doc);
+      }
+    });
+    return list;
   }
 
   /**
@@ -160,9 +160,88 @@ export default class DocumentRepository {
       },
       async (ex) => {
         this._logger.error(`Update failed ${ex}`)
-        throw new BaseError(BaseResultCode.B001,`Update failed ${ex}`)
+        throw new BaseError(BaseResultCode.B001, `Update failed ${ex}`)
       },
     );
     // return result_main;
+  }
+  async createAuth(user: User, auth: AuthContentDocument): Promise<AuthContentDocument> {
+    return await Authorization<AuthContentDocument>(
+      user,
+      TypeFunction.SETTING,
+      async (autho) => {
+        auth.setValueByRole(auth.role)
+        if (auth.user?.id) {
+          let connect = await this._acdRepository.findOne({
+            relations: {
+              document: true,
+              user: true,
+            },
+            where: {
+              document: {
+                id: auth.document.id,
+              },
+              user:{
+                id:auth.user.id
+              }
+            },
+          });
+          if(!connect){
+            let user_auth = await this._userRepository.findOne({where:{id:auth.user.id}})
+            if(user_auth){
+              auth.user = user_auth
+              let result = await this._acdRepository.save(auth)
+              return result
+            }
+          }
+        }else if(auth.token){
+          let result = await this._acdRepository.save(auth)
+          return result
+        }
+        return null
+      }
+    )
+  }
+  async updateAuth(user: User, auth: AuthContentDocument): Promise<AuthContentDocument> {
+    return await Authorization<AuthContentDocument>(
+      user,
+      TypeFunction.SETTING,
+      async (autho) => {
+        auth.setValueByRole(auth.role)
+        if (auth.user?.id) {
+          let connect = await this._acdRepository.findOne({
+            relations: {
+              document: true,
+              user: true,
+            },
+            where: {
+              document: {
+                id: auth.document.id,
+              },
+              user:{
+                id:auth.user.id
+              }
+            },
+          });
+          if(connect){
+            auth.user = connect.user
+            auth.id = connect.id
+            let result = await this._acdRepository.save(auth)
+            return result
+          }
+        }
+        return null
+      }
+    )
+  }
+  async deleteAuth(user: User, id:number): Promise<boolean> {
+    return await Authorization<boolean>(
+      user,
+      TypeFunction.SETTING,
+      async (autho) => {
+        let result = await this._acdRepository.delete({id:id})
+        return result?.affected > 0
+      }
+    )
   }
 }

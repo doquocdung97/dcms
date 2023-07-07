@@ -3,6 +3,7 @@ import {
   InputType,
   ObjectType,
   registerEnumType,
+  createUnionType
 } from '@nestjs/graphql';
 import { plainToClass } from 'class-transformer';
 import { IsOptional, Length } from 'class-validator';
@@ -12,9 +13,19 @@ import {
   Role
 } from 'cms';
 import { CustomObject, CustomUUID } from '../graphqlscalartype';
-import { TypeFunction,Models,Document} from 'cms';
+import { TypeFunction, Models, Document } from 'cms';
 import { User } from '../user/schema';
 
+const AuthContentDocument = createUnionType({
+  name: 'AuthContentDocument',
+  types: () => [TokenAuthContentDocument, UserAuthContentDocument] as const,
+  resolveType: (e) => {
+    if (e.token)
+      return TokenAuthContentDocument.name
+    else
+      return UserAuthContentDocument.name
+  }
+});
 @ObjectType()
 export class BaseDocument {
   @Field()
@@ -30,14 +41,19 @@ export class BaseDocument {
   updatedAt: Date;
 
   @Field(() => [AuthContentDocument], { defaultValue: [] })
-  auths: AuthContentDocument[];
+  auths: typeof AuthContentDocument[];
 }
 
 @ObjectType()
-export class AuthContentDocument {
+export class BaseAuthContentDocument {
 
   //@Field(() => BaseDocument)
   //document: BaseDocument;
+  @Field()
+  id: number;
+
+  @Field()
+  name: string;
 
   @Field(() => Role)
   role: Role;
@@ -57,33 +73,49 @@ export class AuthContentDocument {
   @Field()
   delete: boolean;
 
+}
+@ObjectType()
+export class UserAuthContentDocument extends BaseAuthContentDocument {
   @Field(() => User)
   user: User;
 }
-
+@ObjectType()
+export class TokenAuthContentDocument extends BaseAuthContentDocument {
+  @Field()
+  token: string;
+}
 @InputType()
-export class UserAuth {
-  @Field(() => CustomUUID)
-  id: string;
+export class BaseAuth {
+  @Field()
+  name: string;
 
   @Field(() => InputRole, { nullable: true })
   role: InputRole;
-
-  @Field({ nullable: true })
-  query: boolean;
-
-  @Field({ nullable: true })
-  create: boolean;
-
-  @Field({ nullable: true })
-  edit: boolean;
-
-  @Field({ nullable: true })
-  setting: boolean;
-
-  @Field({ nullable: true })
-  delete: boolean;
 }
+
+@InputType()
+export class UserAuth extends BaseAuth {
+  @Field(() => CustomUUID)
+  userId: string;
+  createModel(): Document.UserAuth {
+    let model = plainToClass(Document.UserAuth, this);
+    return model;
+  }
+}
+
+@InputType()
+export class TokenAuth extends BaseAuth {
+  createModel(): Document.TokenAuth {
+    let model = plainToClass(Document.TokenAuth, this);
+    return model;
+  }
+}
+
+const InputAuth = createUnionType({
+  name: 'InputAuth',
+  types: () => [UserAuth, TokenAuth],
+});
+
 @InputType()
 export class InputUpdateDocument {
   @Field((type) => CustomUUID)
@@ -117,7 +149,30 @@ export class InputCreateDocument {
 }
 
 @ObjectType()
-export class DocumentResult{
+export class TokenAuthResult {
+  @Field((type) => BaseResultCode, { defaultValue: BaseResultCode.B000 })
+  code: BaseResultCode;
+
+  @Field({ defaultValue: true })
+  success: boolean;
+
+  @Field({ nullable: true })
+  data: TokenAuthContentDocument;
+}
+@ObjectType()
+export class UserAuthResult {
+  @Field((type) => BaseResultCode, { defaultValue: BaseResultCode.B000 })
+  code: BaseResultCode;
+
+  @Field({ defaultValue: true })
+  success: boolean;
+
+  @Field({ nullable: true })
+  data: UserAuthContentDocument;
+}
+
+@ObjectType()
+export class DocumentResult {
   @Field((type) => BaseResultCode, { defaultValue: BaseResultCode.B000 })
   code: BaseResultCode;
 
