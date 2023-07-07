@@ -54,9 +54,10 @@ export class LoggerHelper {
   }
   private printf(info: TransformableInfo) {
     let message = info.message;
-    return `[${info.timestamp}] [${info.level}] [${info.name}] - ${message} ${
+    message =  `[${info.timestamp}] [${info.level}] [${info.name}] - ${message} ${
       info.stack || String()
     }`;
+    return message
   }
   info(message: string) {
     this.logger.info(message);

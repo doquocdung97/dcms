@@ -23,6 +23,9 @@ export class App {
 		}
 		return null;
 	}
+	async getDocumentByToken(token:string):Promise<Document| null>{
+		return null
+	}
 	async getUserByToken(val) {
 		let repository = new UserRepository();
 		let token = new Token();

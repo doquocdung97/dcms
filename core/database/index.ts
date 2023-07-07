@@ -1,5 +1,5 @@
 import { ValueStandard } from './models/ValueStandard';
-import { BaseResultCode, TypeProperty} from './common'
+import { BaseResultCode, TypeProperty } from './common'
 //import { Authentication } from './models/Authentication';
 import { AuthContentDocument, BaseDocument } from './models/Document';
 import { BaseMedia } from './models/Media';
@@ -20,7 +20,7 @@ export const Models = [
 	BaseMedia,
 	User,
 	BaseDocument,
-	AuthContentDocument,
+	AuthContentDocument
 	// Authentication
 ]
 import { DataSource, EntityTarget, ObjectLiteral, Repository } from 'typeorm';
@@ -51,7 +51,7 @@ export class DataBase {
 		// let config = JSON.parse(rawdata.toString());
 		let AppDataSource: DataSource = null
 		const config = new Config()
-		const databaseconfig = config.get<any>("DATABASE_CONFIG",Variable.DATABASE_DEFAULT)
+		const databaseconfig = config.get<any>("DATABASE_CONFIG", Variable.DATABASE_DEFAULT)
 		if (databaseconfig.type == Variable.SQLITE_TYPE) {
 			let path = databaseconfig.path
 			let filedata = join(DirRoot, path)
@@ -90,17 +90,17 @@ export class DataBase {
 }
 
 //export {
-	// TypeProperty,
-	// PropertySubscriber,
-	// Authentication,
-	//AuthContentDocument,
-	//BaseDocument,
-	//BaseMedia,
-	//ObjectBase,
-	//ObjectMain,
-	// PropertyBase,
-	//User,
-	// ValueMedia,
-	// ValueObject,
-	// ValueStandard,
+// TypeProperty,
+// PropertySubscriber,
+// Authentication,
+//AuthContentDocument,
+//BaseDocument,
+//BaseMedia,
+//ObjectBase,
+//ObjectMain,
+// PropertyBase,
+//User,
+// ValueMedia,
+// ValueObject,
+// ValueStandard,
 //}
