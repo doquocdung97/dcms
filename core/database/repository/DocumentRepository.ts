@@ -29,10 +29,9 @@ export default class DocumentRepository {
     this._acdRepository = this._dataSource.getRepository(AuthContentDocument);
   }
 
-  async get(user: User): Promise<BaseDocument[]>
-  async get(user: User, id: string): Promise<BaseDocument>
-  async get(user: User, id: string = null) {
-    if (!user) return;
+  async get(): Promise<BaseDocument[]>
+  async get(id: string): Promise<BaseDocument>
+  async get(id: string = null) {
     let option: FindManyOptions<BaseDocument> = {
       relations: {
         auths: {
@@ -56,19 +55,20 @@ export default class DocumentRepository {
     };
     if (id) {
       let result = await this._repository.findOne(option);
-      let hasuser = result.auths.find((x) => x.user.id == user.id);
-      if (hasuser)
-        return result;
+      // let hasuser = result.auths.find((x) => x.user?.id == user.id);
+      // if (hasuser)
+      return result;
     }
     let list: BaseDocument[] = [];
     let result = await this._repository.find(option);
-    result.map((doc) => {
-      let hasuser = doc.auths.find((x) => x.user.id == user.id);
-      if (hasuser) {
-        list.push(doc);
-      }
-    });
-    return list;
+    return result
+    // result.map((doc) => {
+    //   let hasuser = doc.auths.find((x) => x.user?.id == user.id);
+    //   if (hasuser) {
+    //     list.push(doc);
+    //   }
+    // });
+    // return list;
   }
 
   /**
@@ -91,157 +91,142 @@ export default class DocumentRepository {
     }
   }
 
-  async update(user: User, input: BaseDocument): Promise<BaseDocument> {
-    return await Authorization<BaseDocument>(
-      user,
-      TypeFunction.EDIT,
-      async (autho) => {
-        if (autho.role == Role.SUPERADMIN && input.id == autho.document.id) {
-          let record = (await this.get(user, input.id)) as BaseDocument;
-          if (record) {
-            let connect = await this._acdRepository.find({
-              relations: {
-                document: true,
-                user: true,
-              },
-              where: {
-                document: {
-                  id: input.id,
-                },
-              },
-            });
-            let auth_create = connect.find((x) => x.role == Role.SUPERADMIN);
-            let user_ids = input.auths
-              .filter((auth) => auth.user.id != auth_create.user.id)
-              .map((auth) => auth.user.id);
-            let users = await this._userRepository.find({
-              where: { id: In(user_ids) },
-            });
-            let join = handleUpdateJoinTable<AuthContentDocument, User>(
-              users,
-              connect.filter((x) => x.role != Role.SUPERADMIN),
-              (item, users, index) => {
-                return item.user && item.user.id && index < users.length;
-              },
-              (auth, user) => {
-                let value = input.auths.find((x) => x.user.id == user.id);
-                if (value) {
-                  auth = Object.assign(auth, value);
-                  auth.setValueByRole();
-                  auth.user = user;
-                }
-              },
-              (user) => {
-                let auth = input.auths.find((x) => x.user.id == user.id);
-                if (auth) {
-                  let value = plainToClass(AuthContentDocument, auth);
-                  value.setValueByRole();
-                  value.user = user;
-                  value.document = record;
-                  value = this._acdRepository.create(value);
-                  return value;
-                }
-              },
-            );
-            let rowdata = join.create_item.concat(join.update_item, auth_create);
-            if (join.delete_item.length > 0) {
-              await this._acdRepository.remove(join.delete_item);
+  async update(autho: AuthContentDocument, input: BaseDocument): Promise<BaseDocument> {
+    if (autho.role == Role.SUPERADMIN && input.id == autho.document.id) {
+      let record = (await this.get(input.id)) as BaseDocument;
+      if (record) {
+        let connect = await this._acdRepository.find({
+          relations: {
+            document: true,
+            user: true,
+          },
+          where: {
+            document: {
+              id: input.id,
+            },
+          },
+        });
+        let auth_create = connect.find((x) => x.role == Role.SUPERADMIN);
+        let user_ids = input.auths
+          .filter((auth) => auth.user.id != auth_create.user.id)
+          .map((auth) => auth.user.id);
+        let users = await this._userRepository.find({
+          where: { id: In(user_ids) },
+        });
+        let join = handleUpdateJoinTable<AuthContentDocument, User>(
+          users,
+          connect.filter((x) => x.role != Role.SUPERADMIN),
+          (item, users, index) => {
+            return item.user && item.user.id && index < users.length;
+          },
+          (auth, user) => {
+            let value = input.auths.find((x) => x.user.id == user.id);
+            if (value) {
+              auth = Object.assign(auth, value);
+              auth.setValueByRole();
+              auth.user = user;
             }
-            let result = await this._repository.save(input);
-            result = Object.assign(result, record);
-            result.auths = await this._acdRepository.save(rowdata);
-            return result
-          } else {
-            throw new BaseError(BaseResultCode.B002)
-          }
-        } else {
-          throw new BaseError(BaseResultCode.B002)
+          },
+          (user) => {
+            let auth = input.auths.find((x) => x.user.id == user.id);
+            if (auth) {
+              let value = plainToClass(AuthContentDocument, auth);
+              value.setValueByRole();
+              value.user = user;
+              value.document = record;
+              value = this._acdRepository.create(value);
+              return value;
+            }
+          },
+        );
+        let rowdata = join.create_item.concat(join.update_item, auth_create);
+        if (join.delete_item.length > 0) {
+          await this._acdRepository.remove(join.delete_item);
         }
-      },
-      async (ex) => {
-        this._logger.error(`Update failed ${ex}`)
-        throw new BaseError(BaseResultCode.B001, `Update failed ${ex}`)
-      },
-    );
-    // return result_main;
+        let result = await this._repository.save(input);
+        result = Object.assign(result, record);
+        result.auths = await this._acdRepository.save(rowdata);
+        return result
+      } else {
+        throw new BaseError(BaseResultCode.B002)
+      }
+    } else {
+      throw new BaseError(BaseResultCode.B002)
+    }
   }
-  async createAuth(user: User, auth: AuthContentDocument): Promise<AuthContentDocument> {
-    return await Authorization<AuthContentDocument>(
-      user,
-      TypeFunction.SETTING,
-      async (autho) => {
-        auth.setValueByRole(auth.role)
-        if (auth.user?.id) {
-          let connect = await this._acdRepository.findOne({
-            relations: {
-              document: true,
-              user: true,
-            },
-            where: {
-              document: {
-                id: auth.document.id,
-              },
-              user:{
-                id:auth.user.id
-              }
-            },
-          });
-          if(!connect){
-            let user_auth = await this._userRepository.findOne({where:{id:auth.user.id}})
-            if(user_auth){
-              auth.user = user_auth
-              let result = await this._acdRepository.save(auth)
-              return result
-            }
+  async createAuth(auth: AuthContentDocument): Promise<AuthContentDocument> {
+    auth.setValueByRole(auth.role)
+    if (auth.user?.id) {
+      let connect = await this._acdRepository.findOne({
+        relations: {
+          document: true,
+          user: true,
+        },
+        where: {
+          document: {
+            id: auth.document.id,
+          },
+          user: {
+            id: auth.user.id
           }
-        }else if(auth.token){
+        },
+      });
+      if (!connect) {
+        let user_auth = await this._userRepository.findOne({ where: { id: auth.user.id } })
+        if (user_auth) {
+          auth.user = user_auth
           let result = await this._acdRepository.save(auth)
           return result
         }
-        return null
       }
-    )
+    } else if (auth.token) {
+      let result = await this._acdRepository.save(auth)
+      return result
+    }
+    return null
   }
-  async updateAuth(user: User, auth: AuthContentDocument): Promise<AuthContentDocument> {
-    return await Authorization<AuthContentDocument>(
-      user,
-      TypeFunction.SETTING,
-      async (autho) => {
-        auth.setValueByRole(auth.role)
-        if (auth.user?.id) {
-          let connect = await this._acdRepository.findOne({
-            relations: {
-              document: true,
-              user: true,
-            },
-            where: {
-              document: {
-                id: auth.document.id,
-              },
-              user:{
-                id:auth.user.id
-              }
-            },
-          });
-          if(connect){
-            auth.user = connect.user
-            auth.id = connect.id
-            let result = await this._acdRepository.save(auth)
-            return result
+  async updateAuth(auth: AuthContentDocument): Promise<AuthContentDocument> {
+    auth.setValueByRole(auth.role)
+    if (auth.user?.id) {
+      let connect = await this._acdRepository.findOne({
+        relations: {
+          document: true,
+          user: true,
+        },
+        where: {
+          document: {
+            id: auth.document.id,
+          },
+          user: {
+            id: auth.user.id
           }
-        }
-        return null
+        },
+      });
+      if (connect) {
+        auth.user = connect.user
+        auth.id = connect.id
+        let result = await this._acdRepository.save(auth)
+        return result
       }
-    )
+    }
+    return null
   }
-  async deleteAuth(user: User, id:number): Promise<boolean> {
-    return await Authorization<boolean>(
-      user,
-      TypeFunction.SETTING,
-      async (autho) => {
-        let result = await this._acdRepository.delete({id:id})
-        return result?.affected > 0
-      }
-    )
+  async deleteAuth(id: number): Promise<boolean> {
+    let result = await this._acdRepository.delete({ id: id })
+    return result?.affected > 0
+  }
+
+  async getByToken(token: string): Promise<BaseDocument | null> {
+    let option: FindManyOptions<BaseDocument> = {
+      relations: {
+        auths: true
+      },
+      where: {
+        auths: {
+          token: token
+        }
+      },
+    };
+    return await this._repository.findOne(option);
   }
 }

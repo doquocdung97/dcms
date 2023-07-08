@@ -7,6 +7,7 @@ import { ObjectMain } from "../models/ObjectMain";
 import { PropertyBase } from "../models/Property";
 import { DataBase } from "..";
 import { Config } from '../../config';
+import { AuthContentDocument } from "database/models/Document";
 
 export class PropertyResult {
 	code: BaseResultCode;
@@ -35,13 +36,9 @@ export default class PropertyRepository {
 		this.objectRepository = this._dataSource.getRepository(ObjectBase)
 	}
 
-	async get(user: User, objectid: string): Promise<PropertyBase[]>
-	async get(user: User, objectid: string, id: number): Promise<PropertyBase>
-	async get(user: User, objectid: string, id: number = null) {
-		return await Authorization(
-			user,
-			TypeFunction.QUERY,
-			async (autho) => {
+	async get(autho: AuthContentDocument, objectid: string): Promise<PropertyBase[]>
+	async get(autho: AuthContentDocument, objectid: string, id: number): Promise<PropertyBase>
+	async get(autho: AuthContentDocument, objectid: string, id: number = null) {
 				let option: FindManyOptions<PropertyBase> = {
 					relations: {
 						parent: {
@@ -65,18 +62,10 @@ export default class PropertyRepository {
 					return await this._repository.findOne(option);
 				}
 				return await this._repository.find(option);
-			},
-			async (ex) => {
-				this._logger.error(`Get failed.\n${ex}`);
-			},
-		);
+			
 	}
 
-	async create(user: User, id: string, data: PropertyBase): Promise<PropertyBase | null> {
-		let result = await Authorization(
-			user,
-			TypeFunction.CREATE,
-			async (autho) => {
+	async create(autho: AuthContentDocument, id: string, data: PropertyBase): Promise<PropertyBase | null> {
 				let obj = await this.objectRepository.findOneBy({
 					id: id,
 					document: { id: autho.document.id },
@@ -89,15 +78,10 @@ export default class PropertyRepository {
 				} else {
 					throw new BaseError(BaseResultCode.B002);
 				}
-			});
-		return result;
 	}
 
-	async creates(user: User, id: string, items: PropertyBase[]): Promise<PropertyBase[]> {
-		let result = await Authorization(
-			user,
-			TypeFunction.CREATE,
-			async (autho) => {
+	async creates(autho: AuthContentDocument, id: string, items: PropertyBase[]): Promise<PropertyBase[]> {
+
 				let obj = await this.objectRepository.findOneBy({
 					id: id,
 					document: { id: autho.document.id },
@@ -111,16 +95,10 @@ export default class PropertyRepository {
 				} else {
 					throw new BaseError(BaseResultCode.B002);
 				}
-			}
-		);
-		return result;
+			
 	}
 
-	async update(user: User, item: PropertyBase): Promise<PropertyBase|null> {
-		let result = await Authorization(
-			user,
-			TypeFunction.EDIT,
-			async (autho) => {
+	async update(autho: AuthContentDocument, item: PropertyBase): Promise<PropertyBase | null> {
 				var record = await this._repository.findOne({
 					relations: {
 						parent: true,
@@ -143,15 +121,9 @@ export default class PropertyRepository {
 				} else {
 					return null
 				}
-			}
-		);
-		return result;
+			
 	}
-	async updates(user: User, id: string, items: PropertyBase[]): Promise<PropertyBase[]> {
-		let result = await Authorization(
-			user,
-			TypeFunction.EDIT,
-			async (autho) => {
+	async updates(autho: AuthContentDocument, id: string, items: PropertyBase[]): Promise<PropertyBase[]> {
 				var records = await this._repository.find({
 					relations: {
 						parent: true,
@@ -187,9 +159,9 @@ export default class PropertyRepository {
 						throw new BaseError(BaseResultCode.B002);
 					}
 				}
-				
+
 				items.map((data) => {
-					if(!data.id){
+					if (!data.id) {
 						data.parent = ObjectBase.create(id);
 						data.parent.document = autho.document;
 						datas.push(data)
@@ -197,82 +169,62 @@ export default class PropertyRepository {
 				});
 				let rowdatas = await this._repository.save(datas);
 				return rowdatas
+			
+	}
+
+	async delete(autho: AuthContentDocument, id: number, softDelete = true): Promise<boolean> {
+		let data = null;
+		let option: FindOptionsWhere<PropertyBase> = {
+			id: id,
+			parent: { document: { id: autho.document.id } },
+		};
+		let result = await this._repository.findOne({ where: option })
+		if (result) {
+			if (softDelete) {
+				data = await this._repository.softDelete({ id: id });
+			} else {
+				data = await this._repository.delete({ id: id });
 			}
-		);
-		return result;
+			if (data && data.affected > 0) {
+				return true;
+			}
+		}
+		return false;
 	}
 
-	async delete(user: User, id: number, softDelete = true): Promise<boolean> {
-		let result = await Authorization(
-			user,
-			TypeFunction.DELETE,
-			async (autho) => {
-				let data = null;
-				let option: FindOptionsWhere<PropertyBase> = {
-					id: id,
-					parent: { document: { id: autho.document.id } },
-				};
-				let result = await this._repository.findOne({ where: option })
-				if (result) {
-					if (softDelete) {
-						data = await this._repository.softDelete({ id: id });
-					} else {
-						data = await this._repository.delete({ id: id });
-					}
-					if (data && data.affected > 0) {
-						return true;
-					}
-				}
-				return false;
-			});
-		return result;
+	async deletes(autho: AuthContentDocument, ids: number[], softDelete = true): Promise<boolean> {
+		let data = null;
+		let option: FindOptionsWhere<PropertyBase> = {
+			id: In(ids),
+			parent: { document: { id: autho.document.id } },
+		};
+		let rowdata = await this._repository.findBy(option);
+		if (softDelete) {
+			data = await this._repository.softDelete({ id: In(rowdata.map(item => item.id)) });
+		} else {
+			data = await this._repository.delete({ id: In(rowdata.map(item => item.id)) });
+		}
+		if (data && data.affected <= 0) {
+			return false
+		}
+		return true
 	}
 
-	async deletes(user: User, ids: number[], softDelete = true): Promise<boolean> {
-		let result = await Authorization(
-			user,
-			TypeFunction.DELETE,
-			async (autho) => {
-				let data = null;
-				let option: FindOptionsWhere<PropertyBase> = {
-					id: In(ids),
-					parent: { document: { id: autho.document.id } },
-				};
-				let rowdata = await this._repository.findBy(option);
-				if (softDelete) {
-					data = await this._repository.softDelete({ id: In(rowdata.map(item => item.id)) });
-				} else {
-					data = await this._repository.delete({ id: In(rowdata.map(item => item.id)) });
-				}
-				if (data && data.affected <= 0) {
-					return false
-				}
-				return true
+	async restore(autho: AuthContentDocument, id: number): Promise<boolean> {
+		let result = await this._repository.findOne({
+			withDeleted: true, where: {
+				id: id,
+				parent: { document: { id: autho.document.id } },
+			}
+		})
+		if (result) {
+			let data = await this._repository.restore({
+				id: id
 			});
-		return result;
-	}
-
-	async restore(user: User, id: number): Promise<boolean> {
-		let result = await Authorization(
-			user,
-			TypeFunction.DELETE,
-			async (autho) => {
-				let result = await this._repository.findOne({
-					withDeleted: true, where: {
-						id: id,
-						parent: { document: { id: autho.document.id } },
-					}
-				})
-				if (result) {
-					let data = await this._repository.restore({
-						id: id
-					});
-					if (data && data.affected > 0) {
-						return true;
-					}
-				}
-				return false
-			});
-		return result;
+			if (data && data.affected > 0) {
+				return true;
+			}
+		}
+		return false
 	}
 }

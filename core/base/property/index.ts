@@ -3,6 +3,7 @@ import PropertyRepository from '../../database/repository/PropertyRepository'
 import { Objective } from "../object"
 import { TypeProperty } from '../../database/common'
 import { plainToClass } from "class-transformer"
+import { TypeFunction } from "../../common"
 
 export class InputCreateProperty {
     name: string;
@@ -52,22 +53,37 @@ export class Property {
         return this._model;
     }
     async delete(softDelete = true): Promise<boolean> {
-        let user = this._parent.user;
-        return await this._repository.delete(user, this._model.id, softDelete);
+        let result = await this._parent.document.checkAuth(
+            TypeFunction.DELETE,
+            async (_auth)=>{
+                return await this._repository.delete(_auth, this._model.id,softDelete);;
+            }
+        )
+        return result
     }
     async restore(): Promise<boolean> {
-        let user = this._parent.user;
-        return await this._repository.restore(user, this._model.id);
+        let result = await this._parent.document.checkAuth(
+            TypeFunction.EDIT,
+            async (_auth)=>{
+                return await this._repository.restore(_auth, this._model.id);;
+            }
+        )
+        return result
     }
     async update(input: InputUpdateProperty): Promise<boolean> {
-        let user = this._parent.user;
-        let result = await this._repository.update(user, input.model());
-        if (result) {
-            this._model = result;
-            this._parent.onChange(this,result.value)
-            return true;
-        }
-        return false;
+        let result = await this._parent.document.checkAuth(
+            TypeFunction.EDIT,
+            async (_auth)=>{
+                let result = await this._repository.update(_auth, input.model());
+                if (result) {
+                    this._model = result;
+                    this._parent.onChange(this,result.value)
+                    return true;
+                }
+                return false;
+            }
+        )
+        return result
     }
 }
 export {

@@ -4,6 +4,7 @@ import { User } from './user';
 import { Objective } from './object';
 import { Media } from './media';
 import { Token } from "../common";
+import DocumentRepository from '../database/repository/DocumentRepository';
 export class App {
 	private static instance: App;
 	private _documents = {}
@@ -24,6 +25,11 @@ export class App {
 		return null;
 	}
 	async getDocumentByToken(token:string):Promise<Document| null>{
+		let repository = new DocumentRepository();
+		let doc = await repository.getByToken(token)
+		if(doc){
+			return new Document(null,doc)
+		}
 		return null
 	}
 	async getUserByToken(val) {
@@ -32,12 +38,15 @@ export class App {
 		let verify = token.verify(val);// jwt.verify(token, config.get<string>("SECRET_KEY"));
 		if (verify) {
 			let user_model = await repository.findOneByEmail(verify.email);
-			user_model.currentDoc = user_model.connect.find((x) => x.document?.id == verify.documentid);
+			// user_model.currentDoc = user_model.connect.find((x) => x.document?.id == verify.documentid);
+			// let user = new User(user_model);
+			// if (user_model.currentDoc) {
+			// 	let doc = new Document(user, user_model.currentDoc.document)
+			// 	user.setActiveDocument(doc)
+			// }
 			let user = new User(user_model);
-			if (user_model.currentDoc) {
-				let doc = new Document(user, user_model.currentDoc.document)
-				user.setActiveDocument(doc)
-			}
+			let doc = await user.document(verify.documentid)
+			user.setActiveDocument(doc)
 			return user
 		}
 		return null;

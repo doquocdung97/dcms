@@ -23,11 +23,11 @@ export default class UserRepository {
 	}
 	async findOneByEmail(email: string): Promise<User | null> {
 		let user = await this._repository.findOne({
-			relations: {
-				connect: {
-					document: true,
-				},
-			},
+			// relations: {
+			// 	connect: {
+			// 		document: true,
+			// 	},
+			// },
 			where: { email: email }
 		});
 		return user;

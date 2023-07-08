@@ -6,6 +6,7 @@ import PropertyRepository from "../../database/repository/PropertyRepository"
 import { Document } from "../document"
 import { Property, InputCreateProperty } from "../property"
 import { PropertyBase } from "../../database/models/Property";
+import { TypeFunction } from "../../common"
 
 export class InputCreateObjective {
     parentId: string;
@@ -40,7 +41,9 @@ export class Objective {
     private _parent: Document
     private _repository: ObjectRepository
     private _propertyrepository: PropertyRepository
-
+    get document(): Document | null {
+        return this._parent
+    }
     constructor(parent: Document, model: ObjectBase) {
         this._model = model
         this._parent = parent
@@ -48,12 +51,12 @@ export class Objective {
         // this.propertyRepository = new PropertyRepository()
 
     }
-    get mainRepository(){
+    get mainRepository() {
         if (!this._repository)
             this._repository = new ObjectRepository()
         return this._repository
     }
-    get propertyRepository(){
+    get propertyRepository() {
         if (!this._propertyrepository)
             this._propertyrepository = new PropertyRepository()
         return this._propertyrepository
@@ -71,97 +74,134 @@ export class Objective {
         return this._parent.user
     }
     async update(input: InputUpdateObjective): Promise<boolean> {
-        let input_model = input.model()
-        let result = await this.mainRepository.update(this._parent.user, input_model)
-        if (result) {
-            this._model = result
-            return true
-        }
-        return
+        let result = await this._parent.checkAuth(
+            TypeFunction.EDIT,
+            async (_auth) => {
+                let input_model = input.model()
+                let result = await this.mainRepository.update(_auth, input_model)
+                if (result) {
+                    this._model = result
+                    return true
+                }
+            }
+        )
+        return result
     }
 
     async delete(softDelete = true): Promise<boolean> {
-        let user = this._parent.user
-        return await this.mainRepository.delete(user, this._model.id, softDelete)
+        let result = await this._parent.checkAuth(
+            TypeFunction.DELETE,
+            async (_auth) => {
+                return await this.mainRepository.delete(_auth, this._model.id, softDelete)
+            }
+        )
+        return result
     }
     async restore(): Promise<boolean> {
-        let user = this._parent.user
-         
-        return await this.mainRepository.restore(user, this._model.id)
+        let result = await this._parent.checkAuth(
+            TypeFunction.EDIT,
+            async (_auth) => {
+                return await this.mainRepository.restore(_auth, this._model.id)
+            }
+        )
+        return result
     }
 
     async property(id: number, fetch = true): Promise<Property | null> {
-        if (fetch) {
-            let user = this._parent.user;
-             
-            let pro = await this.propertyRepository.get(user, this._model.id, id);
-            if (pro) {
-                return new Property(this, pro);
+        let result = await this._parent.checkAuth(
+            TypeFunction.QUERY,
+            async (_auth) => {
+                if (fetch) {
+                    let pro = await this.propertyRepository.get(_auth, this._model.id, id);
+                    if (pro) {
+                        return new Property(this, pro);
+                    }
+                } else {
+                    let pro = new PropertyBase();
+                    pro.id = id;
+                    return new Property(this, pro);
+                }
+                return null;
             }
-        } else {
-            let pro = new PropertyBase();
-            pro.id = id;
-            return new Property(this, pro);
-        }
-        return null;
+        )
+        return result
     }
     async properties(): Promise<Property[]> {
-        let user = this._parent.user
-         
-        let pros = await this.propertyRepository.get(user, this._model.id)
-        let data = []
-        pros.map(pro => {
-            data.push(new Property(this, pro))
-        })
-        return data
+        let result = await this._parent.checkAuth(
+            TypeFunction.QUERY,
+            async (_auth) => {
+                let pros = await this.propertyRepository.get(_auth, this._model.id)
+                let data = []
+                pros.map(pro => {
+                    data.push(new Property(this, pro))
+                })
+                return data
+            }
+        )
+        return result
     }
     async createProperty(input: InputCreateProperty): Promise<Property | null> {
-        let user = this._parent.user
-         
-        let pro = await this.propertyRepository.create(user, this._model.id, input.model())
-        if (pro) {
-            return new Property(this, pro)
-        }
-        return null
+        let result = await this._parent.checkAuth(
+            TypeFunction.CREATE,
+            async (_auth) => {
+                let pro = await this.propertyRepository.create(_auth, this._model.id, input.model())
+                if (pro) {
+                    return new Property(this, pro)
+                }
+                return null
+            }
+        )
+        return result
     }
     async createPropertys(inputs: InputCreateProperty[]): Promise<Property[] | null> {
-        let user = this._parent.user
-        let models = []
-        inputs.map(input => {
-            models.push(input.model())
-        })
-         
-        let pros = await this.propertyRepository.creates(user, this._model.id, models)
-        if (pros && pros.length > 0) {
-            let propertys: Property[] = []
-            pros.map(pro => {
-                propertys.push(new Property(this, pro))
-            })
-            if (!this._model.properties) {
-                this._model.properties = []
+        let result = await this._parent.checkAuth(
+            TypeFunction.CREATE,
+            async (_auth) => {
+                let models = []
+                inputs.map(input => {
+                    models.push(input.model())
+                })
+                let pros = await this.propertyRepository.creates(_auth, this._model.id, models)
+                if (pros && pros.length > 0) {
+                    let propertys: Property[] = []
+                    pros.map(pro => {
+                        propertys.push(new Property(this, pro))
+                    })
+                    if (!this._model.properties) {
+                        this._model.properties = []
+                    }
+                    this._model.properties.push(...pros)
+                    return propertys
+                }
+                return null
             }
-            this._model.properties.push(...pros)
-            return propertys
-        }
-        return null
+        )
+        return result
     }
 
     private async updatePropertys(inputs: PropertyBase[]): Promise<PropertyBase[] | null> {
-        let user = this._parent.user
-        // let models = []
-        // inputs.map(input => {
-        //     models.push(input.model())
-        // })
-         
-        let pros = await this.propertyRepository.updates(user, this._model.id, inputs)
-        // if (pros && pros.length > 0) {
-        //     let propertys: Property[] = []
-        //     pros.map(pro => {
-        //         propertys.push(new Property(this, pro))
-        //     })
-        //     return propertys
-        // }
-        return pros
+        // let user = this._parent.user
+        // // let models = []
+        // // inputs.map(input => {
+        // //     models.push(input.model())
+        // // })
+
+        // let pros = await this.propertyRepository.updates(user, this._model.id, inputs)
+        // // if (pros && pros.length > 0) {
+        // //     let propertys: Property[] = []
+        // //     pros.map(pro => {
+        // //         propertys.push(new Property(this, pro))
+        // //     })
+        // //     return propertys
+        // // }
+        // return pros
+        let result = await this._parent.checkAuth(
+            TypeFunction.EDIT,
+            async (_auth) => {
+                return await this.propertyRepository.updates(_auth, this._model.id, inputs)
+            }
+        )
+        return result
     }
     toJson() {
         let property = {}
