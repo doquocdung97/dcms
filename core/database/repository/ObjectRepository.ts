@@ -81,6 +81,38 @@ export default class ObjectRepository {
 		let data = await this._repository.findAndCount(option);
 		return data;
 	}
+	async getByTypeOne(autho: AuthContentDocument, type: string,level:number = 0): Promise<ObjectBase>{
+		const levelRelations = function (lel){
+			if(lel <=0){
+				return {
+					connectMeida: true,
+					connectStandard: true
+				}
+			}
+			return {
+				connectObject: {
+					object:{
+						properties:levelRelations(lel-1)
+					}
+				},
+				connectMeida: true,
+				connectStandard: true
+			}
+		}
+		let option: FindManyOptions<ObjectBase> = {
+			relations: {
+				properties: levelRelations(level-1),
+			},
+			where: {
+				type: type,
+				document: {
+					id: autho.document.id,
+				},
+			},
+		};
+		let data = await this._repository.findOne(option);
+		return data;
+	}
 	async getByName(autho: AuthContentDocument, name: string): Promise<ObjectBase> {
 		let option: FindManyOptions<ObjectBase> = {
 			relations: {

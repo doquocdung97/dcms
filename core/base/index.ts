@@ -28,7 +28,9 @@ export class App {
 		let repository = new DocumentRepository();
 		let doc = await repository.getByToken(token)
 		if(doc){
-			return new Document(null,doc)
+			let auth = doc.auths.find(n=>n.token == token)
+			auth.document = doc
+			return new Document(new User(auth.user),doc)
 		}
 		return null
 	}

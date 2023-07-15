@@ -193,6 +193,7 @@ export class DocumentResolver {
   }
   @Mutation(() => UserAuthResult)
   async updateUserAuthDocument(
+    @Args('id',{type: () => Int}) id: number,
     @Args('input') input: UserAuth,
     @CurrentUserGraphql() user: User.User) {
 
@@ -200,7 +201,7 @@ export class DocumentResolver {
     try {
       input = plainToClass(UserAuth, input);
       let doc = await user.activeDocument();
-      let data = await doc.updateAuth(input.createModel())
+      let data = await doc.updateAuth(id,input.createModel())
       if (data) {
         result.data = plainToClass(UserAuthContentDocument, data)
       } else {

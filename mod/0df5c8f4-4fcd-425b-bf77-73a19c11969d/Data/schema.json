@@ -1,5 +1,5 @@
 {
-  "name": "Data",
+  "name": "DataModel",
   "type": "dict",
   "fields": [
     {
@@ -49,8 +49,7 @@
         "map": "Blog"
       },
       "required": true,
-      "manylang": false,
-      "input": false
+      "manylang": false
     },
     {
       "name": "blogs",
@@ -59,8 +58,7 @@
         "map": "Blog"
       },
       "required": true,
-      "manylang": false,
-      "input": false
+      "manylang": false
     }
   ]
 }

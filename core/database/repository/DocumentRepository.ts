@@ -1,4 +1,4 @@
-import { DataSource, Repository, In, FindManyOptions, Not } from 'typeorm';
+import { DataSource, Repository, In, FindManyOptions, Not, IsNull } from 'typeorm';
 import { AuthContentDocument, BaseDocument, Role } from '../models/Document';
 import { Authorization, DirRoot, FileHelper, handleUpdateJoinTable, BaseError, LoggerHelper, TypeFunction } from '../../common';
 import { plainToClass } from 'class-transformer';
@@ -156,7 +156,7 @@ export default class DocumentRepository {
   }
   async createAuth(auth: AuthContentDocument): Promise<AuthContentDocument> {
     auth.setValueByRole(auth.role)
-    if (auth.user?.id) {
+    if (!auth.token) {
       let connect = await this._acdRepository.findOne({
         relations: {
           document: true,
@@ -168,7 +168,8 @@ export default class DocumentRepository {
           },
           user: {
             id: auth.user.id
-          }
+          },
+          token:IsNull()
         },
       });
       if (!connect) {
@@ -185,7 +186,7 @@ export default class DocumentRepository {
     }
     return null
   }
-  async updateAuth(auth: AuthContentDocument): Promise<AuthContentDocument> {
+  async updateAuth(id:number, auth: AuthContentDocument): Promise<AuthContentDocument> {
     auth.setValueByRole(auth.role)
     if (auth.user?.id) {
       let connect = await this._acdRepository.findOne({
@@ -194,11 +195,9 @@ export default class DocumentRepository {
           user: true,
         },
         where: {
+          id:id,
           document: {
             id: auth.document.id,
-          },
-          user: {
-            id: auth.user.id
           }
         },
       });
@@ -217,9 +216,14 @@ export default class DocumentRepository {
   }
 
   async getByToken(token: string): Promise<BaseDocument | null> {
+    if(!token){
+      return null
+    }
     let option: FindManyOptions<BaseDocument> = {
       relations: {
-        auths: true
+        auths: {
+          user:true
+        }
       },
       where: {
         auths: {
@@ -227,6 +231,7 @@ export default class DocumentRepository {
         }
       },
     };
-    return await this._repository.findOne(option);
+    let doc =  await this._repository.findOne(option);
+    return doc
   }
 }

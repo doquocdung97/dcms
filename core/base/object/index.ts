@@ -204,17 +204,7 @@ export class Objective {
         return result
     }
     toJson() {
-        let property = {}
-        if (this._model) {
-            this._model.properties.map(pro => {
-                property[pro.name] = pro.value
-            })
-            let fields = ['id', 'updatedAt', 'createdAt']
-            fields.map(field => {
-                property[field] = this._model[field]
-            })
-        }
-        return property
+        return this._model.toJson()
     }
     async updateProperty(pro: Object): Promise<Object> {
         let fields = Object.keys(pro)

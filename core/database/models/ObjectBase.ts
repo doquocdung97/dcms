@@ -43,7 +43,9 @@ export class ObjectBase {
   //  return `${this.name} test`;
   //}
 
-  @OneToMany((type) => PropertyBase, (obj) => obj.parent)
+  @OneToMany((type) => PropertyBase, (obj) => obj.parent, {
+    onDelete: 'CASCADE',
+  })
   properties: PropertyBase[];
 
   @OneToMany((type) => ValueObject, (obj) => obj.object, {
@@ -66,5 +68,23 @@ export class ObjectBase {
     let obj = new ObjectBase();
     obj.id = id;
     return obj;
+  }
+  toJson(){
+    let property = {}
+    this.properties?.map(pro => {
+      if(pro.value instanceof ObjectBase){
+        property[pro.name] = pro.value.toJson()
+      }else if(pro.value instanceof Array && pro.value[0] instanceof ObjectBase){
+        property[pro.name] = pro.value?.map(x=>x.toJson())
+      }else{
+        property[pro.name] = pro.value
+      }
+      
+    })
+    let fields = ['id', 'updatedAt', 'createdAt']
+    fields.map(field => {
+        property[field] = this[field]
+    })
+    return property
   }
 }

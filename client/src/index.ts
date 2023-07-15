@@ -26,6 +26,9 @@ const server = new ApolloServer({
 			embed: true,
 		}),
 	],
+	context: async ({ req }) => {
+    return req
+  },
 });
 async function apolloServer() {
 	await server.start()

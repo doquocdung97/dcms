@@ -148,6 +148,9 @@ export default class PropertyRepository {
 					) {
 						let data = Object.assign(record, item);
 						data.parent.document = autho.document;
+						delete data.connectStandard
+						delete data.connectMeida
+						delete data.connectObject
 						await data.AfterUpdate(this._dataSource);
 						datas.push(data)
 						item.value = data.value

@@ -67,7 +67,7 @@ export class ObjectResult {
 }
 @InputType()
 export class InputCreateObject {
-  @Field(() => CustomUUID)
+  @Field(() => CustomUUID, { nullable: true })
   parentId: string;
 
   @Length(5, 50)

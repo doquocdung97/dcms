@@ -6,7 +6,7 @@ import { EventDispatcher } from "../../common/EventDispatcher"
 import { Objective } from "../object"
 import { InputCreateMedia, Media } from "../media"
 import { User } from "../user"
-import { BaseDocument, InputRole, AuthContentDocument } from "../../database/models/Document";
+import { BaseDocument, InputRole, AuthContentDocument, Role } from "../../database/models/Document";
 import { User as DBUser } from "../../database/models/User";
 import { Token, TypeFunction } from "../../common";
 import { plainToClass } from 'class-transformer';
@@ -171,7 +171,7 @@ export class Document extends EventDispatcher {
     async objectsByType(type: string, skip: number = 0, take: number = null): Promise<[Objective[], number]> {
         
         let result:[Objective[], number] = await this.checkAuth(
-            TypeFunction.SETTING,
+            TypeFunction.QUERY,
             async (_auth)=>{
                 let [objs, total] = await this._objectrepository.getfilter(_auth, type, skip, take)
                 let data:Objective[] = []
@@ -180,6 +180,17 @@ export class Document extends EventDispatcher {
                 })
                 
                 return [data, total]
+            }
+        )
+        return result
+    }
+    async objectByType(type: string,level:number): Promise<Objective> {
+        let result = await this.checkAuth(
+            TypeFunction.QUERY,
+            async (_auth)=>{
+                let obj = await this._objectrepository.getByTypeOne(_auth, type,level)
+                if(obj)
+                    return new Objective(this, obj)
             }
         )
         return result
@@ -260,27 +271,31 @@ export class Document extends EventDispatcher {
     async createAuth(auth: TokenAuth | UserAuth) {
         let user_model = this._parent.model();
         let input = auth.model()
-        if (auth instanceof TokenAuth) {
-            let tokenhelper = new Token()
-            input.token = tokenhelper.get({ data: 'test' })
-        } else {
-            if(user_model.id == auth.userId){
-                return null;
-            }
-            let user = new DBUser()
-            user.id = auth.userId
-            input.user = user
-        }
         let result = await this.checkAuth(
             TypeFunction.SETTING,
             async (_auth)=>{
-                input.document = this._model
-                let result = await this._repository.createAuth(input)
-                if (result) {
+                if(_auth.role == Role.SUPERADMIN){
                     if (auth instanceof TokenAuth) {
-                        return plainToClass(TokenAuth, result)
+                        let tokenhelper = new Token()
+                        input.token = tokenhelper.get({ data: 'test' })
+                        input.user = _auth.user
                     } else {
-                        return plainToClass(UserAuth, result)
+                        if(user_model.id == auth.userId){
+                            return null;
+                        }
+                        let user = new DBUser()
+                        user.id = auth.userId
+                        input.user = user
+                    }
+
+                    input.document = this._model
+                    let result = await this._repository.createAuth(input)
+                    if (result) {
+                        if (auth instanceof TokenAuth) {
+                            return plainToClass(TokenAuth, result)
+                        } else {
+                            return plainToClass(UserAuth, result)
+                        }
                     }
                 }
                 return null
@@ -288,7 +303,7 @@ export class Document extends EventDispatcher {
         )
         return result;
     }
-    async updateAuth(auth: UserAuth): Promise<UserAuth> {
+    async updateAuth(id:number, auth: UserAuth): Promise<UserAuth> {
         let user_model = this._parent?.model();
         if(user_model.id == auth.userId){
             return null;
@@ -296,14 +311,16 @@ export class Document extends EventDispatcher {
         let result = await this.checkAuth(
             TypeFunction.SETTING,
             async (_auth)=>{
-                let input = auth.model()
-                let user = new DBUser()
-                user.id = auth.userId
-                input.user = user
-                input.document = this._model
-                let result = await this._repository.updateAuth( input)
-                if (result) {
-                    return plainToClass(UserAuth, result)
+                if(_auth.role == Role.SUPERADMIN){
+                    let input = auth.model()
+                    let user = new DBUser()
+                    user.id = auth.userId
+                    input.user = user
+                    input.document = this._model
+                    let result = await this._repository.updateAuth(id, input)
+                    if (result) {
+                        return plainToClass(UserAuth, result)
+                    }
                 }
                 return null
             }
@@ -314,7 +331,9 @@ export class Document extends EventDispatcher {
         let result = await this.checkAuth(
             TypeFunction.SETTING,
             async (_auth)=>{
-                return await this._repository.deleteAuth(id)
+                if(_auth.role == Role.SUPERADMIN){
+                    return await this._repository.deleteAuth(id)
+                }
             }
         )
         return result
@@ -327,6 +346,7 @@ export class Document extends EventDispatcher {
     ) {
         let status = false
         let autho = this.auth()
+        autho.document = this._model
         switch (type) {
             case TypeFunction.QUERY: {
                 status = autho.query;
@@ -350,7 +370,7 @@ export class Document extends EventDispatcher {
             }
         }
         if (!status) {
-            throw new TypeError();
+            throw new Error('Not have access');
         }
         try {
             return await success(autho);
