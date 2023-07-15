@@ -17,6 +17,8 @@ import { join } from 'path'
 import { GraphQLUUID, GraphQLDatetime } from './scalartype';
 import { createResultModel, ResultBase, createEnum, createResultPagination, Media, createFilters ,BaseObjectType} from './objecttype';
 import { CMS, Objective, Property } from 'cms';
+import { Variables } from '../constants';
+import { Document } from 'cms/dist/base';
 class CommonObjectType {
 	private static instance: CommonObjectType;
 	private _type = {}
@@ -68,27 +70,9 @@ class GenerateModel {
 	private _commontype: CommonObjectType
 	constructor(id: string, name: string, data: ObjectClient) {
 		this._commontype = new CommonObjectType()
-		// let field_id = new FieldClient()
-		// field_id.name = 'id'
-		// field_id.type = 'UUID'
-		// field_id.required = true
-		// data.fields.push(field_id)
-
-		// let field_updated = new FieldClient()
-		// field_updated.name = 'updatedAt'
-		// field_updated.type = 'datetime'
-		// field_updated.required = true
-		// data.fields.push(field_updated)
-		
-		// let field_created = new FieldClient()
-		// field_created.name = 'createdAt'
-		// field_created.type = 'datetime'
-		// field_created.required = true
-		// data.fields.push(field_created)
-
 		this._data = data
 		this._id = id
-		this._name = name
+		this._name = data.name
 		let temp = this.init()
 		this._model = temp.model
 		this._input = temp.input
@@ -112,12 +96,20 @@ class GenerateModel {
 				inputfieldtype = fieldtype
 			} else if (field.type == "relationship" || field.type == "relationships") {
 				fieldtype = self._commontype.get(field.option.map)
+				inputfieldtype = GraphQLUUID
 				if (field.type == "relationships") {
 					fieldtype = new GraphQLList(fieldtype)
+					inputfieldtype = new GraphQLList(GraphQLUUID)
 				}
 			}
 			fields[field.name] = {
-				type: fieldtype
+				type: fieldtype,
+				// async resolve(source: any, args: any, context: any, info: any) {
+				// 	console.log(source, args, context, info)
+				// },
+				// subscribe(source: any, args: any, context: any, info: any) {
+				// 	console.log(source, args, context, info)
+				// }
 			}
 			if (field.input == undefined || field.input) {
 				inputfields[field.name] = {
@@ -144,6 +136,11 @@ class GenerateModel {
 
 	}
 	mutation() {
+		if(this._data.type == Variables.MODEL_DICT){
+			return {
+				...this.update()
+			}
+		}
 		return {
 			...this.create(),
 			...this.update(),
@@ -151,23 +148,56 @@ class GenerateModel {
 			...this.restore()
 		}
 	}
-	async getDocument(){
+	async getDocument(req){
 		let app = new CMS.App()
-		let user = await app.getUserByToken('eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJlbWFpbCI6InRlYW10ZXN0QGRxZC52biIsImlhdCI6MTY4NjM2NjkxOCwiZG9jdW1lbnRpZCI6IjBkZjVjOGY0LTRmY2QtNDI1Yi1iZjc3LTczYTE5YzExOTY5ZCJ9.3NN1_2Jglb0yHMrEwt6mh8CisO0cSPFwweCS3BbNHM8')
-		let doc = await user.document(this._id)
+		let doc = await app.getDocumentByToken(req.headers.authorization)
+		// if(!doc){
+		// 	throw Error("Document not found")
+		// }
 		return doc
+	}
+	checkLevel(nodes,level = 0){
+		for (let index = 0; index < nodes.length; index++) {
+			const selection = nodes[index];
+			if(selection.kind === 'Field' && selection.name.value != 'Media' && selection.selectionSet){
+				level++
+				level = this.checkLevel(selection.selectionSet.selections,level)
+				return level
+			}
+		}
+		return level
 	}
 	query() {
 		let schema = {}
 		let self = this
+		if(self._data.type == Variables.MODEL_DICT){
+			schema[this._name] = {
+				type: this._model,
+				async resolve(source: any, args: any, context: any, info: any) {
+					let level = self.checkLevel(info.fieldNodes)
+
+					// console.log(source, args, context, info)
+					let doc = await self.getDocument(context)
+					let obj = await doc?.objectByType(self._data.name,level)
+					if(obj){
+						return obj.toJson();
+					}
+					return {}
+				},
+				// subscribe(source: any, args: any, context: any, info: any) {
+				// 	console.log(source, args, context, info)
+				// }
+			}
+			return schema
+		}
 		schema[this._name] = {
 			type: this._model,
 			args: {
 				id: { type: GraphQLUUID }
 			},
 			async resolve(source: any, args: any, context: any, info: any) {
-				let doc = await self.getDocument()
-				let obj = await doc.object(args.id)
+				let doc = await self.getDocument(context)
+				let obj = await doc?.object(args.id)
 				return obj?.toJson();
 			},
 		}
@@ -180,7 +210,7 @@ class GenerateModel {
 			},
 			type: createResultPagination(this._name, this._model),
 			async resolve(source: any, args: any, context: any, info: any) {
-				let doc = await self.getDocument()
+				let doc = await self.getDocument(context)
 				// let objs = await doc.objectsByType(self._name)
 				// let total = 0
 				let datas = []
@@ -226,32 +256,22 @@ class GenerateModel {
 			},
 			async resolve(source: any, args: any, context: any, info: any) {
 				try {
-					let doc = await self.getDocument()
-					let obj = new Objective.InputCreateObjective();
-					obj.name = self._name
-					obj.type = self._name
-					let fields = Object.keys(args.input)
-					let pros: Property.InputCreateProperty[] = []
-					fields.map(name => {
-						let pro_find = self._data.fields.find(x => x.name == name)
-						if (pro_find) {
-							let property = new Property.InputCreateProperty()
-							property.name = name
-							let type = Property.TypeProperty
-							property.type = type[pro_find.type.toUpperCase()]
-							property.value = args.input[name]
-							pros.push(property)
+					let doc = await self.getDocument(context)
+					if(!doc){
+						return {
+							code:1,
+							success:false,
+							data:null
 						}
-					})
-					let obj_new = await doc.createObject(obj)
-					let pros_temp = await obj_new.createPropertys(pros)
+					}
+					let obj = await self.createObject(doc,args.input)
 					return {
 						code:0,
     				success:true,
-						data:obj_new.toJson()
+						data:obj.toJson()
 					}
 				} catch (error) {
-					
+					console.log(error)
 				}
 			},
 		}
@@ -260,19 +280,28 @@ class GenerateModel {
 	update() {
 		let schema = {}
 		let self = this
+		let args = {
+			input: { type: this._input }
+		}
+		if(this._data.type == Variables.MODEL_LIST){
+			args["id"] = {
+				type: GraphQLUUID
+			}
+		}
+
 		schema[`update${this._name}`] = {
 			type: this._modelresult,
-			args: {
-				id: {
-					type: GraphQLUUID
-				},
-				input: { type: this._input }
-			},
+			args,
 			async resolve(source: any, args: any, context: any, info: any) {
 				try {
-					let doc = await self.getDocument()
-					let obj = await doc.object(args.id)
-
+					let doc = await self.getDocument(context)
+					if(!doc){
+						return {
+							code:1,
+							success:false,
+							data:null
+						}
+					}
 					let fields = Object.keys(args.input)
 					let propertys = {}
 					fields.map(field=>{
@@ -284,9 +313,32 @@ class GenerateModel {
 									}
 							}
 					})
+
+					let obj = null;
+					if(self._data.type == Variables.MODEL_DICT){
+						obj = await doc?.objectByType(self._data.name,0)
+						if(!obj){
+							obj = await self.createObject(doc,args.input)
+							return {
+								code:0,
+								success:true,
+								data:obj.toJson()
+							}
+						}
+					}else{
+						obj = await doc.object(args.id)
+					}
+					if(!obj){
+						return {
+							code:1,
+							success:false,
+							data:null
+						}
+					}
+					
 					return {
-						code:1,
-    				success:false,
+						code:0,
+    				success:true,
 						data:obj.updateProperty(propertys)
 					}
 				} catch (error) {
@@ -295,6 +347,27 @@ class GenerateModel {
 			},
 		}
 		return schema
+	}
+	async createObject(doc:Document,input:any){
+		let obj = new Objective.InputCreateObjective();
+		obj.name = this._name
+		obj.type = this._name
+		let fields = Object.keys(input)
+		let pros: Property.InputCreateProperty[] = []
+		fields.map(name => {
+			let pro_find = this._data.fields.find(x => x.name == name)
+			if (pro_find) {
+				let property = new Property.InputCreateProperty()
+				property.name = name
+				let type = Property.TypeProperty
+				property.type = type[pro_find.type.toUpperCase()]
+				property.value = input[name]
+				pros.push(property)
+			}
+		})
+		let obj_new = await doc.createObject(obj)
+		await obj_new.createPropertys(pros)
+		return obj_new
 	}
 	delete() {
 		let schema = {}
@@ -308,11 +381,18 @@ class GenerateModel {
 			},
 			async resolve(source: any, args: any, context: any, info: any) {
 				try {
-					let doc = await self.getDocument()
+					let doc = await self.getDocument(context)
+					if(!doc){
+						return {
+							code:1,
+							success:false,
+							data:null
+						}
+					}
 					let obj = await doc.object(args.id,false)
 					let status = await obj.delete(false)
 					return {
-						code:1,
+						code:0,
     				success:status
 					}
 				} catch (error) {
@@ -334,11 +414,18 @@ class GenerateModel {
 			},
 			async resolve(source: any, args: any, context: any, info: any) {
 				try {
-					let doc = await self.getDocument()
+					let doc = await self.getDocument(context)
+					if(!doc){
+						return {
+							code:1,
+							success:false,
+							data:null
+						}
+					}
 					let obj = await doc.object(args.id,false)
 					let status = await obj.restore()
 					return {
-						code:1,
+						code:0,
     				success:status
 					}
 				} catch (error) {

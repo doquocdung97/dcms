@@ -17,7 +17,7 @@ import { TypeFunction, Models, Document } from 'cms';
 import { User } from '../user/schema';
 
 const AuthContentDocument = createUnionType({
-  name: 'AuthContentDocument',
+  name: 'AuthDocument',
   types: () => [TokenAuthContentDocument, UserAuthContentDocument] as const,
   resolveType: (e) => {
     if (e.token)

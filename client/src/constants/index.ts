@@ -5,3 +5,7 @@ export class Config {
   static readonly TOKEN_KEY = process.env.TOKEN_KEY || String('security_key');
   static readonly TOKEN_ACCESS = 'x-access-token'
 }
+export class Variables{
+  static readonly MODEL_DICT = "dict";
+  static readonly MODEL_LIST = "list";
+}

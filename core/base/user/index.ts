@@ -45,7 +45,7 @@ export class User {
     //     return null;
     // }
     async documents(): Promise<Document[]> {
-        let docs = await this._doc_repository.get(this._model)
+        let docs = await this._doc_repository.get()
         let list = []
         docs.map(doc => {
             list.push(new Document(this, doc))
@@ -60,7 +60,7 @@ export class User {
     }
     async document(id: string,fetch = true): Promise<Document | null> {
         if(fetch){
-            let doc = await this._doc_repository.get(this._model, id)
+            let doc = await this._doc_repository.get(id)
             if (doc) {
                 return new Document(this, doc)
             }

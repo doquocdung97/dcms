@@ -36,36 +36,31 @@ export default class MediaRepository {
     // this.valueobjectRepository = this._dataSource.getRepository(ValueMedia);
     // this.propertyRepository = this._dataSource.getRepository(PropertyBase);
   }
-  async get(user: User):Promise<BaseMedia[]>
-  async get(user: User, id):Promise<BaseMedia>
-  async get(user: User, id = null) {
-    return await Authorization(user, TypeFunction.QUERY, async (autho) => {
-      let option: FindManyOptions<BaseMedia> = {
-        where: {
-          id: id,
-          document: {
-            id: autho.document.id,
-          },
+  async get(autho: AuthContentDocument):Promise<BaseMedia[]>
+  async get(autho: AuthContentDocument, id):Promise<BaseMedia>
+  async get(autho: AuthContentDocument, id = null) {
+    let option: FindManyOptions<BaseMedia> = {
+      where: {
+        id: id,
+        document: {
+          id: autho.document.id,
         },
-        relations: {
-          connect: {
-            property: true,
-          },
-          user: true,
+      },
+      relations: {
+        connect: {
+          property: true,
         },
-      };
-      if (id) {
-        return await this._repository.findOne(option);
-      }
-      return await this._repository.find(option);
-    });
+        user: true,
+      },
+    };
+    if (id) {
+      return await this._repository.findOne(option);
+    }
+    return await this._repository.find(option);
   }
 
-  async getByUrl(user: User, url: string): Promise<BaseMedia> {
-    return await Authorization(
-      user,
-      TypeFunction.QUERY,
-      async (autho) => {
+  async getByUrl(autho: AuthContentDocument, url: string): Promise<BaseMedia> {
+
         let result = await this._repository.findOne({
           where: {
             url: url,
@@ -76,42 +71,26 @@ export default class MediaRepository {
           },
         });
         return result
-      });
+
 
   }
 
-  async create(user: User, input: BaseMedia): Promise<BaseMedia> {
-    let data = await Authorization(
-      user,
-      TypeFunction.CREATE,
-      async (autho) => {
-        return await this.createData(user,input, autho);
-      }
-    );
-    return data
+  async create(autho: AuthContentDocument, input: BaseMedia): Promise<BaseMedia> {
+    return await this.createData(input, autho)
   }
 
-  async creates(user: User, inputs: BaseMedia[]): Promise<BaseMedia[]> {
-    let result = await Authorization<BaseMedia[]>(
-      user,
-      TypeFunction.CREATE,
-      async (autho) => {
-        let medias = [];
-        for (let index = 0; index < inputs.length; index++) {
-          const input = inputs[index];
-          let media = await this.createData(user,input, autho);
-          medias.push(media);
-        }
-        return medias;
-      });
-    return result;
+  async creates(autho: AuthContentDocument, inputs: BaseMedia[]): Promise<BaseMedia[]> {
+    let medias = [];
+    for (let index = 0; index < inputs.length; index++) {
+      const input = inputs[index];
+      let media = await this.createData(input, autho);
+      medias.push(media);
+    }
+    return medias;
   }
 
-  async update(user: User, input: BaseMedia): Promise<BaseMedia> {
-    return await Authorization(
-      user,
-      TypeFunction.EDIT,
-      async (autho) => {
+  async update(autho: AuthContentDocument, input: BaseMedia): Promise<BaseMedia> {
+
         let dataintable = await this._repository.findOne({
           where: {
             id: input.id,
@@ -194,17 +173,12 @@ export default class MediaRepository {
         new_data.url = this._filehelper.parseUrl(new_data.url)
         let afterdata = await this._repository.save(new_data);
         // afterdata.properties = properties;
-        afterdata.user = user
+        afterdata.user = autho.user
         return afterdata
-      },
-      (ex) => {
-        this._logger.error(`Update failures.\n${ex}`);
-        throw new BaseError(BaseResultCode.B001,`Update failures.\n${ex}`)
-      },
-    );
+
   }
 
-  private async createData(user:User,input: BaseMedia, autho: AuthContentDocument): Promise<BaseMedia> {
+  private async createData(input: BaseMedia, autho: AuthContentDocument): Promise<BaseMedia> {
     if (input.file) {
       let pathfile = await this._filehelper.upload(
         input.public ? 'public' : 'private',
@@ -219,7 +193,7 @@ export default class MediaRepository {
         input.url = pathfile.replace(Variable.FORDER_FILE, String());
       }
     }
-    input.user = user;
+    input.user = autho.user;
     input.document = BaseDocument.create(autho.document.id)
     let media = await this._repository.save(input);
     // if (input.properties) {
@@ -268,11 +242,8 @@ export default class MediaRepository {
   //   return join;
   // }
 
-  async delete(user: User, id: string, softDelete = true): Promise<boolean> {
-    let result = await Authorization(
-      user,
-      TypeFunction.DELETE,
-      async (autho) => {
+  async delete(autho: AuthContentDocument, id: string, softDelete = true): Promise<boolean> {
+
         let data = null;
         if (softDelete) {
           data = await this._repository.softDelete({
@@ -289,25 +260,16 @@ export default class MediaRepository {
           return false
         }
         return true
-      });
-
-    return result;
   }
 
-  async restore(user: User, id: string): Promise<boolean> {
-    let result = await Authorization(
-      user,
-      TypeFunction.DELETE,
-      async (autho) => {
-        let data = await this._repository.restore({
-          id: id,
-          document: { id: autho.document.id },
-        });
-        if (data.affected <= 0) {
-          return false
-        }
-        return true
-      });
-    return result;
+  async restore(autho: AuthContentDocument, id: string): Promise<boolean> {
+    let data = await this._repository.restore({
+      id: id,
+      document: { id: autho.document.id },
+    });
+    if (data.affected <= 0) {
+      return false
+    }
+    return true
   }
 }

@@ -6,9 +6,9 @@ import { EventDispatcher } from "../../common/EventDispatcher"
 import { Objective } from "../object"
 import { InputCreateMedia, Media } from "../media"
 import { User } from "../user"
-import { BaseDocument, InputRole, AuthContentDocument } from "../../database/models/Document";
+import { BaseDocument, InputRole, AuthContentDocument, Role } from "../../database/models/Document";
 import { User as DBUser } from "../../database/models/User";
-import { Token } from "../../common";
+import { Token, TypeFunction } from "../../common";
 import { plainToClass } from 'class-transformer';
 import { BaseMedia } from "../../database/models/Media"
 import { ObjectBase } from "../../database/models/ObjectBase"
@@ -31,15 +31,15 @@ class Auth {
     setting: boolean;
 
     delete: boolean;
-    model():AuthContentDocument{
+    model(): AuthContentDocument {
         let auth = plainToClass(AuthContentDocument, this);
         return auth;
     }
 }
-export class UserAuth extends Auth{
+export class UserAuth extends Auth {
     userId: string;
 }
-export class TokenAuth extends Auth{
+export class TokenAuth extends Auth {
     token: string;
 }
 
@@ -99,15 +99,20 @@ export class Document extends EventDispatcher {
         return this._parent.model()
     }
     async update(input: InputUpdateDocument): Promise<boolean> {
-        let user_model = this._parent.model();
-        let data = input.model();
-        data.id = this._model.id;
-        let result = await this._repository.update(user_model, data)
-        if (result) {
-            this._model = result
-            return true
-        }
-        return
+        let result = await this.checkAuth(
+            TypeFunction.SETTING,
+            async (_auth)=>{
+                let data = input.model();
+                data.id = this._model.id;
+                let result = await this._repository.update(_auth, data)
+                if (result) {
+                    this._model = result
+                    return true
+                }
+                return
+            }
+        )
+        return result
     }
     auth(): AuthContentDocument | null {
         let model = this._model
@@ -130,121 +135,250 @@ export class Document extends EventDispatcher {
 
     //object
     async object(id: string, fetch = true): Promise<Objective | null> {
-        if (!id)
-            return null;
-        if (fetch) {
-            let user = this._parent.model()
-            let obj = await this._objectrepository.get(user, id)
-            if (obj) {
-                return new Objective(this, obj)
+        
+        let result = await this.checkAuth(
+            TypeFunction.QUERY,
+            async (_auth)=>{
+                if (!id)
+                    return null;
+                if (fetch) {
+                    let obj = await this._objectrepository.get(_auth, id)
+                    if (obj) {
+                        return new Objective(this, obj)
+                    }
+                } else {
+                    return new Objective(this, ObjectBase.create(id))
+                }
             }
-        } else {
-            return new Objective(this, ObjectBase.create(id))
-        }
+        )
+        return result
     }
     async objects(): Promise<Objective[]> {
-        let user = this._parent.model()
-        let objs = await this._objectrepository.get(user)
-        let data = []
-        objs.map(obj => {
-            data.push(new Objective(this, obj))
-        })
-        return data
+        
+        let result = await this.checkAuth(
+            TypeFunction.QUERY,
+            async (_auth)=>{
+                let objs = await this._objectrepository.get(_auth)
+                let data = []
+                objs.map(obj => {
+                    data.push(new Objective(this, obj))
+                })
+                return data
+            }
+        )
+        return result
     }
     async objectsByType(type: string, skip: number = 0, take: number = null): Promise<[Objective[], number]> {
-        let user = this._parent.model()
-        let [objs, total] = await this._objectrepository.getfilter(user, type, skip, take)
-        let data = []
-        objs.map(obj => {
-            data.push(new Objective(this, obj))
-        })
-        return [data, total]
+        
+        let result:[Objective[], number] = await this.checkAuth(
+            TypeFunction.QUERY,
+            async (_auth)=>{
+                let [objs, total] = await this._objectrepository.getfilter(_auth, type, skip, take)
+                let data:Objective[] = []
+                objs.map(obj => {
+                    data.push(new Objective(this, obj))
+                })
+                
+                return [data, total]
+            }
+        )
+        return result
+    }
+    async objectByType(type: string,level:number): Promise<Objective> {
+        let result = await this.checkAuth(
+            TypeFunction.QUERY,
+            async (_auth)=>{
+                let obj = await this._objectrepository.getByTypeOne(_auth, type,level)
+                if(obj)
+                    return new Objective(this, obj)
+            }
+        )
+        return result
     }
 
     async createObject(input: InputCreateObjective): Promise<Objective> {
-        let user = this._parent.model()
-        let obj = await this._objectrepository.create(user, input.parentId, input.model())
-        return new Objective(this, obj)
+        let result = await this.checkAuth(
+            TypeFunction.CREATE,
+            async (_auth)=>{
+                let obj = await this._objectrepository.create(_auth, input.parentId, input.model())
+                return new Objective(this, obj)
+            }
+        )
+        return result
     }
 
     //media
     async media(id: string, fetch = true): Promise<Media | null> {
-        if (fetch) {
-            let user = this._parent.model()
-            let media = await this._mediarepository.get(user, id)
-            if (media)
-                return new Media(this, media)
-        } else {
-            return new Media(this, BaseMedia.create(id))
-        }
+        let result = await this.checkAuth(
+            TypeFunction.QUERY,
+            async (_auth)=>{
+                if (fetch) {
+                    let media = await this._mediarepository.get(_auth, id)
+                    if (media)
+                        return new Media(this, media)
+                } else {
+                    return new Media(this, BaseMedia.create(id))
+                }
+            }
+        )
+        return result
+        
     }
     async medias(): Promise<Media[]> {
-        let user = this._parent.model()
-        let medias = await this._mediarepository.get(user)
-        let data = []
-        medias.map(media => {
-            data.push(new Media(this, media))
-        })
-        return data
+        let result = await this.checkAuth(
+            TypeFunction.QUERY,
+            async (_auth)=>{
+                let medias = await this._mediarepository.get(_auth)
+                let data = []
+                medias.map(media => {
+                    data.push(new Media(this, media))
+                })
+                return data
+            }
+        )
+        return result
     }
     async createMedia(input: InputCreateMedia): Promise<Media> {
-        let user = this._parent.model()
-        let media = await this._mediarepository.create(user, input.model())
-        return new Media(this, media)
+        let result = await this.checkAuth(
+            TypeFunction.CREATE,
+            async (_auth)=>{
+                let media = await this._mediarepository.create(_auth, input.model())
+                return new Media(this, media)
+            }
+        )
+        return result
     }
     async createMedias(_inputs: InputCreateMedia[]): Promise<Media[]> {
-        let user = this._parent.model()
-        let inputs = []
-        _inputs.map(input => {
-            inputs.push(input.model())
-        })
-        let medias = await this._mediarepository.creates(user, inputs)
-        let data = []
-        medias.map(media => {
-            data.push(new Media(this, media))
-        })
-        return data
+        let result = await this.checkAuth(
+            TypeFunction.CREATE,
+            async (_auth)=>{
+                let inputs = []
+                _inputs.map(input => {
+                    inputs.push(input.model())
+                })
+                let medias = await this._mediarepository.creates(_auth, inputs)
+                let data = []
+                medias.map(media => {
+                    data.push(new Media(this, media))
+                })
+                return data
+            }
+        )
+        return result
     }
-    async createAuth(auth:TokenAuth):Promise<TokenAuth>
-    async createAuth(auth:UserAuth):Promise<UserAuth>
-    async createAuth(auth:TokenAuth|UserAuth){
+    async createAuth(auth: TokenAuth): Promise<TokenAuth>
+    async createAuth(auth: UserAuth): Promise<UserAuth>
+    async createAuth(auth: TokenAuth | UserAuth) {
         let user_model = this._parent.model();
         let input = auth.model()
-        if(auth instanceof TokenAuth){
-            let tokenhelper = new Token()
-            input.token = tokenhelper.get({data:'test'})
-        }else{
-            let user = new DBUser()
-            user.id = auth.userId
-            input.user = user
+        let result = await this.checkAuth(
+            TypeFunction.SETTING,
+            async (_auth)=>{
+                if(_auth.role == Role.SUPERADMIN){
+                    if (auth instanceof TokenAuth) {
+                        let tokenhelper = new Token()
+                        input.token = tokenhelper.get({ data: 'test' })
+                        input.user = _auth.user
+                    } else {
+                        if(user_model.id == auth.userId){
+                            return null;
+                        }
+                        let user = new DBUser()
+                        user.id = auth.userId
+                        input.user = user
+                    }
+
+                    input.document = this._model
+                    let result = await this._repository.createAuth(input)
+                    if (result) {
+                        if (auth instanceof TokenAuth) {
+                            return plainToClass(TokenAuth, result)
+                        } else {
+                            return plainToClass(UserAuth, result)
+                        }
+                    }
+                }
+                return null
+            }
+        )
+        return result;
+    }
+    async updateAuth(id:number, auth: UserAuth): Promise<UserAuth> {
+        let user_model = this._parent?.model();
+        if(user_model.id == auth.userId){
+            return null;
         }
-        input.document = this._model
-        let result = await this._repository.createAuth(user_model , input)
-        if (result) {
-            if(auth instanceof TokenAuth){
-                return plainToClass(TokenAuth,result)
-            }else{
-                return plainToClass(UserAuth,result)
+        let result = await this.checkAuth(
+            TypeFunction.SETTING,
+            async (_auth)=>{
+                if(_auth.role == Role.SUPERADMIN){
+                    let input = auth.model()
+                    let user = new DBUser()
+                    user.id = auth.userId
+                    input.user = user
+                    input.document = this._model
+                    let result = await this._repository.updateAuth(id, input)
+                    if (result) {
+                        return plainToClass(UserAuth, result)
+                    }
+                }
+                return null
+            }
+        )
+        return result
+    }
+    async deleteAuth(id: number): Promise<boolean> {
+        let result = await this.checkAuth(
+            TypeFunction.SETTING,
+            async (_auth)=>{
+                if(_auth.role == Role.SUPERADMIN){
+                    return await this._repository.deleteAuth(id)
+                }
+            }
+        )
+        return result
+        
+    }
+    async checkAuth<T>(
+        type: TypeFunction,
+        success: (autho: AuthContentDocument) => Promise<T>,
+        error: (e: any) => void = null,
+    ) {
+        let status = false
+        let autho = this.auth()
+        autho.document = this._model
+        switch (type) {
+            case TypeFunction.QUERY: {
+                status = autho.query;
+                break;
+            }
+            case TypeFunction.CREATE: {
+                status = autho.create;
+                break;
+            }
+            case TypeFunction.EDIT: {
+                status = autho.edit;
+                break;
+            }
+            case TypeFunction.DELETE: {
+                status = autho.delete;
+                break;
+            }
+            case TypeFunction.SETTING: {
+                status = autho.setting;
+                break;
             }
         }
-        return null
-    }
-    async updateAuth(auth:UserAuth):Promise<UserAuth>{
-        let user_model = this._parent.model();
-        let input = auth.model()
-        let user = new DBUser()
-        user.id = auth.userId
-        input.user = user
-        input.document = this._model
-        let result = await this._repository.updateAuth(user_model , input)
-        if (result) {
-            return plainToClass(UserAuth,result)
+        if (!status) {
+            throw new Error('Not have access');
         }
-        return null
-    }
-    async deleteAuth(id:number):Promise<boolean>{
-        let user_model = this._parent.model();
-        return await this._repository.deleteAuth(user_model , id)
+        try {
+            return await success(autho);
+        } catch (error) {
+            if(error)
+            error(error)
+        }
+        
     }
     onChange(obj: any, pop: any, value: any) {
         let event = { type: 'onChange', obj, pop, value }
