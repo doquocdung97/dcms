@@ -1,4 +1,5 @@
-import { FileHelper ,LoggerHelper} from "./../common";
+import { DirRoot, FileHelper ,LoggerHelper} from "./../common";
+import { join } from 'path';
 export class Config {
 	private static instance: Config;
 	private _data: any = {}
@@ -13,6 +14,7 @@ export class Config {
 	async load(path:string) {
 		let _file = new FileHelper();
 		try {
+			path = join(DirRoot, path)
 			let data = await _file.readFile(path)
     	this._data = JSON.parse(data.toString());
 		} catch (error) {

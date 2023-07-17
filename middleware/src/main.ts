@@ -10,7 +10,7 @@ let logger = new LoggerHelper('Main');
 async function bootstrap() {
 	// let database = new DataBase()
 	// await database.createDataSource(DatabaseConfig.MAIN)
-	let cms = new CMS('./config.json');
+	let cms = new CMS('./config/config.json');
 
 	await cms.init()
 	const app = await NestFactory.create(AppModule, {

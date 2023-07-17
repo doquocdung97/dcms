@@ -43,9 +43,7 @@ export class ObjectBase {
   //  return `${this.name} test`;
   //}
 
-  @OneToMany((type) => PropertyBase, (obj) => obj.parent, {
-    onDelete: 'CASCADE',
-  })
+  @OneToMany((type) => PropertyBase, (obj) => obj.parent)
   properties: PropertyBase[];
 
   @OneToMany((type) => ValueObject, (obj) => obj.object, {
