@@ -22,7 +22,7 @@ export class MediasResult {
 }
 
 export default class MediaRepository {
-  private _logger = new LoggerHelper('Media Repository');
+  private _logger:LoggerHelper;
   private _filehelper = new FileHelper();
   private _dataSource: DataSource;
   private _repository: Repository<BaseMedia>;
@@ -35,6 +35,7 @@ export default class MediaRepository {
     this._repository = this._dataSource.getRepository(BaseMedia);
     // this.valueobjectRepository = this._dataSource.getRepository(ValueMedia);
     // this.propertyRepository = this._dataSource.getRepository(PropertyBase);
+    this._logger = new LoggerHelper('Media Repository');
   }
   async get(autho: AuthContentDocument):Promise<BaseMedia[]>
   async get(autho: AuthContentDocument, id):Promise<BaseMedia>
