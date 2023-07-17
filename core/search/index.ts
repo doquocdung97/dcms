@@ -5,7 +5,7 @@ import { Config } from "config";
 import { Variable } from "../constants";
 
 class ClientSearch {
-	#logger = new LoggerHelper('Client Search');
+	#logger:LoggerHelper;
 	private static instance: ClientSearch;
 	private _client: Client
 	constructor() {
@@ -21,6 +21,7 @@ class ClientSearch {
 		} catch (error) {
 			this.#logger.error(error)
 		}
+		this.#logger = new LoggerHelper('Client Search');
 		ClientSearch.instance = this;
 	}
 	get client() {
@@ -28,7 +29,8 @@ class ClientSearch {
 	}
 }
 export class SearchService {
-	#logger = new LoggerHelper('Search Service');
+	#logger:LoggerHelper;
+	
 	private _search: InfoResponse
 
 	private _client: Client;
@@ -41,6 +43,7 @@ export class SearchService {
 		}
 		let search = new ClientSearch()
 		this._client = search.client
+		this.#logger = new LoggerHelper('Search Service');
 		SearchService.instance = this;
 	}
 
@@ -77,7 +80,7 @@ export class SearchService {
 	}
 }
 class Index {
-	#logger = new LoggerHelper('Search Index');
+	#logger:LoggerHelper;
 	#client: Client
 	public uuid: string
 	public status: string
@@ -90,6 +93,7 @@ class Index {
 		this.uuid = data.uuid
 		this.status = data.status
 		this.count = parseInt(data["docs.count"], 0)
+		this.#logger = new LoggerHelper('Search Index');
 	}
 
 	async get(): Promise<Document[]>;
@@ -157,11 +161,10 @@ class Index {
 	}
 }
 class Document {
-	#logger = new LoggerHelper('Search Document');
 	#client: Client
 	#name: string
 	public id: string
-
+	#logger:LoggerHelper;
 	public data: any
 	constructor(data: SearchHit) {
 		let search = new ClientSearch()
@@ -169,6 +172,7 @@ class Document {
 		this.#name = data._index
 		this.id = data._id
 		this.data = data._source
+		this.#logger = new LoggerHelper('Search Document');
 	}
 	async update(data: any) {
 		try {

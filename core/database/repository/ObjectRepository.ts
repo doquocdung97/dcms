@@ -16,7 +16,7 @@ export class ObjectResult {
 }
 
 export default class ObjectRepository {
-	private _logger = new LoggerHelper('Object Repository');
+	private _logger:LoggerHelper; 
 	private _dataSource: DataSource;
 	private _repository: Repository<ObjectBase>;
 	private objectmainRepository: Repository<ObjectMain>
@@ -30,6 +30,7 @@ export default class ObjectRepository {
 		this._repository = this._dataSource.getRepository(ObjectBase);
 		this.objectmainRepository = this._dataSource.getRepository(ObjectMain);
 		// this._propertyRepository = new PropertyRepository(request)
+		this._logger = new LoggerHelper('Object Repository');
 	}
 	
 	async get(autho: AuthContentDocument, id:string): Promise<ObjectBase>

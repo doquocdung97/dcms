@@ -2,6 +2,7 @@ import { createLogger, transports, format, Logger } from 'winston';
 import { join } from 'path';
 import { Variable } from "../constants";
 import { TransformableInfo } from 'logform';
+import { DirRoot } from './utils';
 
 function filenamebydate(filename: String) {
   let date = new Date();
@@ -23,20 +24,16 @@ export class LoggerHelper {
       }),
     ];
     if (true) {
+      let module = this.getModel()
+      let path = join(DirRoot, Variable.FOLDER,module)
       data_transports.push(
         new transports.File({
           level: Variable.LEVEL_ERROR,
-          filename: join(
-            Variable.FOLDER,
-            filenamebydate(Variable.ERROR_FILE),
-          ),
+          filename: join(path,filenamebydate(Variable.ERROR_FILE)),
         }),
         new transports.File({
           level: Variable.LEVEL_INFO,
-          filename: join(
-            Variable.FOLDER,
-            filenamebydate(Variable.INFO_FILE),
-          ),
+          filename: join(path,filenamebydate(Variable.INFO_FILE)),
         }),
       );
     }
@@ -51,6 +48,9 @@ export class LoggerHelper {
       defaultMeta: { name },
       transports: data_transports,
     });
+  }
+  getModel():string{
+    return String()
   }
   private printf(info: TransformableInfo) {
     let message = info.message;

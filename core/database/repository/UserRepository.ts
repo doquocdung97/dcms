@@ -12,7 +12,7 @@ export class UserResult {
 }
 
 export default class UserRepository {
-	private _logger = new LoggerHelper('User Repository');
+	private _logger:LoggerHelper;
 	private _dataSource: DataSource;
 	private _repository: Repository<User>;
 	constructor() {
@@ -20,6 +20,7 @@ export default class UserRepository {
 		const config = new Config()
     this._dataSource = data.getDataSource(config.get<string>('DATABASE_BASE'));
 		this._repository = this._dataSource?.getRepository(User);
+		this._logger = new LoggerHelper('User Repository');
 	}
 	async findOneByEmail(email: string): Promise<User | null> {
 		let user = await this._repository.findOne({

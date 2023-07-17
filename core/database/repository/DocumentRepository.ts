@@ -15,7 +15,7 @@ export class DocumentResult {
 }
 
 export default class DocumentRepository {
-  private _logger = new LoggerHelper('Document Repository');
+  private _logger:LoggerHelper;
   private _dataSource: DataSource;
   private _repository: Repository<BaseDocument>;
   private _userRepository: Repository<User>;
@@ -27,6 +27,7 @@ export default class DocumentRepository {
     this._repository = this._dataSource.getRepository(BaseDocument);
     this._userRepository = this._dataSource.getRepository(User);
     this._acdRepository = this._dataSource.getRepository(AuthContentDocument);
+    this._logger = new LoggerHelper('Document Repository');
   }
 
   async get(): Promise<BaseDocument[]>

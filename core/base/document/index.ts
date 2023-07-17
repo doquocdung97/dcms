@@ -374,9 +374,9 @@ export class Document extends EventDispatcher {
         }
         try {
             return await success(autho);
-        } catch (error) {
+        } catch (err) {
             if(error)
-            error(error)
+            error(err)
         }
         
     }

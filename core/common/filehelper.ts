@@ -16,8 +16,10 @@ import { Stream } from 'stream';
 import { Variable } from "../constants";
 export class FileHelper {
   private path = Variable.FORDER_FILE;
-  private logger = new LoggerHelper('FileHelper');
-  constructor() {}
+  private logger:LoggerHelper;
+  constructor() {
+    this.logger = new LoggerHelper('FileHelper');
+  }
   /**
    *
    * @param path
