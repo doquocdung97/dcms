@@ -34,7 +34,7 @@ async function apolloServer() {
 	await server.start()
 	server.applyMiddleware({ app });
 
-	let cms = new CMS('./config.json');
+	let cms = new CMS('./congi/config.json');
 	await cms.init()
 }
 apolloServer()

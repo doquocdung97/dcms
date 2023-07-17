@@ -1,8 +1,0 @@
-{
-  "DATABASE_BASE": "main",
-  "DATABASE_CONFIG": {
-    "type": "sqlite",
-    "path": "/data/db.sqlite"
-  },
-  "SECRET_KEY": "$2b$10$ADO1vFY65eA5ab4nIbYHW.A4CQVBV0kWpQKeC4F6jzOEdIWEljokW"
-}

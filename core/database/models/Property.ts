@@ -56,7 +56,9 @@ export class PropertyBase extends BaseEntity {
 
   attribute: any;
 
-  @ManyToOne((type) => ObjectBase, (obj) => obj.properties)
+  @ManyToOne((type) => ObjectBase, (obj) => obj.properties, {
+    onDelete: 'CASCADE',
+  })
   parent: ObjectBase;
 
   @OneToMany((type) => ValueObject, (obj) => obj.property, {
