@@ -24,10 +24,15 @@ import { plainToClass } from 'class-transformer';
 export class PropertyResolver {
 
   @Query(() => PropertyBase, { nullable: true, })
-  async property(@Args('id', { type: () => Int }) id) {
-    // var result = await this._repository.get(id);
-
-    // return result;
+  async property(@CurrentUserGraphql() user: User.User,@Args('id', { type: () => Int }) id) {
+    let doc = user.activeDocument();
+    let obj = await doc.object(null, false);
+    let pros = await obj?.property(id);
+    if(pros){
+      return PropertyBase.create(pros);
+    }
+    return null;
+    
   }
 
   @Query(() => [PropertyBase], { nullable: true })

@@ -212,7 +212,6 @@ class GenerateModelDict {
 		}else{
 			return 0
 		}
-		console.log(curentlevel)
 		return curentlevel
 	}
 	query() {

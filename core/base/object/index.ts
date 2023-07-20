@@ -58,8 +58,14 @@ export class Objective {
     }
     get propertyRepository() {
         if (!this._propertyrepository)
-            this._propertyrepository = new PropertyRepository()
+            this._propertyrepository = new PropertyRepository(this.Lang)
         return this._propertyrepository
+    }
+    get Lang() {
+        return this._parent.Lang;
+    }
+    get user(): DBUser {
+        return this._parent.user
     }
     // init() {
     //     if (!this.mainRepository)
@@ -70,9 +76,7 @@ export class Objective {
     model() {
         return this._model
     }
-    get user(): DBUser {
-        return this._parent.user
-    }
+    
     async update(input: InputUpdateObjective): Promise<boolean> {
         let result = await this._parent.checkAuth(
             TypeFunction.EDIT,
@@ -112,7 +116,7 @@ export class Objective {
             TypeFunction.QUERY,
             async (_auth) => {
                 if (fetch) {
-                    let pro = await this.propertyRepository.get(_auth, this._model.id, id);
+                    let pro = await this.propertyRepository.get(_auth, this._model?.id, id);
                     if (pro) {
                         return new Property(this, pro);
                     }

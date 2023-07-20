@@ -28,7 +28,7 @@ export default class PropertyRepository {
 	private _repository: Repository<PropertyBase>;
 	private objectRepository: Repository<ObjectBase>;
 
-	constructor() {
+	constructor(private _lang:string) {
 		let data = new DataBase()
 		const config = new Config()
 		this._dataSource = data.getDataSource(config.get<string>('DATABASE_BASE'));
@@ -58,6 +58,8 @@ export default class PropertyRepository {
 						},
 					},
 				};
+				const queryRunner = this._dataSource.createQueryRunner()
+				queryRunner.data['lang'] = this._lang
 				if (id) {
 					return await this._repository.findOne(option);
 				}

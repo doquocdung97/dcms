@@ -87,15 +87,6 @@ export class PropertyBase extends BaseEntity {
   @DeleteDateColumn()
   deleteAt: Date;
 
-  @AfterLoad()
-  AfterLoad() {
-    this.value = null;
-    let property = mainproperty.get(this.type);
-    if (property) {
-      this.value = property.get(this);
-    }
-  }
-
   async AfterUpdate(dataSource: DataSource) {
     let property = mainproperty.get(this.type);
     if (property) {
@@ -109,8 +100,8 @@ class PropertyString extends BasePropertyType {
    * Design Pattern:
    * Structural Pattern - Decorator Pattern
    */
-  get(object: PropertyBase) {
-    return super.get(object) || String();
+  get(object: PropertyBase,lang:string) {
+    return super.get(object,lang) || String();
   }
   validate(val: any): boolean {
     if ((typeof val) == Variable.STRING) {
@@ -127,8 +118,8 @@ mainproperty.addProperty('string', PropertyString);
  */
 
 class PropertyStrings extends BasePropertyType {
-  get(object: PropertyBase) {
-    return super.get(object) || [];
+  get(object: PropertyBase,lang:string) {
+    return super.get(object,lang) || [];
   }
   validate(val: any): boolean {
     if (val instanceof Array) {
@@ -149,8 +140,8 @@ mainproperty.addProperty('strings', PropertyStrings);
  * Leaf class
  */
 class PropertyNumber extends BasePropertyType {
-  get(object: PropertyBase) {
-    return super.get(object) || 0;
+  get(object: PropertyBase,lang:string) {
+    return super.get(object,lang) || 0;
   }
   validate(val: any): boolean {
     if ((typeof val) == Variable.NUMBER) {
@@ -161,8 +152,8 @@ class PropertyNumber extends BasePropertyType {
 mainproperty.addProperty('number', PropertyNumber);
 
 class PropertyNumbers extends BasePropertyType {
-  get(object: PropertyBase) {
-    return super.get(object) || [];
+  get(object: PropertyBase,lang:string) {
+    return super.get(object,lang) || [];
   }
   validate(val: any): boolean {
     if (val instanceof Array) {
@@ -179,8 +170,8 @@ class PropertyNumbers extends BasePropertyType {
 mainproperty.addProperty('numbers', PropertyNumbers);
 
 class PropertyJson extends BasePropertyType {
-  get(object: PropertyBase) {
-    return super.get(object) || {};
+  get(object: PropertyBase,lang:string) {
+    return super.get(object,lang) || {};
   }
 }
 mainproperty.addProperty('json', PropertyJson);
@@ -250,7 +241,7 @@ class PropertyMedia extends BasePropertyType {
       return true
     }
   }
-  get(object: PropertyBase) {
+  get(object: PropertyBase,lang:string) {
     let val = null;
     if (object.connectMeida && object.connectMeida.length > 0) {
       val = object.connectMeida[0].object;
@@ -326,7 +317,7 @@ class PropertyMedias extends BasePropertyType {
       return true
     }
   }
-  get(object: PropertyBase) {
+  get(object: PropertyBase,lang:string) {
     let val = [];
     if (object.connectMeida && object.connectMeida.length > 0) {
       let data = [];
@@ -403,7 +394,7 @@ class PropertyRelationship extends BasePropertyType {
     }
     return object;
   }
-  get(object: PropertyBase) {
+  get(object: PropertyBase,lang:string) {
     let val = null;
     if (object.connectObject && object.connectObject.length > 0) {
       val = object.connectObject[0].object;
@@ -484,7 +475,7 @@ class PropertyRelationships extends BasePropertyType {
     }
     return objects;
   }
-  get(object: PropertyBase) {
+  get(object: PropertyBase,lang:string) {
     let val = [];
     if (object.connectObject && object.connectObject.length > 0) {
       let data = [];
@@ -499,8 +490,8 @@ class PropertyRelationships extends BasePropertyType {
 }
 mainproperty.addProperty('relationships', PropertyRelationships);
 class PropertyEnum extends BasePropertyType {
-  get(object: PropertyBase) {
-    return super.get(object) || 0;
+  get(object: PropertyBase,lang:string) {
+    return super.get(object,lang) || 0;
   }
   validate(val: any): boolean {
     if ((typeof val) == Variable.NUMBER) {
@@ -511,8 +502,8 @@ class PropertyEnum extends BasePropertyType {
 mainproperty.addProperty('enum', PropertyEnum);
 
 class PropertyEnums extends BasePropertyType {
-  get(object: PropertyBase) {
-    return super.get(object) || [];
+  get(object: PropertyBase,lang:string) {
+    return super.get(object,lang) || [];
   }
   validate(val: any): boolean {
     if (val instanceof Array) {

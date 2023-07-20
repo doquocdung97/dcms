@@ -2,6 +2,7 @@ import {
   EntitySubscriberInterface,
   EventSubscriber,
   InsertEvent,
+  LoadEvent,
   RecoverEvent,
   RemoveEvent,
   SoftRemoveEvent,
@@ -36,6 +37,15 @@ export class PropertySubscriber
   // beforeUpdate(event: UpdateEvent<PropertyBase>) {
   //   console.log(`BEFORE ENTITY UPDATED: `, event.entity)
   // }
+
+  afterLoad?(entity: PropertyBase, event?: LoadEvent<PropertyBase>){
+    entity.value = null;
+    const lang = event.queryRunner.data['lang']
+    let property = this._mainproperty.get(entity.type);
+    if (property) {
+      entity.value = property.get(entity,lang);
+    }
+  }
 
   async beforeInsert(event: InsertEvent<PropertyBase>) {
     // let p = event.entity;

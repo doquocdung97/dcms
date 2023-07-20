@@ -69,10 +69,15 @@ export class MainProperty {
 export class BasePropertyType {
   dataInTable: boolean = true;
   constructor() { }
-  get(object: any) {
+  get(object: any, lang:string) {
     let val = null;
-    if (object.connectStandard && object.connectStandard.length > 0) {
-      val = object.connectStandard[0].value;
+    if (object.connectStandard) {
+      const value = object.connectStandard.find(n=>n.lang == lang)
+      if(!value){
+        val = object.connectStandard[0].value
+      }else{
+        val = value.value
+      }
     }
     try {
       val = JSON.parse(val)
