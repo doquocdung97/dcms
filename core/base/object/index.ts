@@ -203,8 +203,8 @@ export class Objective {
         )
         return result
     }
-    toJson() {
-        return this._model.toJson()
+    toJSON() {
+        return this._model.toJSON()
     }
     async updateProperty(pro: Object): Promise<Object> {
         let fields = Object.keys(pro)
@@ -233,7 +233,7 @@ export class Objective {
                 }
             })
             // this._model.properties
-            return this.toJson()
+            return this.toJSON()
         }
         return {}
     }

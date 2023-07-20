@@ -38,7 +38,7 @@ export class GenerateTemplate {
     this._id = id
     this._path = path
   }
-  getSchame(): ObjectClient {
+  getSchema(): ObjectClient {
     // let path = join(__dirname, '..', '..', 'mod')
     let fullname = join(this._path,this._name, 'schema.json')
     let rawdata = readFileSync(fullname);

@@ -67,13 +67,13 @@ export class ObjectBase {
     obj.id = id;
     return obj;
   }
-  toJson(){
+  toJSON(){
     let property = {}
     this.properties?.map(pro => {
       if(pro.value instanceof ObjectBase){
-        property[pro.name] = pro.value.toJson()
+        property[pro.name] = pro.value.toJSON()
       }else if(pro.value instanceof Array && pro.value[0] instanceof ObjectBase){
-        property[pro.name] = pro.value?.map(x=>x.toJson())
+        property[pro.name] = pro.value?.map(x=>x.toJSON())
       }else{
         property[pro.name] = pro.value
       }

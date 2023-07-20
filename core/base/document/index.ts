@@ -168,12 +168,12 @@ export class Document extends EventDispatcher {
         )
         return result
     }
-    async objectsByType(type: string, skip: number = 0, take: number = null): Promise<[Objective[], number]> {
+    async objectsByType(type: string, skip: number = 0, take: number = null,level:number): Promise<[Objective[], number]> {
         
         let result:[Objective[], number] = await this.checkAuth(
             TypeFunction.QUERY,
             async (_auth)=>{
-                let [objs, total] = await this._objectrepository.getfilter(_auth, type, skip, take)
+                let [objs, total] = await this._objectrepository.getfilter(_auth, type, skip, take,level)
                 let data:Objective[] = []
                 objs.map(obj => {
                     data.push(new Objective(this, obj))
@@ -184,11 +184,11 @@ export class Document extends EventDispatcher {
         )
         return result
     }
-    async objectByType(type: string,level:number): Promise<Objective> {
+    async objectByType(type: string,id:string,level:number): Promise<Objective> {
         let result = await this.checkAuth(
             TypeFunction.QUERY,
             async (_auth)=>{
-                let obj = await this._objectrepository.getByTypeOne(_auth, type,level)
+                let obj = await this._objectrepository.getByTypeOne(_auth, type,id,level)
                 if(obj)
                     return new Objective(this, obj)
             }
