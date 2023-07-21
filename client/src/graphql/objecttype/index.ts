@@ -82,9 +82,9 @@ export function createFilters(name: string, model: GraphQLInputObjectType): Grap
 				type: GraphQLInt,
 				defaultValue: 10
 			},
-			data: {
-				type: model
-			}
+			// filter: {
+			// 	type: model
+			// }
 		}
 	})
 }

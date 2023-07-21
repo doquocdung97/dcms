@@ -58,14 +58,10 @@ export default class ObjectRepository {
 		let data = await this._repository.find(option);
 		return data;
 	}
-	async getfilter(autho: AuthContentDocument, type: string = null,skip:number = 0,take:number = null): Promise<[ObjectBase[],number]>{
+	async getfilter(autho: AuthContentDocument, type: string = null,skip:number = 0,take:number = null,level:number = 0): Promise<[ObjectBase[],number]>{
 		let option: FindManyOptions<ObjectBase> = {
 			relations: {
-				properties: {
-					connectObject: true,
-					connectMeida: true,
-					connectStandard: true
-				},
+				properties: this.levelRelations(level-1),
 			},
 			where: {
 				type: type,
@@ -82,29 +78,32 @@ export default class ObjectRepository {
 		let data = await this._repository.findAndCount(option);
 		return data;
 	}
-	async getByTypeOne(autho: AuthContentDocument, type: string,level:number = 0): Promise<ObjectBase>{
-		const levelRelations = function (lel){
-			if(lel <=0){
-				return {
-					connectMeida: true,
-					connectStandard: true
-				}
-			}
+	levelRelations (lel){
+		if(lel ==0){
 			return {
-				connectObject: {
-					object:{
-						properties:levelRelations(lel-1)
-					}
-				},
 				connectMeida: true,
 				connectStandard: true
 			}
+		}else if(lel < 0){
+			return {}
 		}
+		return {
+			connectObject: {
+				object:{
+					properties:this.levelRelations(lel-1)
+				}
+			},
+			connectMeida: true,
+			connectStandard: true
+		}
+	}
+	async getByTypeOne(autho: AuthContentDocument, type: string, id: string,level:number = 0): Promise<ObjectBase>{
 		let option: FindManyOptions<ObjectBase> = {
 			relations: {
-				properties: levelRelations(level-1),
+				properties: this.levelRelations(level-1),
 			},
 			where: {
+				id:id,
 				type: type,
 				document: {
 					id: autho.document.id,

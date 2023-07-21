@@ -42,18 +42,18 @@
     },
     {
       "name": "user",
-      "type": "media",
+      "type": "relationship",
       "option": {
-        "map": "user"
+        "map": "User"
       },
       "required": true,
       "manylang": true
     },
     {
       "name": "users",
-      "type": "media",
+      "type": "relationships",
       "option": {
-        "map": "user",
+        "map": "User",
         "min": 1,
         "max": 100
       },
