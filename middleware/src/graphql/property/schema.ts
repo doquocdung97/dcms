@@ -79,11 +79,11 @@ export class PropertyBase {
     if (model instanceof Array) {
       let objs = []
       model.map((item: Property.Property) => {
-        objs.push(plainToClass(PropertyBase, item.model()))
+        objs.push(item.model());
       })
-      return objs
+      return objs;
     }
-    return plainToClass(PropertyBase, model.model())
+    return model.model();
   }
 }
 

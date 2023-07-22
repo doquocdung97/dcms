@@ -8,6 +8,7 @@ import { ObjectMain } from "../models/ObjectMain";
 import { DataBase } from "..";
 import { Config } from '../../config';
 import { AuthContentDocument } from "database/models/Document";
+import { Variable } from "../../constants";
 
 export class ObjectResult {
 	code: BaseResultCode;
@@ -23,13 +24,16 @@ export default class ObjectRepository {
 	// private _request: any;
 	// private _propertyRepository: PropertyRepository
 
-	constructor() {
+	constructor(private _lang:string) {
 		let data = new DataBase()
 		const config = new Config()
 		this._dataSource = data.getDataSource(config.get<string>('DATABASE_BASE'));
 		this._repository = this._dataSource.getRepository(ObjectBase);
 		this.objectmainRepository = this._dataSource.getRepository(ObjectMain);
 		// this._propertyRepository = new PropertyRepository(request)
+		const queryRunner = this._dataSource.createQueryRunner()
+		queryRunner.data[Variable.LANG] = this._lang
+
 		this._logger = new LoggerHelper('Object Repository');
 	}
 	

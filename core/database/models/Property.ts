@@ -87,19 +87,10 @@ export class PropertyBase extends BaseEntity {
   @DeleteDateColumn()
   deleteAt: Date;
 
-  @AfterLoad()
-  AfterLoad() {
-    this.value = null;
+  async AfterUpdate(dataSource: DataSource, lang:string) {
     let property = mainproperty.get(this.type);
     if (property) {
-      this.value = property.get(this);
-    }
-  }
-
-  async AfterUpdate(dataSource: DataSource) {
-    let property = mainproperty.get(this.type);
-    if (property) {
-      this.value = await property.setData(this, dataSource);
+      this.value = await property.setData(this,lang, dataSource);
     }
   }
 }
@@ -109,8 +100,8 @@ class PropertyString extends BasePropertyType {
    * Design Pattern:
    * Structural Pattern - Decorator Pattern
    */
-  get(object: PropertyBase) {
-    return super.get(object) || String();
+  get(object: PropertyBase,lang:string) {
+    return super.get(object,lang) || String();
   }
   validate(val: any): boolean {
     if ((typeof val) == Variable.STRING) {
@@ -127,8 +118,8 @@ mainproperty.addProperty('string', PropertyString);
  */
 
 class PropertyStrings extends BasePropertyType {
-  get(object: PropertyBase) {
-    return super.get(object) || [];
+  get(object: PropertyBase,lang:string) {
+    return super.get(object,lang) || [];
   }
   validate(val: any): boolean {
     if (val instanceof Array) {
@@ -149,8 +140,8 @@ mainproperty.addProperty('strings', PropertyStrings);
  * Leaf class
  */
 class PropertyNumber extends BasePropertyType {
-  get(object: PropertyBase) {
-    return super.get(object) || 0;
+  get(object: PropertyBase,lang:string) {
+    return super.get(object,lang) || 0;
   }
   validate(val: any): boolean {
     if ((typeof val) == Variable.NUMBER) {
@@ -161,8 +152,8 @@ class PropertyNumber extends BasePropertyType {
 mainproperty.addProperty('number', PropertyNumber);
 
 class PropertyNumbers extends BasePropertyType {
-  get(object: PropertyBase) {
-    return super.get(object) || [];
+  get(object: PropertyBase,lang:string) {
+    return super.get(object,lang) || [];
   }
   validate(val: any): boolean {
     if (val instanceof Array) {
@@ -179,15 +170,15 @@ class PropertyNumbers extends BasePropertyType {
 mainproperty.addProperty('numbers', PropertyNumbers);
 
 class PropertyJson extends BasePropertyType {
-  get(object: PropertyBase) {
-    return super.get(object) || {};
+  get(object: PropertyBase,lang:string) {
+    return super.get(object,lang) || {};
   }
 }
 mainproperty.addProperty('json', PropertyJson);
 
 class PropertyMedia extends BasePropertyType {
   dataInTable = false;
-  async set(object: PropertyBase, dataSource: DataSource) {
+  async set(object: PropertyBase,lang:string, dataSource: DataSource) {
     var val = object.value;
     if (!this.validate(val)) {
       return null;
@@ -202,6 +193,7 @@ class PropertyMedia extends BasePropertyType {
         object: true,
       },
       where: {
+        lang:lang,
         property: {
           id: object.id,
         },
@@ -232,6 +224,7 @@ class PropertyMedia extends BasePropertyType {
       (media: any) => {
         let newvalue = new ValueMedia();
         newvalue.object = media;
+        newvalue.lang = lang;
         newvalue.property = object;
         return newvalue;
       },
@@ -250,10 +243,15 @@ class PropertyMedia extends BasePropertyType {
       return true
     }
   }
-  get(object: PropertyBase) {
+  get(object: PropertyBase,lang:string) {
     let val = null;
-    if (object.connectMeida && object.connectMeida.length > 0) {
-      val = object.connectMeida[0].object;
+    if (object.connectMeida) {
+      const value = object.connectMeida.find(n=>n.lang == lang)
+      if(!value && object.connectMeida.length > 0){
+        val = object.connectMeida[0].object
+      }else{
+        val = value.object
+      }
     }
     return val;
   }
@@ -262,7 +260,7 @@ mainproperty.addProperty('media', PropertyMedia);
 
 class PropertyMedias extends BasePropertyType {
   dataInTable = false;
-  async set(object: PropertyBase, dataSource: DataSource) {
+  async set(object: PropertyBase,lang:string, dataSource: DataSource) {
     var val = object.value;
     if (!this.validate(val)) {
       return null;
@@ -277,6 +275,7 @@ class PropertyMedias extends BasePropertyType {
         object: true,
       },
       where: {
+        lang:lang,
         property: {
           id: object.id,
         },
@@ -304,6 +303,7 @@ class PropertyMedias extends BasePropertyType {
       (media: any) => {
         let newvalue = new ValueMedia();
         newvalue.object = media;
+        newvalue.lang = lang;
         newvalue.property = object;
         return newvalue;
       },
@@ -326,12 +326,13 @@ class PropertyMedias extends BasePropertyType {
       return true
     }
   }
-  get(object: PropertyBase) {
+  get(object: PropertyBase,lang:string) {
     let val = [];
-    if (object.connectMeida && object.connectMeida.length > 0) {
+    if (object.connectMeida) {
       let data = [];
-      for (let i = 0; i < object.connectMeida.length; i++) {
-        let obj = object.connectMeida[i];
+      const connect = object.connectMeida.filter(x=>x.lang == lang)
+      for (let i = 0; i < connect.length; i++) {
+        let obj = connect[i];
         data.push(obj.object);
       }
       val = data;
@@ -347,7 +348,7 @@ class PropertyRelationship extends BasePropertyType {
       return true
     }
   }
-  async set(property: PropertyBase, dataSource: DataSource) {
+  async set(property: PropertyBase,lang:string, dataSource: DataSource) {
     var val = property.value;
     if (!this.validate(val)) {
       return null;
@@ -365,6 +366,7 @@ class PropertyRelationship extends BasePropertyType {
         object: true,
       },
       where: {
+        lang:lang,
         property: {
           id: property.id,
         },
@@ -385,12 +387,13 @@ class PropertyRelationship extends BasePropertyType {
           item['object'] && item['object']['id'] && index < properties.length
         );
       },
-      (item, media) => {
-        item.object = media;
+      (item, object) => {
+        item.object = object;
       },
-      (media: any) => {
+      (object: any) => {
         let newvalue = new ValueObject();
-        newvalue.object = media;
+        newvalue.object = object;
+        newvalue.lang = lang;
         newvalue.property = property;
         return newvalue;
       },
@@ -403,10 +406,15 @@ class PropertyRelationship extends BasePropertyType {
     }
     return object;
   }
-  get(object: PropertyBase) {
+  get(object: PropertyBase,lang:string) {
     let val = null;
-    if (object.connectObject && object.connectObject.length > 0) {
-      val = object.connectObject[0].object;
+    if(object.connectObject){
+      const value = object.connectObject.find(n=>n.lang == lang)
+      if(!value && object.connectObject.length > 0){
+        val = object.connectObject[0].object
+      }else{
+        val = value.object
+      }
     }
     return val;
   }
@@ -424,7 +432,7 @@ class PropertyRelationships extends BasePropertyType {
       return true
     }
   }
-  async set(property: PropertyBase, dataSource: DataSource) {
+  async set(property: PropertyBase,lang:string, dataSource: DataSource) {
     var val = property.value;
     if (!this.validate(val)) {
       return null;
@@ -446,6 +454,7 @@ class PropertyRelationships extends BasePropertyType {
         object: true,
       },
       where: {
+        lang:lang,
         property: {
           id: property.id,
         },
@@ -466,12 +475,13 @@ class PropertyRelationships extends BasePropertyType {
           item['object'] && item['object']['id'] && index < properties.length
         );
       },
-      (item, media) => {
-        item.object = media;
+      (item, object) => {
+        item.object = object;
       },
-      (media: any) => {
+      (object: any) => {
         let newvalue = new ValueObject();
-        newvalue.object = media;
+        newvalue.object = object;
+        newvalue.lang = lang;
         newvalue.property = property;
         return newvalue;
       },
@@ -484,12 +494,13 @@ class PropertyRelationships extends BasePropertyType {
     }
     return objects;
   }
-  get(object: PropertyBase) {
+  get(object: PropertyBase,lang:string) {
     let val = [];
-    if (object.connectObject && object.connectObject.length > 0) {
+    if (object.connectObject) {
       let data = [];
-      for (let i = 0; i < object.connectObject.length; i++) {
-        let obj = object.connectObject[i];
+      const connect = object.connectObject.filter(x=>x.lang == lang)
+      for (let i = 0; i < connect.length; i++) {
+        let obj = connect[i];
         data.push(obj.object);
       }
       val = data;
@@ -499,8 +510,8 @@ class PropertyRelationships extends BasePropertyType {
 }
 mainproperty.addProperty('relationships', PropertyRelationships);
 class PropertyEnum extends BasePropertyType {
-  get(object: PropertyBase) {
-    return super.get(object) || 0;
+  get(object: PropertyBase,lang:string) {
+    return super.get(object,lang) || 0;
   }
   validate(val: any): boolean {
     if ((typeof val) == Variable.NUMBER) {
@@ -511,8 +522,8 @@ class PropertyEnum extends BasePropertyType {
 mainproperty.addProperty('enum', PropertyEnum);
 
 class PropertyEnums extends BasePropertyType {
-  get(object: PropertyBase) {
-    return super.get(object) || [];
+  get(object: PropertyBase,lang:string) {
+    return super.get(object,lang) || [];
   }
   validate(val: any): boolean {
     if (val instanceof Array) {

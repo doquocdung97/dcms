@@ -4,6 +4,8 @@ export class Variable {
 	static readonly NUMBER: string 							= 'number';
 	static readonly DICT: string 								= 'dict';
 	static readonly LISTENING_DOCUMENT: string 	= 'document_{0}';
+	static readonly LANG = 'lang';
+	static readonly LANG_EN = 'en'
 	
 	//config
 	static readonly ELASTIC_HOST: string = 'ELASTIC_HOST';

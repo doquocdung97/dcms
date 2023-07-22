@@ -47,7 +47,7 @@ export class Property {
     constructor(parent: Objective, model: PropertyBase) {
         this._parent = parent;
         this._model = model;
-        this._repository = new PropertyRepository();
+        this._repository = new PropertyRepository(this._parent.Lang);
     }
     model() {
         return this._model;

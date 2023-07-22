@@ -156,7 +156,7 @@ class GenerateModelDict {
 	}
 	async getDocument(req){
 		let app = new CMS.App()
-		let doc = await app.getDocumentByToken(req.headers.authorization)
+		let doc = await app.getDocumentByToken(req.headers.authorization,req.headers.lang)
 		return doc
 	}
 
@@ -212,7 +212,6 @@ class GenerateModelDict {
 		}else{
 			return 0
 		}
-		console.log(curentlevel)
 		return curentlevel
 	}
 	query() {

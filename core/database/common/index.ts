@@ -47,14 +47,14 @@ export class MainProperty {
     return Object.keys(this.properties)[0];
   }
   checkType(name: string) {
-    return this.properties[name.toLowerCase()] ? true : false;
+    return this.properties[name?.toLowerCase()] ? true : false;
   }
   /**
    * Design Pattern:
    * Creational Pattern - Factory Method
    */
   get(name: any): BasePropertyType {
-    return this.properties[name.toLowerCase()];
+    return this.properties[name?.toLowerCase()];
   }
   gets() {
     return this.properties;
@@ -69,10 +69,15 @@ export class MainProperty {
 export class BasePropertyType {
   dataInTable: boolean = true;
   constructor() { }
-  get(object: any) {
+  get(object: any, lang:string) {
     let val = null;
-    if (object.connectStandard && object.connectStandard.length > 0) {
-      val = object.connectStandard[0].value;
+    if (object.connectStandard) {
+      const value = object.connectStandard.find(n=>n.lang == lang)
+      if(!value && object.connectStandard.length > 0){
+        val = object.connectStandard[0].value
+      }else{
+        val = value.value
+      }
     }
     try {
       val = JSON.parse(val)
@@ -86,7 +91,7 @@ export class BasePropertyType {
     return true
   }
 
-  async set(object: any, dataSource: DataSource): Promise<any> {
+  async set(object: any, lang:string, dataSource: DataSource): Promise<any> {
     var val = object.value;
     if (this.validate(val)) {
       const { ValueStandard } = await import('../models/ValueStandard')
@@ -98,6 +103,7 @@ export class BasePropertyType {
           property: true,
         },
         where: {
+          lang:lang,
           property: {
             id: object.id,
           },
@@ -105,6 +111,7 @@ export class BasePropertyType {
       });
       if (!connect) {
         connect = new ValueStandard()
+        connect.lang = lang;
         connect.property = object
       }
       connect.value = JSON.stringify(val)
@@ -113,10 +120,10 @@ export class BasePropertyType {
     }
     return null
   }
-  async setData(object: any, dataSource: DataSource): Promise<any> {
+  async setData(object: any, lang:string, dataSource: DataSource): Promise<any> {
     var val = object.value;
     if (this.validate(val)) {
-      let data = await this.set(object, dataSource)
+      let data = await this.set(object, lang, dataSource)
       return data
     }
     return null

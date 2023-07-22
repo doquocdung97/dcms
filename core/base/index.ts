@@ -5,6 +5,8 @@ import { Objective } from './object';
 import { Media } from './media';
 import { Token } from "../common";
 import DocumentRepository from '../database/repository/DocumentRepository';
+import { Config } from '../config';
+import { Variable } from '../constants';
 export class App {
 	private static instance: App;
 	private _documents = {}
@@ -24,17 +26,17 @@ export class App {
 		}
 		return null;
 	}
-	async getDocumentByToken(token:string):Promise<Document| null>{
+	async getDocumentByToken(token:string,lang:string):Promise<Document| null>{
 		let repository = new DocumentRepository();
 		let doc = await repository.getByToken(token)
 		if(doc){
 			let auth = doc.auths.find(n=>n.token == token)
 			auth.document = doc
-			return new Document(new User(auth.user),doc)
+			return new Document(new User(auth.user),doc,lang)
 		}
 		return null
 	}
-	async getUserByToken(val) {
+	async getUserByToken(val:string, lang:string) {
 		let repository = new UserRepository();
 		let token = new Token();
 		let verify = token.verify(val);// jwt.verify(token, config.get<string>("SECRET_KEY"));
@@ -47,7 +49,8 @@ export class App {
 			// 	user.setActiveDocument(doc)
 			// }
 			let user = new User(user_model);
-			let doc = await user.document(verify.documentid)
+			const config = new Config()
+			let doc = await user.document(verify.documentid,true, lang || config.get(Variable.LANG,Variable.LANG_EN))
 			user.setActiveDocument(doc)
 			return user
 		}

@@ -1,4 +1,4 @@
-import { Document,InputCreateDocument } from "../document";
+import { Document, InputCreateDocument } from "../document";
 import { User as UserModel } from "../../database/models/User"
 import * as jwt from 'jsonwebtoken'
 import UserRepository from "../../database/repository/UserRepository";
@@ -52,22 +52,22 @@ export class User {
         })
         return list
     }
-    setActiveDocument(doc:Document) {
+    setActiveDocument(doc: Document) {
         this._activedocument = doc
     }
     activeDocument() {
         return this._activedocument
     }
-    async document(id: string,fetch = true): Promise<Document | null> {
-        if(fetch){
+    async document(id: string, fetch: boolean = true, lang: string = String()): Promise<Document | null> {
+        if (fetch) {
             let doc = await this._doc_repository.get(id)
             if (doc) {
-                return new Document(this, doc)
+                return new Document(this, doc, lang)
             }
             return null
-        }else{
+        } else {
             let doc = BaseDocument.create(id)
-            return new Document(this, doc)
+            return new Document(this, doc, lang)
         }
     }
     /**

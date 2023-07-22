@@ -17,7 +17,7 @@ export class JwtAuthGuardGraphql extends AuthGuard('jwt') {
     try {
       if (req.headers?.authorization) {
         let app = new CMS.App()
-        let user = await app.getUserByToken(req.headers.authorization)
+        let user = await app.getUserByToken(req.headers.authorization,req.headers?.lang)
         if (user) {
           req.user = user;//.model()
           return true

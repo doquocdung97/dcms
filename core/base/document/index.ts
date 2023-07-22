@@ -79,21 +79,20 @@ export class Document extends EventDispatcher {
     // private static instance: Document;
     private _properties = {};
     private _id: string;
-    private _parent: User
+    private _parent: User;
+    private _lang: string;
     // private _pubSub:PubSub;
-    constructor(parent: User, model: BaseDocument) {
+    constructor(parent: User, model: BaseDocument, lang:string = String()) {
         super();
         this._model = model
         this._parent = parent
+        this._lang = lang
         this._repository = new DocumentRepository()
         this._mediarepository = new MediaRepository()
-        this._objectrepository = new ObjectRepository()
-        // const instance = Document.instance;
-        // if (instance) {
-        // return instance;
-        // }
-        // // this._pubSub = new PubSub();
-        // Document.instance = this;
+        this._objectrepository = new ObjectRepository(lang)
+    }
+    get Lang():string{
+        return this._lang
     }
     get user(): DBUser {
         return this._parent.model()
@@ -101,7 +100,7 @@ export class Document extends EventDispatcher {
     async update(input: InputUpdateDocument): Promise<boolean> {
         let result = await this.checkAuth(
             TypeFunction.SETTING,
-            async (_auth)=>{
+            async (_auth) => {
                 let data = input.model();
                 data.id = this._model.id;
                 let result = await this._repository.update(_auth, data)
@@ -135,12 +134,16 @@ export class Document extends EventDispatcher {
 
     //object
     async object(id: string, fetch = true): Promise<Objective | null> {
-        
+
         let result = await this.checkAuth(
             TypeFunction.QUERY,
-            async (_auth)=>{
-                if (!id)
+            async (_auth) => {
+                if (!id) {
+                    if (!fetch) {
+                        return new Objective(this, null)
+                    }
                     return null;
+                }
                 if (fetch) {
                     let obj = await this._objectrepository.get(_auth, id)
                     if (obj) {
@@ -154,10 +157,10 @@ export class Document extends EventDispatcher {
         return result
     }
     async objects(): Promise<Objective[]> {
-        
+
         let result = await this.checkAuth(
             TypeFunction.QUERY,
-            async (_auth)=>{
+            async (_auth) => {
                 let objs = await this._objectrepository.get(_auth)
                 let data = []
                 objs.map(obj => {
@@ -168,28 +171,28 @@ export class Document extends EventDispatcher {
         )
         return result
     }
-    async objectsByType(type: string, skip: number = 0, take: number = null,level:number): Promise<[Objective[], number]> {
-        
-        let result:[Objective[], number] = await this.checkAuth(
+    async objectsByType(type: string, skip: number = 0, take: number = null, level: number): Promise<[Objective[], number]> {
+
+        let result: [Objective[], number] = await this.checkAuth(
             TypeFunction.QUERY,
-            async (_auth)=>{
-                let [objs, total] = await this._objectrepository.getfilter(_auth, type, skip, take,level)
-                let data:Objective[] = []
+            async (_auth) => {
+                let [objs, total] = await this._objectrepository.getfilter(_auth, type, skip, take, level)
+                let data: Objective[] = []
                 objs.map(obj => {
                     data.push(new Objective(this, obj))
                 })
-                
+
                 return [data, total]
             }
         )
         return result
     }
-    async objectByType(type: string,id:string,level:number): Promise<Objective> {
+    async objectByType(type: string, id: string, level: number): Promise<Objective> {
         let result = await this.checkAuth(
             TypeFunction.QUERY,
-            async (_auth)=>{
-                let obj = await this._objectrepository.getByTypeOne(_auth, type,id,level)
-                if(obj)
+            async (_auth) => {
+                let obj = await this._objectrepository.getByTypeOne(_auth, type, id, level)
+                if (obj)
                     return new Objective(this, obj)
             }
         )
@@ -199,7 +202,7 @@ export class Document extends EventDispatcher {
     async createObject(input: InputCreateObjective): Promise<Objective> {
         let result = await this.checkAuth(
             TypeFunction.CREATE,
-            async (_auth)=>{
+            async (_auth) => {
                 let obj = await this._objectrepository.create(_auth, input.parentId, input.model())
                 return new Objective(this, obj)
             }
@@ -211,7 +214,7 @@ export class Document extends EventDispatcher {
     async media(id: string, fetch = true): Promise<Media | null> {
         let result = await this.checkAuth(
             TypeFunction.QUERY,
-            async (_auth)=>{
+            async (_auth) => {
                 if (fetch) {
                     let media = await this._mediarepository.get(_auth, id)
                     if (media)
@@ -222,12 +225,12 @@ export class Document extends EventDispatcher {
             }
         )
         return result
-        
+
     }
     async medias(): Promise<Media[]> {
         let result = await this.checkAuth(
             TypeFunction.QUERY,
-            async (_auth)=>{
+            async (_auth) => {
                 let medias = await this._mediarepository.get(_auth)
                 let data = []
                 medias.map(media => {
@@ -241,7 +244,7 @@ export class Document extends EventDispatcher {
     async createMedia(input: InputCreateMedia): Promise<Media> {
         let result = await this.checkAuth(
             TypeFunction.CREATE,
-            async (_auth)=>{
+            async (_auth) => {
                 let media = await this._mediarepository.create(_auth, input.model())
                 return new Media(this, media)
             }
@@ -251,7 +254,7 @@ export class Document extends EventDispatcher {
     async createMedias(_inputs: InputCreateMedia[]): Promise<Media[]> {
         let result = await this.checkAuth(
             TypeFunction.CREATE,
-            async (_auth)=>{
+            async (_auth) => {
                 let inputs = []
                 _inputs.map(input => {
                     inputs.push(input.model())
@@ -273,14 +276,14 @@ export class Document extends EventDispatcher {
         let input = auth.model()
         let result = await this.checkAuth(
             TypeFunction.SETTING,
-            async (_auth)=>{
-                if(_auth.role == Role.SUPERADMIN){
+            async (_auth) => {
+                if (_auth.role == Role.SUPERADMIN) {
                     if (auth instanceof TokenAuth) {
                         let tokenhelper = new Token()
                         input.token = tokenhelper.get({ data: 'test' })
                         input.user = _auth.user
                     } else {
-                        if(user_model.id == auth.userId){
+                        if (user_model.id == auth.userId) {
                             return null;
                         }
                         let user = new DBUser()
@@ -303,15 +306,15 @@ export class Document extends EventDispatcher {
         )
         return result;
     }
-    async updateAuth(id:number, auth: UserAuth): Promise<UserAuth> {
+    async updateAuth(id: number, auth: UserAuth): Promise<UserAuth> {
         let user_model = this._parent?.model();
-        if(user_model.id == auth.userId){
+        if (user_model.id == auth.userId) {
             return null;
         }
         let result = await this.checkAuth(
             TypeFunction.SETTING,
-            async (_auth)=>{
-                if(_auth.role == Role.SUPERADMIN){
+            async (_auth) => {
+                if (_auth.role == Role.SUPERADMIN) {
                     let input = auth.model()
                     let user = new DBUser()
                     user.id = auth.userId
@@ -330,14 +333,14 @@ export class Document extends EventDispatcher {
     async deleteAuth(id: number): Promise<boolean> {
         let result = await this.checkAuth(
             TypeFunction.SETTING,
-            async (_auth)=>{
-                if(_auth.role == Role.SUPERADMIN){
+            async (_auth) => {
+                if (_auth.role == Role.SUPERADMIN) {
                     return await this._repository.deleteAuth(id)
                 }
             }
         )
         return result
-        
+
     }
     async checkAuth<T>(
         type: TypeFunction,
@@ -375,10 +378,10 @@ export class Document extends EventDispatcher {
         try {
             return await success(autho);
         } catch (err) {
-            if(error)
-            error(err)
+            if (error)
+                error(err)
         }
-        
+
     }
     onChange(obj: any, pop: any, value: any) {
         let event = { type: 'onChange', obj, pop, value }
