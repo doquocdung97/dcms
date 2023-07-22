@@ -53,7 +53,7 @@ export class Objective {
     }
     get mainRepository() {
         if (!this._repository)
-            this._repository = new ObjectRepository()
+            this._repository = new ObjectRepository(this.Lang)
         return this._repository
     }
     get propertyRepository() {

@@ -19,6 +19,7 @@ import { ValueStandard } from '../models/ValueStandard';
 import { Document } from '../../base/document';
 import { App } from '../../base';
 import { BaseDocument } from '../models/Document';
+import { Variable } from '../../constants';
 // let 
 @EventSubscriber()
 export class PropertySubscriber
@@ -40,7 +41,7 @@ export class PropertySubscriber
 
   afterLoad?(entity: PropertyBase, event?: LoadEvent<PropertyBase>){
     entity.value = null;
-    const lang = event.queryRunner.data['lang']
+    const lang = event.queryRunner.data[Variable.LANG]
     let property = this._mainproperty.get(entity.type);
     if (property) {
       entity.value = property.get(entity,lang);
@@ -57,8 +58,9 @@ export class PropertySubscriber
   async afterInsert(event: InsertEvent<PropertyBase>) {
     let p = event.entity;
     let property = this._mainproperty.get(event.entity.type);
+    const lang = event.queryRunner.data[Variable.LANG]
     if (property) {
-      p.value = await property.setData(p, event.connection);
+      p.value = await property.setData(p,lang, event.connection);
     }
   }
 }

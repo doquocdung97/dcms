@@ -89,13 +89,7 @@ export class Document extends EventDispatcher {
         this._lang = lang
         this._repository = new DocumentRepository()
         this._mediarepository = new MediaRepository()
-        this._objectrepository = new ObjectRepository()
-        // const instance = Document.instance;
-        // if (instance) {
-        // return instance;
-        // }
-        // // this._pubSub = new PubSub();
-        // Document.instance = this;
+        this._objectrepository = new ObjectRepository(lang)
     }
     get Lang():string{
         return this._lang

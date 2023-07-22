@@ -8,6 +8,7 @@ import { PropertyBase } from "../models/Property";
 import { DataBase } from "..";
 import { Config } from '../../config';
 import { AuthContentDocument } from "database/models/Document";
+import { Variable } from "../../constants";
 
 export class PropertyResult {
 	code: BaseResultCode;
@@ -34,6 +35,8 @@ export default class PropertyRepository {
 		this._dataSource = data.getDataSource(config.get<string>('DATABASE_BASE'));
 		this._repository = this._dataSource.getRepository(PropertyBase);
 		this.objectRepository = this._dataSource.getRepository(ObjectBase)
+		const queryRunner = this._dataSource.createQueryRunner()
+		queryRunner.data[Variable.LANG] = this._lang
 	}
 
 	async get(autho: AuthContentDocument, objectid: string): Promise<PropertyBase[]>
@@ -58,8 +61,6 @@ export default class PropertyRepository {
 						},
 					},
 				};
-				const queryRunner = this._dataSource.createQueryRunner()
-				queryRunner.data['lang'] = this._lang
 				if (id) {
 					return await this._repository.findOne(option);
 				}
@@ -116,7 +117,7 @@ export default class PropertyRepository {
 				) {
 					let data = Object.assign(record, item);
 					data.parent.document = autho.document;
-					data.AfterUpdate(this._dataSource);
+					data.AfterUpdate(this._dataSource, this._lang);
 					let rowdata = await this._repository.save(data);
 					rowdata.value = data.value;
 					return rowdata;
@@ -153,7 +154,7 @@ export default class PropertyRepository {
 						delete data.connectStandard
 						delete data.connectMeida
 						delete data.connectObject
-						await data.AfterUpdate(this._dataSource);
+						await data.AfterUpdate(this._dataSource,this._lang);
 						datas.push(data)
 						item.value = data.value
 						// let rowdata = await this._repository.save(data);

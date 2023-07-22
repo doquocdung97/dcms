@@ -6,6 +6,7 @@ import { Media } from './media';
 import { Token } from "../common";
 import DocumentRepository from '../database/repository/DocumentRepository';
 import { Config } from '../config';
+import { Variable } from '../constants';
 export class App {
 	private static instance: App;
 	private _documents = {}
@@ -25,13 +26,13 @@ export class App {
 		}
 		return null;
 	}
-	async getDocumentByToken(token:string):Promise<Document| null>{
+	async getDocumentByToken(token:string,lang:string):Promise<Document| null>{
 		let repository = new DocumentRepository();
 		let doc = await repository.getByToken(token)
 		if(doc){
 			let auth = doc.auths.find(n=>n.token == token)
 			auth.document = doc
-			return new Document(new User(auth.user),doc)
+			return new Document(new User(auth.user),doc,lang)
 		}
 		return null
 	}
@@ -49,7 +50,7 @@ export class App {
 			// }
 			let user = new User(user_model);
 			const config = new Config()
-			let doc = await user.document(verify.documentid,true, lang || config.get('lang','en'))
+			let doc = await user.document(verify.documentid,true, lang || config.get(Variable.LANG,Variable.LANG_EN))
 			user.setActiveDocument(doc)
 			return user
 		}
