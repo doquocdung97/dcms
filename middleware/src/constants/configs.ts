@@ -23,9 +23,9 @@ export class PasswordConfig {
 }
 export class MediaConfig {
   static readonly FORDER_FILE = 'media';
-  static readonly FORDER_FILE_PUBLIC = '/public';
+  static readonly FORDER_FILE_PUBLIC = '/media';
   static readonly FORDER_FILE_PRIVATE = '/private';
-  static readonly FORDER_FILE_PUBLIC_ROOT = 'media/public';
+  static readonly FORDER_FILE_PUBLIC_ROOT = 'media';
 }
 export class Config {
   static readonly PRODUCTION: boolean = Extensions.parseBoolean(process.env.PRODUCTION);

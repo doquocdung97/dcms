@@ -1,6 +1,6 @@
 import { DataSource, Repository, In, FindManyOptions, Not, IsNull } from 'typeorm';
 import { AuthContentDocument, BaseDocument, Role } from '../models/Document';
-import { Authorization, DirRoot, FileHelper, handleUpdateJoinTable, BaseError, LoggerHelper, TypeFunction } from '../../common';
+import { DirRoot, FileHelper, handleUpdateJoinTable, BaseError, LoggerHelper, TypeFunction } from '../../common';
 import { plainToClass } from 'class-transformer';
 import { User } from '../models/User';
 import { BaseResultCode } from '../common';

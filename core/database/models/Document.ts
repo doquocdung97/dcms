@@ -15,6 +15,7 @@ import {
 import { User } from './User';
 import { ObjectBase } from './ObjectBase';
 import { BaseMedia } from './Media';
+import { Variable } from '../../constants';
 @Entity()
 export class BaseDocument {
   @PrimaryGeneratedColumn('uuid')
@@ -72,7 +73,7 @@ export class AuthContentDocument {
   id: number;
 
   @ManyToOne((type) => BaseDocument, (obj) => obj.auths, {
-    onDelete: 'CASCADE',
+    onDelete: Variable.CASCADE,
   })
   document: BaseDocument;
   //

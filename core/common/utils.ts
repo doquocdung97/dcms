@@ -47,46 +47,6 @@ export enum TypeFunction {
   DELETE,
   SETTING,
 }
-export async function Authorization<T>(
-  user: User,
-  type: TypeFunction,
-  success: (autho: AuthContentDocument) => Promise<T>,
-  error: (e: any) => void = null,
-){
-  if (!user.currentDoc) {
-    throw new TypeError('Document not found');
-  }
-  let autho = user.currentDoc;
-  let status = false;
-  if (autho) {
-    switch (type) {
-      case TypeFunction.QUERY: {
-        status = autho.query;
-        break;
-      }
-      case TypeFunction.CREATE: {
-        status = autho.create;
-        break;
-      }
-      case TypeFunction.EDIT: {
-        status = autho.edit;
-        break;
-      }
-      case TypeFunction.DELETE: {
-        status = autho.delete;
-        break;
-      }
-      case TypeFunction.SETTING: {
-        status = autho.setting;
-        break;
-      }
-    }
-  }
-  if (!status) {
-    throw new TypeError();
-  }
-  return await success(autho);
-}
 /**
  * @returns dir
  */
@@ -125,4 +85,23 @@ export class BaseError extends Error {
   constructor (public status: number, public message: string = String()) {
       super();
   }
+}
+export function generateRandomText(length:number) {
+  const characters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
+  let randomText = '';
+
+  for (let i = 0; i < length; i++) {
+    const randomIndex = Math.floor(Math.random() * characters.length);
+    randomText += characters[randomIndex];
+  }
+  return randomText;
+}
+export function generateRandomNumber(length:number) {
+  if (typeof length !== 'number' || length < 1) {
+    throw new Error('Invalid input. Number of length must be a positive integer.');
+  }
+
+  const min = 10 ** (length - 1);
+  const max = 10 ** length - 1;
+  return Math.floor(Math.random() * (max - min + 1)) + min;
 }

@@ -6,47 +6,49 @@ import {
   InputCreateMedia,
   MediaResult,
   MediasResult,
-  BaseMedia
+  Media
 } from './schema';
 import { plainToClass } from 'class-transformer';
 import { CurrentUserGraphql, JwtAuthGuardGraphql } from '../user/guard';
-import { User } from 'cms';
+import { BaseResultCode, User } from 'cms';
 
 @UseGuards(JwtAuthGuardGraphql)
-@Resolver(() => BaseMedia)
+@Resolver(() => Media)
 export class MediaResolver {
 
-  @Query(() => BaseMedia, { nullable: true })
+  @Query(() => Media, { nullable: true })
   async media(@CurrentUserGraphql() user: User.User, @Args('id') id: string) {
-    let doc = user.activeDocument();
-    let media = await doc.media(id);
-    return plainToClass(BaseMedia, media.model());
+    const doc = user.activeDocument();
+    const media = await doc.media(id);
+    const schema = Media.create(media)
+    return schema
   }
 
-  @Query(() => [BaseMedia], { nullable: true })
+  @Query(() => [Media], { nullable: true })
   async medias(@CurrentUserGraphql() user: User.User) {
-    let doc = user.activeDocument();
-    let medias = await doc.medias();
-    let list = [];
-    medias.map(media => {
-      list.push(Object.assign(new BaseMedia(), media.model()));
-    })
-    return list;
+    const doc = user.activeDocument();
+    const medias = await doc.medias();
+    const schema = Media.create(medias);
+    return schema;
   }
 
   @Mutation(() => MediaResult)
   async createMedia(@CurrentUserGraphql() user: User.User, @Args('input') input: InputCreateMedia) {
-    let result = new MediaResult();
+    const result = new MediaResult();
     try {
       input = plainToClass(InputCreateMedia, input);
-      let doc = user.activeDocument();
-      let model = await input.createModel();
-      let media = await doc.createMedia(model);
-      result.data = plainToClass(BaseMedia, media.model());
+      const doc = user.activeDocument();
+      const model = await input.createModel();
+      const media = await doc.createMedia(model);
+      if(!media){
+        result.code = BaseResultCode.B002;
+        result.success = false; 
+        return result
+      }
+      result.data = Media.create(media)
     } catch (error) {
       console.log(error)
     }
-
     return result;
   }
 
@@ -59,44 +61,62 @@ export class MediaResolver {
     let models = [];
     for (let index = 0; index < inputs.length; index++) {
       const input = inputs[index];
-      let data = plainToClass(InputCreateMedia, input);
-      let model = await data.createModel();
+      const data = plainToClass(InputCreateMedia, input);
+      const model = await data.createModel();
       models.push(model);
     }
-    let result = new MediasResult();
-    let doc = user.activeDocument();
-    let medias = await doc.createMedias(models)
-    let list = [];
-    medias.map(media => {
-      list.push(Object.assign(new BaseMedia(), media.model()));
-    })
-    result.data = list
+    const result = new MediasResult();
+    const doc = user.activeDocument();
+    const medias = await doc.createMedias(models)
+    result.data = Media.create(medias)
     return result;
   }
 
   @Mutation(() => MediaResult)
   async updateMedia(@CurrentUserGraphql() user: User.User, @Args('input') input: InputUpdateMedia) {
     input = plainToClass(InputUpdateMedia, input);
-    let model = await input.createModel();
-    let result = new MediaResult();
-    let doc = user.activeDocument();
-    let media = await doc.media(input.id, false)
-    let data = await media.update(model)
-    if (data) {
-      result.data = plainToClass(BaseMedia, media.model())
+    const result = new MediaResult();
+    try {
+      const model = await input.createModel();
+      
+      const doc = user.activeDocument();
+      const media = await doc.media(input.id, false)
+      const data = await media.update(model)
+      if (data) {
+        result.data = Media.create(media)
+      }
+    } catch (error) {
+      console.log(error)
     }
     return result
   }
   @Mutation(() => BaseResult)
   async deleteMedia(
+    @CurrentUserGraphql() user: User.User,
     @Args('id') id: string,
     @Args('soft', { nullable: true, defaultValue: true }) soft: boolean,
   ) {
-    // return await this._repository.delete(id, soft);
+    const result = new BaseResult();
+    const doc = user.activeDocument();
+    const media = await doc.media(id, false)
+    const status = await media.delete(soft)
+    if(!status){
+      result.code = BaseResultCode.B002;
+      result.success = false;
+    }
+    return result;
   }
-  @Mutation((returns) => BaseResult)
-  async restoreMedia(@Args('id') id: string) {
-    // return await this._repository.restore(id);
+  @Mutation(() => BaseResult)
+  async restoreMedia(@CurrentUserGraphql() user: User.User,@Args('id') id: string) {
+    const result = new BaseResult();
+    const doc = user.activeDocument();
+    const media = await doc.media(id, false)
+    const status = await media.restore()
+    if(!status){
+      result.code = BaseResultCode.B002;
+      result.success = false;
+    }
+    return result;
   }
   //@ResolveField()
   //async posts(@Parent() author) {

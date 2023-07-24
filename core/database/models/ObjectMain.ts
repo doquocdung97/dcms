@@ -10,6 +10,7 @@ import {
     Column,
   } from 'typeorm';
 import { ObjectBase } from './ObjectBase';
+import { Variable } from '../../constants';
 @Entity()
 @Tree("materialized-path")
 export class ObjectMain {
@@ -23,12 +24,12 @@ export class ObjectMain {
   children: ObjectMain[];
 
   @TreeParent({
-    onDelete: 'CASCADE',
+    onDelete: Variable.CASCADE,
   })
   parent: ObjectMain;
 
   @OneToOne(() => ObjectBase,(obj)=>obj.main,{
-    onDelete: 'CASCADE',
+    onDelete: Variable.CASCADE,
   })
   @JoinColumn({name:"id"})
   detail: ObjectBase

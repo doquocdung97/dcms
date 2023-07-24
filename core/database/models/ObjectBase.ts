@@ -21,6 +21,7 @@ import { PropertyBase } from './Property';
 import { ValueObject } from './ValueObject';
 import { ObjectMain, } from './ObjectMain';
 import { BaseDocument } from './Document';
+import { Variable } from '../../constants';
 
 
 @Entity()
@@ -47,7 +48,7 @@ export class ObjectBase {
   properties: PropertyBase[];
 
   @OneToMany((type) => ValueObject, (obj) => obj.object, {
-    onDelete: 'CASCADE',
+    onDelete: Variable.CASCADE,
   })
   connect: ValueObject[];
 

@@ -1,4 +1,4 @@
-import { Authorization, BaseError, LoggerHelper, TypeFunction } from "../../common";
+import { BaseError, LoggerHelper, TypeFunction } from "../../common";
 import { DataSource, FindManyOptions, FindOptionsWhere, In, Repository } from "typeorm";
 import { ObjectBase } from "../models/ObjectBase";
 import { BaseResultCode, MainProperty } from "../common";
