@@ -6,14 +6,14 @@ import {
 } from '@nestjs/graphql';
 // import { BaseMedia, BaseResultCode, PropertyBase } from 'core/database';
 import * as GraphQLUpload from 'graphql-upload/GraphQLUpload.js';
-import {  CustomUUID } from 'src/graphql';
-import {Media as MediaCMS,Extensions,BaseResultCode} from 'cms';
+import { CustomUUID } from 'src/graphql';
+import { Media as MediaCMS, Extensions, BaseResultCode, Base } from 'cms';
 import { plainToClass } from 'class-transformer';
 import { IsOptional, Length } from 'class-validator';
 import { User } from '../user/schema';
-import {PropertyBase} from '../property/schema'
+import { PropertyBase } from '../property/schema'
 @ObjectType()
-export class PropertyMedia {
+export class Media {
   @Field((type) => CustomUUID)
   id: string;
 
@@ -23,8 +23,14 @@ export class PropertyMedia {
   @Field()
   url: string;
 
+  // @Field()
+  // public: boolean;
+
   @Field()
-  public: boolean;
+  type: string;
+
+  @Field()
+  user: User;
 
   @Field()
   createdAt: Date;
@@ -34,15 +40,22 @@ export class PropertyMedia {
 
   @Field({ nullable: true })
   deleteAt: Date;
-}
 
-@ObjectType()
-export class BaseMedia extends PropertyMedia{
-  @Field()
-  user: User;
-
-  @Field((type) => [PropertyBase], { defaultValue: [] })
-  properties: PropertyBase[];
+  static create(model: Base.Media): Media
+  static create(model: Base.Media[]): Media[]
+  static create(model) {
+    if (!model) {
+      return null
+    }
+    if (model instanceof Array) {
+      let objs = []
+      model.map((item: Base.Objective) => {
+        objs.push(item.model())
+      })
+      return objs
+    }
+    return model.model()
+  }
 }
 
 @InputType()
@@ -55,11 +68,11 @@ export class InputUpdateMedia {
   @Field({ nullable: true })
   name: string;
 
-  @Field({ nullable: true })
-  public: boolean;
+  // @Field({ nullable: true })
+  // public: boolean;
 
-  @Field(() => [Number], { nullable: true })
-  properties: number[];
+  // @Field(() => [Number], { nullable: true })
+  // properties: number[];
 
   @Field(() => GraphQLUpload, { nullable: true })
   file: Promise<MediaCMS.FileUpload>;
@@ -94,14 +107,14 @@ export class InputCreateMedia {
   @Field({ nullable: true })
   name: string;
 
-  @Field({ nullable: true, defaultValue: true })
-  public: boolean;
+  // @Field({ nullable: true, defaultValue: true })
+  // public: boolean;
 
   @Field(() => GraphQLUpload)
   file: Promise<MediaCMS.FileUpload>;
 
-  @Field(() => [Number], { nullable: true })
-  properties: number[];
+  // @Field(() => [Number], { nullable: true })
+  // properties: number[];
 
   async createModel(): Promise<MediaCMS.InputCreateMedia> {
     let model = new MediaCMS.InputCreateMedia();
@@ -114,7 +127,7 @@ export class InputCreateMedia {
       let fileUpload = plainToClass(MediaCMS.FileUpload, file);
       model.file = await fileUpload.toFile();
     }
-    model.public = this.public;
+    // model.public = this.public;
     // let properties = [];
     // this.properties?.map((id) => {
     //   let property = new PropertyBase();
@@ -133,8 +146,8 @@ export class MediaResult {
 
   @Field({ defaultValue: true })
   success: boolean;
-  @Field((type) => BaseMedia, { nullable: true })
-  data: BaseMedia;
+  @Field((type) => Media, { nullable: true })
+  data: Media;
 }
 
 @ObjectType()
@@ -144,6 +157,6 @@ export class MediasResult {
 
   @Field({ defaultValue: true })
   success: boolean;
-  @Field((type) => [BaseMedia], { nullable: true })
-  data: BaseMedia[];
+  @Field((type) => [Media], { nullable: true })
+  data: Media[];
 }

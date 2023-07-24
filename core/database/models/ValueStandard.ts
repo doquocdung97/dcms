@@ -5,6 +5,7 @@ import {
   ManyToOne,
 } from 'typeorm';
 import { PropertyBase } from './Property';
+import { Variable } from '../../constants';
 
 @Entity()
 export class ValueStandard {
@@ -12,7 +13,7 @@ export class ValueStandard {
   id: string;
 
   @ManyToOne((type) => PropertyBase, (obj) => obj.connectStandard, {
-    onDelete: 'CASCADE',
+    onDelete: Variable.CASCADE,
   })
   property: PropertyBase;
 

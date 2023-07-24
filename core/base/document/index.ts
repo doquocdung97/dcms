@@ -245,8 +245,8 @@ export class Document extends EventDispatcher {
         let result = await this.checkAuth(
             TypeFunction.CREATE,
             async (_auth) => {
-                let media = await this._mediarepository.create(_auth, input.model())
-                return new Media(this, media)
+                let media = new Media(this, input.model())
+                return media.create(_auth)
             }
         )
         return result
@@ -255,16 +255,13 @@ export class Document extends EventDispatcher {
         let result = await this.checkAuth(
             TypeFunction.CREATE,
             async (_auth) => {
-                let inputs = []
-                _inputs.map(input => {
-                    inputs.push(input.model())
-                })
-                let medias = await this._mediarepository.creates(_auth, inputs)
-                let data = []
-                medias.map(media => {
-                    data.push(new Media(this, media))
-                })
-                return data
+                let medias = []
+                for (let index = 0; index < _inputs.length; index++) {
+                    const input = _inputs[index];
+                    let media = new Media(this, input.model())
+                    medias.push(await media.create(_auth)) 
+                }
+                return medias
             }
         )
         return result

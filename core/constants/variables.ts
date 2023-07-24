@@ -13,6 +13,7 @@ export class Variable {
 	//
 
 	//media
+	static readonly TRASH = 'trash'
 	static readonly FORDER_FILE = 'media';
   static readonly FORDER_FILE_PUBLIC = '/public';
   static readonly FORDER_FILE_PRIVATE = '/private';
@@ -36,4 +37,7 @@ export class Variable {
 		"type": "sqlite",
     "path": "/data/db.sqlite"
 	}
+
+	//TyeORM
+	static readonly CASCADE = 'CASCADE';
 }

@@ -31,6 +31,7 @@ import { join } from 'path';
 // import { readFileSync } from 'fs';
 import { Config } from '../config';
 import { Variable } from '../constants';
+import { MediaSubscriber } from './subscriber/MediaSubscriber';
 
 
 export class DataBase {
@@ -62,7 +63,7 @@ export class DataBase {
 				synchronize: true,
 				//logging: true,
 				entities: Models,//['src/core/database/models/**/*.ts'],
-				subscribers: [PropertySubscriber],//['subscriber/**/*.ts'],
+				subscribers: [PropertySubscriber, MediaSubscriber],//['subscriber/**/*.ts'],
 				migrations: [],
 			});
 		}

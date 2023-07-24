@@ -14,17 +14,17 @@ import { PropertyBase } from './Property';
 import { File } from '../../common';
 import { User } from './User';
 import { BaseDocument } from './Document';
-
+import { Variable } from '../../constants';
 @Entity()
 export class BaseMedia {
   @PrimaryGeneratedColumn('uuid')
   id: string;
 
-  @Column({ default: '', length: 50 })
+  @Column({ default: String(), length: 50 })
   name: string;
 
-  @Column({ default: 'unknown', length: 10 })
-  tyle: string;
+  @Column({ default: String(), length: 10 })
+  type: string;
 
   @Column()
   url: string;
@@ -53,7 +53,7 @@ export class BaseMedia {
 
   @ManyToOne(() => BaseDocument, (obj) => obj.medias, {
     nullable: false,
-    onDelete: 'CASCADE',
+    onDelete: Variable.CASCADE,
   })
   document: BaseDocument;
 

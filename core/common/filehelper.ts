@@ -8,17 +8,23 @@ import {
   rmSync,
   rm,
   writeFileSync,
-  readFileSync
+  readFileSync,
+  rename,
+  access,
+  constants,
+  renameSync,
+
 } from 'fs';
+import { copy, copySync } from 'fs-extra';
 import { LoggerHelper } from './loggerhelper';
-import { join, basename, extname, dirname } from 'path';
+import { join, basename, extname, dirname, resolve } from 'path';
 import { Stream } from 'stream';
 import { Variable } from "../constants";
 export class FileHelper {
   private path = Variable.FORDER_FILE;
-  private logger:LoggerHelper;
+  private logger: LoggerHelper;
   constructor() {
-    this.logger = new LoggerHelper('FileHelper');
+    this.logger = new LoggerHelper(this.constructor.name);
   }
   /**
    *
@@ -27,7 +33,7 @@ export class FileHelper {
    */
   createDir(filepath: string, hasfilename = true) {
     let path = this.parseUrl(filepath);;
-    if(hasfilename){
+    if (hasfilename) {
       path = dirname(path);
     }
     if (!existsSync(path)) {
@@ -81,7 +87,7 @@ export class FileHelper {
     }
     return false;
   }
-  async saveFile(filePath,data){
+  async saveFile(filePath, data) {
     try {
       this.logger.info(`Save file - path: ${filePath}`);
       writeFileSync(filePath, data);
@@ -91,7 +97,7 @@ export class FileHelper {
     }
     return false;
   }
-  deleteDir(filePath){
+  deleteDir(filePath) {
     try {
       this.logger.info(`Delete directory - path: ${filePath}`);
       rmSync(filePath, { recursive: true });
@@ -126,19 +132,37 @@ export class FileHelper {
     return getFileName(path, type);
   }
   getType(file: string) {
-    return extname(file);
+    let type = extname(file);
+    return type.replace(/\./g, String());
   }
-  joinpath(...path) {
+  joinpath(...path): string {
     return join(...path);
   }
-  parseUrl(str:string){
-    if(str){
+  parseUrl(str: string): string {
+    if (str) {
       str = str.replace(/\\/g, '/');
       return str
     }
   }
-  readFile(path){
+  readFile(path) {
     return readFileSync(path);
+  }
+  async copyFolder(source, destination): Promise<boolean> {
+    try {
+      this.logger.error(`Copy folder: ${source} to folder: ${destination}`);
+      await copy(source, destination);
+      return true
+    } catch (err) {
+      this.logger.error(`Copy folder - error: ${err}`);
+    }
+  }
+  getPath(fullPath): string {
+    return dirname(fullPath);
+  }
+  replaceFilename(fullPath, newFilename) {
+    const directory = dirname(fullPath);
+    const newFullPath = join(directory, newFilename);
+    return newFullPath;
   }
 }
 export function getFileName(path: string, type: boolean = false) {
