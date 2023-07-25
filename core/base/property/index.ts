@@ -10,6 +10,8 @@ export class InputCreateProperty {
 
     type: TypeProperty;
 
+    manylang: boolean;
+
     description: string;
 
     status: number;
@@ -25,6 +27,8 @@ export class InputUpdateProperty {
     id: number;
 
     name: string;
+
+    manylang: boolean;
 
     type: TypeProperty;
 
@@ -55,8 +59,8 @@ export class Property {
     async delete(softDelete = true): Promise<boolean> {
         let result = await this._parent.document.checkAuth(
             TypeFunction.DELETE,
-            async (_auth)=>{
-                return await this._repository.delete(_auth, this._model.id,softDelete);;
+            async (_auth) => {
+                return await this._repository.delete(_auth, this._model.id, softDelete);;
             }
         )
         return result
@@ -64,7 +68,7 @@ export class Property {
     async restore(): Promise<boolean> {
         let result = await this._parent.document.checkAuth(
             TypeFunction.EDIT,
-            async (_auth)=>{
+            async (_auth) => {
                 return await this._repository.restore(_auth, this._model.id);;
             }
         )
@@ -73,11 +77,11 @@ export class Property {
     async update(input: InputUpdateProperty): Promise<boolean> {
         let result = await this._parent.document.checkAuth(
             TypeFunction.EDIT,
-            async (_auth)=>{
+            async (_auth) => {
                 let result = await this._repository.update(_auth, input.model());
                 if (result) {
                     this._model = result;
-                    this._parent.onChange(this,result.value)
+                    this._parent.onChange(this, result.value)
                     return true;
                 }
                 return false;

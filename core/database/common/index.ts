@@ -72,10 +72,11 @@ export class BasePropertyType {
   get(object: any, lang:string) {
     let val = null;
     if (object.connectStandard) {
+      if(!object.manylang){
+        lang = String()
+      }
       const value = object.connectStandard.find(n=>n.lang == lang)
-      if(!value && object.connectStandard.length > 0){
-        val = object.connectStandard[0].value
-      }else{
+      if(value){
         val = value.value
       }
     }
@@ -95,25 +96,33 @@ export class BasePropertyType {
     var val = object.value;
     if (this.validate(val)) {
       const { ValueStandard } = await import('../models/ValueStandard')
-      const queryRunner = dataSource.createQueryRunner();
-      let connectRepository = queryRunner.manager.getRepository(ValueStandard);
-
+      let connectRepository = dataSource.manager.getRepository(ValueStandard);
+      if(!object.manylang){
+        lang = String()
+      }
       let connect = await connectRepository.findOne({
         relations: {
           property: true,
         },
-        where: {
-          lang:lang,
-          property: {
-            id: object.id,
+        where: [
+          {
+            lang:lang,
+            property: {
+              id: object.id,
+            }
           },
-        },
+          {
+            property: {
+              id: object.id,
+            }
+          }
+        ]
       });
       if (!connect) {
         connect = new ValueStandard()
-        connect.lang = lang;
         connect.property = object
       }
+      connect.lang = lang;
       connect.value = JSON.stringify(val)
       await connectRepository.save(connect)
       return val;

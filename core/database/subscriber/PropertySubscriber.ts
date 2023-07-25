@@ -38,6 +38,15 @@ export class PropertySubscriber
   // beforeUpdate(event: UpdateEvent<PropertyBase>) {
   //   console.log(`BEFORE ENTITY UPDATED: `, event.entity)
   // }
+  async afterUpdate(event: UpdateEvent<PropertyBase>){
+    // console.log(event)
+    const model = event.entity
+    const property = this._mainproperty.get(model.type);
+    if (property) {
+      const lang = event.queryRunner.data[Variable.LANG]
+      model.value = await property.setData(model,lang, event.connection);
+    }
+  }
 
   afterLoad?(entity: PropertyBase, event?: LoadEvent<PropertyBase>){
     entity.value = null;

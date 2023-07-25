@@ -117,9 +117,10 @@ export default class PropertyRepository {
 				) {
 					let data = Object.assign(record, item);
 					data.parent.document = autho.document;
-					data.AfterUpdate(this._dataSource, this._lang);
+					// data.AfterUpdate(this._dataSource, this._lang);
+					data.updatedAt = new Date()
 					let rowdata = await this._repository.save(data);
-					rowdata.value = data.value;
+					// rowdata.value = data.value;
 					return rowdata;
 				} else {
 					return null
@@ -154,9 +155,10 @@ export default class PropertyRepository {
 						delete data.connectStandard
 						delete data.connectMeida
 						delete data.connectObject
-						await data.AfterUpdate(this._dataSource,this._lang);
+						// await data.AfterUpdate(this._dataSource,this._lang);
+						data.updatedAt = new Date()
 						datas.push(data)
-						item.value = data.value
+						// item.value = data.value
 						// let rowdata = await this._repository.save(data);
 						// rowdata.value = data.value;
 						// result.data = rowdata;

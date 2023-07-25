@@ -54,7 +54,9 @@ export class PropertyBase extends BaseEntity {
   // @Column({ default: null })
   // attribute_str: string;
 
-  attribute: any;
+  // attribute: any;
+  @Column({ default: true })
+  manylang: boolean;
 
   @ManyToOne((type) => ObjectBase, (obj) => obj.properties, {
     onDelete: 'CASCADE',
@@ -87,12 +89,12 @@ export class PropertyBase extends BaseEntity {
   @DeleteDateColumn()
   deleteAt: Date;
 
-  async AfterUpdate(dataSource: DataSource, lang:string) {
-    let property = mainproperty.get(this.type);
-    if (property) {
-      this.value = await property.setData(this,lang, dataSource);
-    }
-  }
+  // async AfterUpdate(dataSource: DataSource, lang:string) {
+  //   let property = mainproperty.get(this.type);
+  //   if (property) {
+  //     this.value = await property.setData(this,lang, dataSource);
+  //   }
+  // }
 }
 let mainproperty = new MainProperty()
 class PropertyString extends BasePropertyType {
@@ -183,21 +185,29 @@ class PropertyMedia extends BasePropertyType {
     if (!this.validate(val)) {
       return null;
     }
-    const queryRunner = dataSource.createQueryRunner();
-    let mediaRepository = queryRunner.manager.getRepository(BaseMedia);
-    let connectRepository = queryRunner.manager.getRepository(ValueMedia);
-
+    let mediaRepository = dataSource.manager.getRepository(BaseMedia);
+    let connectRepository = dataSource.manager.getRepository(ValueMedia);
+    if(!object.manylang){
+      lang = String()
+    }
     let connect = await connectRepository.find({
       relations: {
         property: true,
         object: true,
       },
-      where: {
-        lang:lang,
-        property: {
-          id: object.id,
+      where: [
+        {
+          lang:lang,
+          property: {
+            id: object.id,
+          }
         },
-      },
+        {
+          property: {
+            id: object.id,
+          }
+        }
+      ]
     });
     if (!object.value) {
       connectRepository.remove(connect);
@@ -219,6 +229,7 @@ class PropertyMedia extends BasePropertyType {
         );
       },
       (item, media) => {
+        item.lang = lang;
         item.object = media;
       },
       (media: any) => {
@@ -246,10 +257,11 @@ class PropertyMedia extends BasePropertyType {
   get(object: PropertyBase,lang:string) {
     let val = null;
     if (object.connectMeida) {
+      if(!object.manylang){
+        lang = String()
+      }
       const value = object.connectMeida.find(n=>n.lang == lang)
-      if(!value && object.connectMeida.length > 0){
-        val = object.connectMeida[0].object
-      }else{
+      if(value){
         val = value.object
       }
     }
@@ -265,21 +277,30 @@ class PropertyMedias extends BasePropertyType {
     if (!this.validate(val)) {
       return null;
     }
-    const queryRunner = dataSource.createQueryRunner();
-    let mediaRepository = queryRunner.manager.getRepository(BaseMedia);
-    let connectRepository = queryRunner.manager.getRepository(ValueMedia);
+    let mediaRepository = dataSource.manager.getRepository(BaseMedia);
+    let connectRepository = dataSource.manager.getRepository(ValueMedia);
     let ids = object.value || [];
+    if(!object.manylang){
+      lang = String()
+    }
     let connect = await connectRepository.find({
       relations: {
         property: true,
         object: true,
       },
-      where: {
-        lang:lang,
-        property: {
-          id: object.id,
+      where: [
+        {
+          lang:lang,
+          property: {
+            id: object.id,
+          }
         },
-      },
+        {
+          property: {
+            id: object.id,
+          }
+        }
+      ]
     });
     if (ids.length == 0) {
       connectRepository.remove(connect);
@@ -299,6 +320,7 @@ class PropertyMedias extends BasePropertyType {
       },
       (item, media) => {
         item.object = media;
+        item.lang = lang;
       },
       (media: any) => {
         let newvalue = new ValueMedia();
@@ -330,6 +352,9 @@ class PropertyMedias extends BasePropertyType {
     let val = [];
     if (object.connectMeida) {
       let data = [];
+      if(!object.manylang){
+        lang = String()
+      }
       const connect = object.connectMeida.filter(x=>x.lang == lang)
       for (let i = 0; i < connect.length; i++) {
         let obj = connect[i];
@@ -353,24 +378,33 @@ class PropertyRelationship extends BasePropertyType {
     if (!this.validate(val)) {
       return null;
     }
-    const queryRunner = dataSource.createQueryRunner();
-    let objectRepository = queryRunner.manager.getRepository(ObjectBase);
-    let connectRepository = queryRunner.manager.getRepository(ValueObject);
+    let objectRepository = dataSource.manager.getRepository(ObjectBase);
+    let connectRepository = dataSource.manager.getRepository(ValueObject);
     let id = property.value || String();
     if (id == property.parent?.id) {
       id = String();
+    }
+    if(!property.manylang){
+      lang = String()
     }
     let connect = await connectRepository.find({
       relations: {
         property: true,
         object: true,
       },
-      where: {
-        lang:lang,
-        property: {
-          id: property.id,
+      where: [
+        {
+          lang:lang,
+          property: {
+            id: property.id,
+          }
         },
-      },
+        {
+          property: {
+            id: property.id,
+          }
+        }
+      ]
     });
     if (!id) {
       connectRepository.remove(connect);
@@ -389,6 +423,7 @@ class PropertyRelationship extends BasePropertyType {
       },
       (item, object) => {
         item.object = object;
+        item.lang = lang;
       },
       (object: any) => {
         let newvalue = new ValueObject();
@@ -409,10 +444,11 @@ class PropertyRelationship extends BasePropertyType {
   get(object: PropertyBase,lang:string) {
     let val = null;
     if(object.connectObject){
+      if(!object.manylang){
+        lang = String()
+      }
       const value = object.connectObject.find(n=>n.lang == lang)
-      if(!value && object.connectObject.length > 0){
-        val = object.connectObject[0].object
-      }else{
+      if(value){
         val = value.object
       }
     }
@@ -437,9 +473,8 @@ class PropertyRelationships extends BasePropertyType {
     if (!this.validate(val)) {
       return null;
     }
-    const queryRunner = dataSource.createQueryRunner();
-    let objectRepository = queryRunner.manager.getRepository(ObjectBase);
-    let connectRepository = queryRunner.manager.getRepository(ValueObject);
+    let objectRepository = dataSource.manager.getRepository(ObjectBase);
+    let connectRepository = dataSource.manager.getRepository(ValueObject);
     let ids = property.value || [];
     if (ids) {
       let index = ids.indexOf(property.parent?.id);
@@ -447,18 +482,27 @@ class PropertyRelationships extends BasePropertyType {
         ids.splice(index, 1);
       }
     }
-
+    if(!property.manylang){
+      lang = String()
+    }
     let connect = await connectRepository.find({
       relations: {
         property: true,
         object: true,
       },
-      where: {
-        lang:lang,
-        property: {
-          id: property.id,
+      where: [
+        {
+          lang:lang,
+          property: {
+            id: property.id,
+          }
         },
-      },
+        {
+          property: {
+            id: property.id,
+          }
+        }
+      ]
     });
     if (ids.length == 0) {
       connectRepository.remove(connect);
@@ -477,6 +521,7 @@ class PropertyRelationships extends BasePropertyType {
       },
       (item, object) => {
         item.object = object;
+        item.lang = lang;
       },
       (object: any) => {
         let newvalue = new ValueObject();
@@ -498,6 +543,9 @@ class PropertyRelationships extends BasePropertyType {
     let val = [];
     if (object.connectObject) {
       let data = [];
+      if(!object.manylang){
+        lang = String()
+      }
       const connect = object.connectObject.filter(x=>x.lang == lang)
       for (let i = 0; i < connect.length; i++) {
         let obj = connect[i];
