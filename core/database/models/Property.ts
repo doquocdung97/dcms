@@ -59,22 +59,22 @@ export class PropertyBase extends BaseEntity {
   manylang: boolean;
 
   @ManyToOne((type) => ObjectBase, (obj) => obj.properties, {
-    onDelete: 'CASCADE',
+    onDelete: Variable.CASCADE,
   })
   parent: ObjectBase;
 
   @OneToMany((type) => ValueObject, (obj) => obj.property, {
-    onDelete: 'CASCADE',
+    onDelete: Variable.CASCADE,
   })
   connectObject: ValueObject[];
 
   @OneToMany((type) => ValueMedia, (obj) => obj.property, {
-    onDelete: 'CASCADE',
+    onDelete: Variable.CASCADE,
   })
   connectMeida: ValueMedia[];
 
   @OneToMany((type) => ValueStandard, (obj) => obj.property, {
-    onDelete: 'CASCADE',
+    onDelete: Variable.CASCADE,
   })
   connectStandard: ValueStandard[];
 
