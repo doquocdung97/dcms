@@ -300,6 +300,7 @@ class GenerateModelDict {
 				let type = Property.TypeProperty
 				property.type = type[pro_find.type.toUpperCase()]
 				property.value = input[name]
+				property.manylang = pro_find.manylang
 				pros.push(property)
 			}
 		})
@@ -455,7 +456,7 @@ class GenerateModelList extends GenerateModelDict {
 					return {
 						code:0,
     				success:true,
-						data :data.toJSON()
+						data :data?.toJSON()
 					}
 				} catch (error) {
 					console.log(error)

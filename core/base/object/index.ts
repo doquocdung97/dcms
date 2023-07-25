@@ -225,6 +225,7 @@ export class Objective {
                 pro_new.name = field
                 pro_new.type = schema.type
                 pro_new.value = p.value
+                pro_new.manylang = p.manylang
                 propertys.push(pro_new)
             }
         })

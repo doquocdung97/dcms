@@ -28,7 +28,7 @@
       "name": "avatar",
       "type": "media",
       "required": true,
-      "manylang": false
+      "manylang": true
     }
   ]
 }
