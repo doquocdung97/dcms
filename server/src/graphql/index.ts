@@ -580,18 +580,19 @@ class GenerateDocument {
 		}
 	}
 }
-let doc_id = '0df5c8f4-4fcd-425b-bf77-73a19c11969d'
-let generate = new GenerateDocument(doc_id)
-let datatemp = generate.init()
-const schema = new GraphQLSchema({
-	query: new GraphQLObjectType({
-		name: 'Query',
-		fields: datatemp.query
-	}),
-	mutation: new GraphQLObjectType({
-		name: 'Mutation',
-		fields: datatemp.mutation
-	})
-});
-
-export default schema
+function getSchema(id:string):GraphQLSchema{
+	let generate = new GenerateDocument(id)
+	let datatemp = generate.init()
+	const schema = new GraphQLSchema({
+		query: new GraphQLObjectType({
+			name: 'Query',
+			fields: datatemp.query
+		}),
+		mutation: new GraphQLObjectType({
+			name: 'Mutation',
+			fields: datatemp.mutation
+		})
+	});
+	return schema
+}
+export default getSchema

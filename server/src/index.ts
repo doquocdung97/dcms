@@ -5,7 +5,7 @@ import { CMS } from 'cms';
 import { Config } from "./constants"
 import { ApolloServer } from 'apollo-server-express'
 import { ApolloServerPluginLandingPageLocalDefault } from 'apollo-server-core';
-import schema from "./graphql";
+import getSchema from "./graphql";
 import { LoggerHelper } from './common/loggerhelper';
 const app = express()
 
@@ -20,7 +20,7 @@ app.get('/', function (req, res) {
 })
 
 const server = new ApolloServer({
-	schema: schema,
+	schema: getSchema('0df5c8f4-4fcd-425b-bf77-73a19c11969d'),
 	plugins: [
 		ApolloServerPluginLandingPageLocalDefault({
 			embed: true,
