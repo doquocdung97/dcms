@@ -89,12 +89,12 @@ export class PropertyBase extends BaseEntity {
   @DeleteDateColumn()
   deleteAt: Date;
 
-  async AfterUpdate(dataSource: DataSource, lang:string) {
-    let property = mainproperty.get(this.type);
-    if (property) {
-      this.value = await property.setData(this,lang, dataSource);
-    }
-  }
+  // async AfterUpdate(dataSource: DataSource, lang:string) {
+  //   let property = mainproperty.get(this.type);
+  //   if (property) {
+  //     this.value = await property.setData(this,lang, dataSource);
+  //   }
+  // }
 }
 let mainproperty = new MainProperty()
 class PropertyString extends BasePropertyType {
@@ -185,9 +185,8 @@ class PropertyMedia extends BasePropertyType {
     if (!this.validate(val)) {
       return null;
     }
-    const queryRunner = dataSource.createQueryRunner();
-    let mediaRepository = queryRunner.manager.getRepository(BaseMedia);
-    let connectRepository = queryRunner.manager.getRepository(ValueMedia);
+    let mediaRepository = dataSource.manager.getRepository(BaseMedia);
+    let connectRepository = dataSource.manager.getRepository(ValueMedia);
     if(!object.manylang){
       lang = String()
     }
@@ -230,6 +229,7 @@ class PropertyMedia extends BasePropertyType {
         );
       },
       (item, media) => {
+        item.lang = lang;
         item.object = media;
       },
       (media: any) => {
@@ -277,9 +277,8 @@ class PropertyMedias extends BasePropertyType {
     if (!this.validate(val)) {
       return null;
     }
-    const queryRunner = dataSource.createQueryRunner();
-    let mediaRepository = queryRunner.manager.getRepository(BaseMedia);
-    let connectRepository = queryRunner.manager.getRepository(ValueMedia);
+    let mediaRepository = dataSource.manager.getRepository(BaseMedia);
+    let connectRepository = dataSource.manager.getRepository(ValueMedia);
     let ids = object.value || [];
     if(!object.manylang){
       lang = String()
@@ -321,6 +320,7 @@ class PropertyMedias extends BasePropertyType {
       },
       (item, media) => {
         item.object = media;
+        item.lang = lang;
       },
       (media: any) => {
         let newvalue = new ValueMedia();
@@ -378,9 +378,8 @@ class PropertyRelationship extends BasePropertyType {
     if (!this.validate(val)) {
       return null;
     }
-    const queryRunner = dataSource.createQueryRunner();
-    let objectRepository = queryRunner.manager.getRepository(ObjectBase);
-    let connectRepository = queryRunner.manager.getRepository(ValueObject);
+    let objectRepository = dataSource.manager.getRepository(ObjectBase);
+    let connectRepository = dataSource.manager.getRepository(ValueObject);
     let id = property.value || String();
     if (id == property.parent?.id) {
       id = String();
@@ -424,6 +423,7 @@ class PropertyRelationship extends BasePropertyType {
       },
       (item, object) => {
         item.object = object;
+        item.lang = lang;
       },
       (object: any) => {
         let newvalue = new ValueObject();
@@ -473,9 +473,8 @@ class PropertyRelationships extends BasePropertyType {
     if (!this.validate(val)) {
       return null;
     }
-    const queryRunner = dataSource.createQueryRunner();
-    let objectRepository = queryRunner.manager.getRepository(ObjectBase);
-    let connectRepository = queryRunner.manager.getRepository(ValueObject);
+    let objectRepository = dataSource.manager.getRepository(ObjectBase);
+    let connectRepository = dataSource.manager.getRepository(ValueObject);
     let ids = property.value || [];
     if (ids) {
       let index = ids.indexOf(property.parent?.id);
@@ -522,6 +521,7 @@ class PropertyRelationships extends BasePropertyType {
       },
       (item, object) => {
         item.object = object;
+        item.lang = lang;
       },
       (object: any) => {
         let newvalue = new ValueObject();

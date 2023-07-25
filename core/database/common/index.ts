@@ -96,8 +96,7 @@ export class BasePropertyType {
     var val = object.value;
     if (this.validate(val)) {
       const { ValueStandard } = await import('../models/ValueStandard')
-      const queryRunner = dataSource.createQueryRunner();
-      let connectRepository = queryRunner.manager.getRepository(ValueStandard);
+      let connectRepository = dataSource.manager.getRepository(ValueStandard);
       if(!object.manylang){
         lang = String()
       }
@@ -121,9 +120,9 @@ export class BasePropertyType {
       });
       if (!connect) {
         connect = new ValueStandard()
-        connect.lang = lang;
         connect.property = object
       }
+      connect.lang = lang;
       connect.value = JSON.stringify(val)
       await connectRepository.save(connect)
       return val;
